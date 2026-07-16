@@ -1,0 +1,39 @@
+# Copy to runs/<YYYY-MM-DD>-<name>.manifest.yaml. One manifest per
+# pilot/burn. This file is the ONLY trace of a run that lives in git;
+# the data itself lives in the private HF dataset repo named below.
+
+run_id: 2026-07-XX-pilot
+kind: pilot                    # pilot | burn
+started: ""                    # ISO 8601
+finished: ""
+
+provenance:
+  hermes_commit: ""            # exact SHA of the pinned checkout
+  task_bank_commit: ""         # SHA of this repo at rollout time
+  datagen_config_hash: ""      # sha256 over datagen/configs + toolsets + persona
+  serializer_contract: v1      # bump ONLY with a golden-file change
+
+teachers:
+  easy_mid: ""                 # dated snapshot ID, e.g. deepseek-v4-flash-YYYYMMDD
+  hard: ""                     # dated snapshot ID, e.g. deepseek-v4-pro-YYYYMMDD
+  # never `latest` — see CLAUDE.md provenance rule
+
+counts:
+  instances: 0
+  rollouts: 0
+  verified: 0
+  judged: 0
+  rendered_train: 0
+  rendered_eval: 0
+
+keep_rates:
+  verify: 0.0
+  judge: 0.0
+
+spend_usd: 0.0
+
+artifacts:
+  hf_dataset: ""               # e.g. aimeri/aviary-2026-07-XX-pilot (private)
+  eval_families_held_out: []   # template ids with holdout: true this run
+
+notes: ""

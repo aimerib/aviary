@@ -1,0 +1,41 @@
+# Copy into tasks/<family>/<short_name>.task.yaml and fill in.
+# One file = one template = one task family member.
+
+id: web.compare_sources        # <family>.<short_name>, unique repo-wide
+family: web                    # web | files | nightrunner | chains | social
+holdout: false                 # true => eval-only; renderer HARD-FAILS if
+                               # this template ever appears in a train render
+
+description: >
+  One human-readable sentence: what job does this teach?
+
+# Every {placeholder} used in `prompt` must be a key here.
+# Cartesian product of param lists = task instances.
+params:
+  topic:
+    - "example topic A"
+    - "example topic B"
+
+prompt: |
+  The user-turn text the teacher receives. Reference params like {topic}.
+  Write it the way a real person would ask Olivia — not like a benchmark.
+
+# Tool allowlist for this template. Must map to a toolset distribution
+# in datagen/toolsets/. Widening this list REQUIRES updating this
+# template's verifier fixtures in the same change.
+tools:
+  - web_search
+  - web_fetch
+  - write_file
+
+n_rollouts: 4                  # samples per instance (rejection sampling)
+
+# Target teacher pass-rate band. Outside it, revise THIS FILE
+# (difficulty), never the verifier.
+difficulty_target: [0.3, 0.8]
+
+# Pure function over the final session state. Ships with fixtures:
+# clean pass, clean fail, recovered-failure pass. No fixtures, no merge.
+verifier: verifiers/web/compare_sources.py
+
+notes: ""

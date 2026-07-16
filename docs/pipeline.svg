@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 2010" font-family="ui-monospace,'SF Mono','Cascadia Mono',Menlo,Consolas,monospace">
+  <defs>
+    <marker id="ag" markerWidth="10" markerHeight="10" refX="5" refY="8" orient="auto">
+      <path d="M1,1 L5,9 L9,1" fill="none" stroke="#63C08A" stroke-width="2" stroke-linecap="round"/>
+    </marker>
+    <marker id="af" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M1,1 L9,5 L1,9" fill="none" stroke="#7C8DA0" stroke-width="1.6" stroke-linecap="round"/>
+    </marker>
+  </defs>
+  <style>
+    .card{fill:#171E23;stroke:#2A343B;stroke-width:1.5;rx:10;}
+    .eyebrow{fill:#D9A441;font-size:11px;letter-spacing:2.5px;font-weight:700;}
+    .h{fill:#E9E4D8;font-size:19px;font-weight:700;}
+    .b{fill:#B9C2C9;font-size:13px;}
+    .k{fill:#E9E4D8;font-size:13px;}
+    .dim{fill:#7C8DA0;font-size:12px;}
+    .grn{fill:#63C08A;}
+    .red{fill:#C75A50;font-size:12px;}
+    .barlab{fill:#63C08A;font-size:12.5px;font-weight:700;}
+    .fb{stroke:#7C8DA0;stroke-width:1.4;stroke-dasharray:5 5;fill:none;}
+  </style>
+
+  <rect x="0" y="0" width="760" height="2010" fill="#0F1417"/>
+
+  <!-- header -->
+  <text x="40" y="62" fill="#E9E4D8" font-size="28" font-weight="800" letter-spacing="1">OLIVIA · SFT TRACE DISTILLERY</text>
+  <text x="40" y="90" class="dim">hermes-agent batch datagen → Swift Parrot bootstrap corpus → (later) GRPO reward suite</text>
+  <line x1="40" y1="110" x2="720" y2="110" stroke="#2A343B" stroke-width="1.5"/>
+
+  <!-- STAGE 0 : TASK BANK -->
+  <rect x="40" y="140" width="680" height="214" class="card" rx="10"/>
+  <text x="64" y="174" class="eyebrow">STAGE 0 · DESIGN</text>
+  <text x="64" y="202" class="h">Task bank — the dataset is designed here</text>
+  <text x="64" y="230" class="b">50 parameterized templates · YAML: params, tool allowlist, verifier, N</text>
+  <text x="64" y="250" class="b">families: web errands · files+memory · nightrunner IF · multi-tool · social</text>
+  <text x="64" y="270" class="b">difficulty tuned to 30–80% teacher pass — else rejection sampling is inert</text>
+  <text x="64" y="290" class="b">family-level split decided <tspan class="k">now</tspan>: whole templates held out for eval</text>
+  <text x="64" y="326" class="dim">50 templates × params → ~2,500 task instances</text>
+
+  <!-- arrow 0→1 -->
+  <line x1="380" y1="360" x2="380" y2="390" stroke="#63C08A" stroke-width="3.5" marker-end="url(#ag)"/>
+
+  <!-- STAGE 1 : ROLLOUT FLEET -->
+  <rect x="40" y="398" width="680" height="252" class="card" rx="10"/>
+  <text x="64" y="432" class="eyebrow">STAGE 1 · GENERATE</text>
+  <text x="64" y="460" class="h">Rollout fleet — batch_runner.py</text>
+  <text x="64" y="488" class="b">datagen config: workers · batch size · toolset distribution per family</text>
+  <text x="64" y="508" class="b">sandbox per worker: Docker local / Modal burst · nightrunner mounted as MCP</text>
+  <text x="64" y="528" class="b">teacher: DeepSeek V4 <tspan class="k">Flash</tspan> (easy/mid) · V4 <tspan class="k">Pro</tspan> (hard, long-horizon)</text>
+  <text x="64" y="548" class="b">Olivia personality (SOUL.md) in system prompt · byte-stable prefix = cache hits</text>
+  <text x="64" y="568" class="b">N=4 rollouts per instance · auto-checkpoint, crash-resumable</text>
+  <rect x="64" y="592" width="240" height="10" fill="#63C08A" opacity="0.85" rx="3"/>
+  <text x="316" y="601" class="barlab">~10,000 trajectories</text>
+  <text x="64" y="628" class="dim">≈ $150–400 API spend (tiered teachers + prefix caching)</text>
+
+  <!-- arrow 1→2 -->
+  <line x1="380" y1="656" x2="380" y2="686" stroke="#63C08A" stroke-width="3" marker-end="url(#ag)"/>
+
+  <!-- STAGE 2 : VERIFY -->
+  <rect x="40" y="694" width="680" height="212" class="card" rx="10"/>
+  <text x="64" y="728" class="eyebrow">STAGE 2 · VERIFY</text>
+  <text x="64" y="756" class="h">Outcome gate — not a path gate</text>
+  <text x="64" y="784" class="b">per-template verifier on final state: quest advanced · file == gold · answer ✓</text>
+  <text x="64" y="804" class="b">every tool call schema-checked against Swift Parrot's registry</text>
+  <text x="64" y="824" class="b"><tspan class="k">recovered failures kept</tspan> — error → adapt → success is prime data</text>
+  <rect x="64" y="848" width="96" height="10" fill="#63C08A" opacity="0.85" rx="3"/>
+  <text x="172" y="857" class="barlab">~4,000 kept (≈40%)</text>
+  <line x1="720" y1="800" x2="744" y2="800" stroke="#C75A50" stroke-width="2"/>
+  <text x="716" y="784" text-anchor="end" class="red">− ~6,000 rejected → stats only</text>
+
+  <!-- arrow 2→3 -->
+  <line x1="380" y1="912" x2="380" y2="942" stroke="#63C08A" stroke-width="2.6" marker-end="url(#ag)"/>
+
+  <!-- STAGE 3 : JUDGE -->
+  <rect x="40" y="950" width="680" height="196" class="card" rx="10"/>
+  <text x="64" y="984" class="eyebrow">STAGE 3 · JUDGE</text>
+  <text x="64" y="1012" class="h">rp_judge — voice + quality gate</text>
+  <text x="64" y="1040" class="b">Olivia-voice axis: does the persona survive a transcript full of tool calls?</text>
+  <text x="64" y="1060" class="b">prose rubric, pairwise-debiased · teacher-fingerprint + boilerplate audit</text>
+  <rect x="64" y="1084" width="77" height="10" fill="#63C08A" opacity="0.85" rx="3"/>
+  <text x="152" y="1093" class="barlab">~3,200 kept</text>
+  <line x1="720" y1="1040" x2="744" y2="1040" stroke="#C75A50" stroke-width="2"/>
+  <text x="716" y="1024" text-anchor="end" class="red">− ~800 rejected</text>
+
+  <!-- arrow 3→4 -->
+  <line x1="380" y1="1152" x2="380" y2="1182" stroke="#63C08A" stroke-width="2.4" marker-end="url(#ag)"/>
+
+  <!-- STAGE 4 : HARMONIZE -->
+  <rect x="40" y="1190" width="680" height="164" class="card" rx="10"/>
+  <text x="64" y="1224" class="eyebrow">STAGE 4 · HARMONIZE</text>
+  <text x="64" y="1252" class="h">Light paraphrase + scrub</text>
+  <text x="64" y="1280" class="b">Olivia paraphrase on <tspan class="k">conversational spans only</tspan></text>
+  <text x="64" y="1300" class="b">protected: tool args · file paths · quoted outputs · identifiers</text>
+  <text x="64" y="1320" class="b">PII + teacher-identity scrub · near-dup removal · leakage audit (Gemma rule)</text>
+
+  <!-- arrow 4→5 -->
+  <line x1="380" y1="1360" x2="380" y2="1390" stroke="#63C08A" stroke-width="2.4" marker-end="url(#ag)"/>
+
+  <!-- STAGE 5 : RE-RENDER (choke point, amber) -->
+  <rect x="40" y="1398" width="680" height="196" fill="#171E23" stroke="#D9A441" stroke-width="2" rx="10"/>
+  <text x="64" y="1432" class="eyebrow">STAGE 5 · RE-RENDER</text>
+  <text x="64" y="1460" class="h">The single choke point</text>
+  <text x="64" y="1488" class="b">source of truth: raw Hermes session records — not the flattened ShareGPT view</text>
+  <text x="64" y="1508" class="b">one serializer → Swift Parrot ChatML + &lt;tool_call&gt; template</text>
+  <text x="64" y="1528" class="b"><tspan class="k">byte-identical template</tspan> across SFT · eval · deployment · GRPO</text>
+  <text x="64" y="1548" class="b">trajectory_compressor only if a run overflows 43K packing</text>
+  <text x="64" y="1574" class="dim">off-policy leak prevention lives here — everything funnels through this file</text>
+
+  <!-- arrow 5→6 -->
+  <line x1="380" y1="1600" x2="380" y2="1630" stroke="#63C08A" stroke-width="2.4" marker-end="url(#ag)"/>
+
+  <!-- STAGE 6 : SHIP -->
+  <rect x="40" y="1638" width="680" height="212" class="card" rx="10"/>
+  <text x="64" y="1672" class="eyebrow">STAGE 6 · SHIP</text>
+  <text x="64" y="1700" class="h">Three artifacts leave the building</text>
+  <text x="64" y="1728" class="b"><tspan class="k">SFT train</tspan>: ~2,700 trajectories + ~20% RP replay mix → Megatron-SWIFT</text>
+  <text x="64" y="1748" class="b"><tspan class="k">eval</tspan>: held-out families + unseen params of seen ones (~500)</text>
+  <text x="64" y="1768" class="b"><tspan class="k">persistent asset</tspan>: templates + verifiers = the GRPO reward suite</text>
+  <text x="64" y="1788" class="b">(Atropos integration + tool-call parsers already in Hermes for that phase)</text>
+  <rect x="64" y="1812" width="65" height="10" fill="#63C08A" opacity="0.85" rx="3"/>
+  <rect x="133" y="1812" width="12" height="10" fill="#D9A441" opacity="0.85" rx="3"/>
+  <text x="157" y="1821" class="barlab">2,700 train <tspan fill="#D9A441">+ 500 eval</tspan></text>
+
+  <!-- feedback loops -->
+  <path class="fb" d="M 40 800 H 20 V 340 H 32" marker-end="url(#af)"/>
+  <text x="14" y="586" class="dim" transform="rotate(-90 14 586)" text-anchor="middle">pass@N → difficulty tuning</text>
+  <path class="fb" d="M 40 1046 H 8 V 560 H 32" marker-end="url(#af)"/>
+  <text x="2" y="820" class="dim" transform="rotate(-90 2 820)" text-anchor="middle">voice drift → persona prompt rev</text>
+
+  <!-- footer -->
+  <line x1="40" y1="1886" x2="720" y2="1886" stroke="#2A343B" stroke-width="1.5"/>
+  <text x="40" y="1914" class="dim">volumes are targets, not promises — calibrate keep-rate with a ~200-rollout</text>
+  <text x="40" y="1934" class="dim">pilot before the full burn · rerun the whole column whenever the task bank improves</text>
+</svg>

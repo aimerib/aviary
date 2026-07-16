@@ -1,0 +1,54 @@
+# ── philosophy ────────────────────────────────────────────────
+# Code + contracts live in git. Trajectory data lives in private
+# HF dataset repos, referenced by manifests in runs/.
+# Fixtures (verifiers/fixtures/) and goldens (render/goldens/)
+# are TRACKED on purpose — they ARE the contract.
+
+# ── run data: manifests only ─────────────────────────────────
+runs/*
+!runs/.gitkeep
+!runs/TEMPLATE.manifest.yaml
+!runs/*.manifest.yaml
+
+# ── bulk data, wherever it tries to land ─────────────────────
+data/
+trajectories/
+corpora/
+sessions/
+*.sqlite
+*.sqlite3
+*.db
+
+# ── model weights never belong here ──────────────────────────
+*.safetensors
+*.gguf
+*.bin
+*.pt
+*.onnx
+
+# ── secrets ───────────────────────────────────────────────────
+.env
+.env.*
+*.key
+secrets/
+
+# ── local hermes checkout / symlink targets ──────────────────
+hermes-agent/
+.hermes/
+
+# ── python ────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+.venv/
+.uv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# ── experiment trackers / misc ────────────────────────────────
+wandb/
+.ipynb_checkpoints/
+.DS_Store
