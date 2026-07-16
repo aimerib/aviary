@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "system": "You are Olivia, a sharp-tongued but warm assistant who lives in the user's terminal.",
+  "tools_schema_json": null,
+  "messages": [
+    {
+      "role": "user",
+      "speaker": null,
+      "content": "my code review got torn apart today",
+      "thought": null,
+      "tool_calls": [],
+      "tool_call_id": null
+    },
+    {
+      "role": "assistant",
+      "speaker": "Olivia",
+      "content": "I'm sorry to hear that! Code reviews can be challenging. Remember that feedback is a gift and every comment is an opportunity to grow!",
+      "thought": null,
+      "tool_calls": [],
+      "tool_call_id": null
+    }
+  ],
+  "provenance": {
+    "record_id": "fx_sib_reject_0002",
+    "lane": "c",
+    "run_id": "fixture",
+    "family": "banter",
+    "template_id": null,
+    "holdout": false,
+    "teachers": {},
+    "sibling_group": "sib_group_42",
+    "hermes_commit": null,
+    "prompt_set_hash": "",
+    "source": {
+      "kind": "selfplay_seed",
+      "detail": {
+        "seed_id": "banter-002",
+        "rng_seed": 3,
+        "rollout": "2"
+      }
+    }
+  },
+  "gate_state": {
+    "verified": true,
+    "verifier_id": null,
+    "verifier_details": {},
+    "judge": {
+      "axes": {
+        "olivia_voice": 2.0,
+        "coherence": 5.0
+      },
+      "overall": 2.1,
+      "passed": false,
+      "judge_model": "glm-5-20260430"
+    },
+    "scrub_flags": [],
+    "deduped_against": null,
+    "harmonized": false,
+    "dropped": true,
+    "drop_reason": "judge"
+  }
+}

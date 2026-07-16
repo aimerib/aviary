@@ -1,0 +1,18 @@
+{
+  "text": "<|im_start|>system\nRoleplay the following scene faithfully.\n\n## Characters\nMarianne: A governess with a habit of saying the quiet part out loud.\nEdmund: The estate's heir, allergic to sincerity.\n\n## Scene\nThe east library, past midnight. A storm has knocked the power out and neither can sleep.<|im_end|>\n<|im_start|>assistant\nMarianne: (sets the candle on the shelf) You're hiding from the storm or from your father?<|im_end|>\n<|im_start|>assistant\nEdmund: Both have identical tempers. (pulls a book he isn't reading) The library was closer than my rooms.<|im_end|>\n<|im_start|>assistant\nMarianne:",
+  "train_spans": [
+    [
+      589,
+      598
+    ]
+  ],
+  "meta": {
+    "record_id": "fx_scene_0001",
+    "lane": "b",
+    "family": "work_north_and_south_variant",
+    "thought_mode": "no_thoughts",
+    "sample_kind": "next_speaker",
+    "turn_index": "2",
+    "contract": "v2"
+  }
+}
