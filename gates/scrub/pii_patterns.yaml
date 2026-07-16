@@ -1,0 +1,15 @@
+# PII shapes. Real user data should never appear (everything is synthetic), so any
+# hit is suspicious; emails/keys drop, phone-shaped strings flag (false-positive prone).
+
+- label: pii_email
+  pattern: '\b[\w.+-]+@[\w-]+\.[a-z]{2,}\b'
+  action: drop
+- label: pii_api_key
+  pattern: '\b(?:sk|pk|api|key)[-_][A-Za-z0-9_-]{20,}\b'
+  action: drop
+- label: pii_phone
+  pattern: '\b(?:\+?1[-. ]?)?\(?\d{3}\)?[-. ]\d{3}[-. ]\d{4}\b'
+  action: flag
+- label: pii_ssn
+  pattern: '\b\d{3}-\d{2}-\d{4}\b'
+  action: drop

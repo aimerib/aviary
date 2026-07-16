@@ -29,6 +29,7 @@ sessions/
 # ── secrets ───────────────────────────────────────────────────
 .env
 .env.*
+!.env.example
 *.key
 secrets/
 

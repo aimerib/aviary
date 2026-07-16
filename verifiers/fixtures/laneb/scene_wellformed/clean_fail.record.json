@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "system": "Roleplay the following scene faithfully.\n\n## Characters\nMarianne: A governess with a habit of saying the quiet part out loud.\nEdmund: The estate's heir, allergic to sincerity.\n\n## Scene\nThe east library, past midnight. A storm has knocked the power out and neither can sleep.",
+  "tools_schema_json": null,
+  "messages": [
+    {
+      "role": "assistant",
+      "speaker": "Marianne",
+      "content": "(sets the candle on the shelf) You're hiding from the storm or from your father?",
+      "thought": "He flinched at the thunder earlier. It wasn't the thunder.",
+      "tool_calls": [],
+      "tool_call_id": null
+    },
+    {
+      "role": "assistant",
+      "speaker": "Edmund",
+      "content": "Both have identical tempers. (pulls a book he isn't reading) The library was closer than my rooms.",
+      "thought": "She notices everything. That's inconvenient.",
+      "tool_calls": [],
+      "tool_call_id": null
+    }
+  ],
+  "provenance": {
+    "record_id": "fx_scene_0001",
+    "lane": "b",
+    "run_id": "fixture",
+    "family": "work_north_and_south_variant",
+    "template_id": null,
+    "holdout": false,
+    "teachers": {},
+    "sibling_group": null,
+    "hermes_commit": null,
+    "prompt_set_hash": "",
+    "source": {
+      "kind": "book_scene",
+      "detail": {
+        "work_id": "work_north_and_south_variant",
+        "chapter": 12,
+        "scene_idx": 2
+      }
+    }
+  },
+  "gate_state": {
+    "verified": null,
+    "verifier_id": null,
+    "verifier_details": {},
+    "judge": null,
+    "scrub_flags": [],
+    "deduped_against": null,
+    "harmonized": false,
+    "dropped": false,
+    "drop_reason": null
+  }
+}

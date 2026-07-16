@@ -1,35 +1,39 @@
 # aviary — recipe names are part of the workflow contract (see CLAUDE.md).
-# Implement bodies; don't rename recipes.
+# Bodies delegate 1:1 to the aviary CLI (src/aviary/cli.py).
+
+set dotenv-load := true
 
 default:
     @just --list
 
-# Symlink datagen configs/toolsets/persona into hermes-agent's expected
-# directories. Repo is source of truth; never edit symlink targets.
+# Verify the pinned hermes-agent checkout ($AVIARY_HERMES_DIR) and symlink
+# datagen configs/toolsets/persona into it. Repo is source of truth; never
+# edit symlink targets.
 install:
-    @echo "TODO: symlink datagen/* into the pinned hermes-agent checkout"
+    uv run aviary install
 
-# ~200-rollout calibration run. Writes runs/<date>-pilot.manifest.yaml.
+# ~200-rollout calibration run across lanes enabled in datagen/configs/pilot.yaml.
+# Writes runs/<date>-pilot.manifest.yaml.
 pilot:
-    @echo "TODO: hermes batch_runner with datagen/configs/pilot.yaml"
+    uv run aviary pilot
 
-# Full burn. MUST refuse to start without a recent pilot manifest
-# whose keep_rates are within expected bands.
+# Full burn. Refuses to start without a recent pilot manifest whose keep_rates
+# are within the bands in burn.yaml and whose datagen config hash matches.
 burn:
-    @echo "TODO: guard on pilot manifest, then full batch_runner run"
+    uv run aviary burn
 
-# verify -> judge -> scrub/harmonize over a run's raw session records.
+# verify -> judge -> scrub -> dedupe -> harmonize over a run's raw records.
 gate run_id:
-    @echo "TODO: gate pipeline for {{run_id}}"
+    uv run aviary gate {{run_id}}
 
 # Choke-point serialization + train/eval split for a gated run.
-# Hard-fails on any holdout template in the train split.
-render run_id:
-    @echo "TODO: render {{run_id}} through render/ serializer"
+# Hard-fails on any holdout family in the train split.
+render run_id *args:
+    uv run aviary render {{run_id}} {{args}}
 
 # Keep rates, pass@N per template, spend, difficulty-band violations.
 stats run_id:
-    @echo "TODO: stats for {{run_id}}"
+    uv run aviary stats {{run_id}}
 
 test:
     uv run pytest

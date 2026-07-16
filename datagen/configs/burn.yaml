@@ -1,0 +1,17 @@
+# Full run. `just burn` refuses without a recent pilot manifest whose keep rates sit
+# inside the bands below and whose datagen_config_hash matches (cache-discipline rule).
+kind: burn
+lanes: [b, c]
+eval_param_fraction: 0.15
+split_seed: 20260716
+dpo_min_margin: 1.0
+dedupe_threshold: 0.8
+lane_a_num_workers: 8
+lane_a_batch_size: 20
+lane_c:
+  conversations_per_seed: 3
+  personas: [lazy_texter, engaged_rper, task_asker]
+  rng_seed: 20260716
+burn_bands_verify: [0.25, 0.65]
+burn_bands_judge: [0.6, 0.95]
+burn_max_pilot_age_days: 14

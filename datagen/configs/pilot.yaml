@@ -1,0 +1,14 @@
+# ~200-rollout calibration run. Lane A joins `lanes` once AVIARY_HERMES_DIR is set
+# and the task bank has templates.
+kind: pilot
+lanes: [b, c]
+eval_param_fraction: 0.15
+split_seed: 20260716
+dpo_min_margin: 1.0
+dedupe_threshold: 0.8
+lane_a_num_workers: 4
+lane_a_batch_size: 20
+lane_c:
+  conversations_per_seed: 1
+  personas: [lazy_texter, engaged_rper, task_asker]
+  rng_seed: 20260716

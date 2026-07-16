@@ -1,0 +1,19 @@
+# Lane B book list. Paths are LOCAL — book files never enter the repo (data-in-git
+# rule). Sources: your ebook library (.epub/.txt), otwarchive-downloader output
+# (.html), Gutenberg dumps (.txt, boilerplate auto-stripped).
+#
+# holdout: true holds out the ENTIRE work at family level (split rule).
+# max_chunks caps extraction per book for pilots; remove for burns.
+
+books: []
+# - work_id: example_novel
+#   title: Example Novel
+#   author: A. Writer
+#   path: ~/books/example_novel.epub
+#   holdout: false
+#   max_chunks: 10
+
+profile_sample_chars: 60000
+chunk_target_chars: 16000
+min_turns: 6
+min_thought_coverage: 0.5

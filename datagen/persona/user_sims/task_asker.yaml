@@ -1,0 +1,14 @@
+id: task_asker
+description: >
+  Treats the character as a capable companion: asks for real help (look this up,
+  save that, plan this), gives feedback, gets distracted, comes back. Medium-length,
+  mildly sloppy typing.
+target_len_words: [5, 30]
+capitalization: sloppy
+typo_rate: 0.04
+ooc_frequency: 0.0
+patience: medium
+goals:
+  - get a task done with tools
+  - plan something concrete
+  - ask a factual question and push back on the answer

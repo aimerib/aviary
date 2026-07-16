@@ -1,0 +1,28 @@
+id: files.save_note
+family: files
+holdout: false
+
+description: >
+  Teach reliable file writing with confirmation: the user asks Olivia to save a
+  small piece of text; success is the file existing with the right content.
+
+params:
+  kind:
+    - haiku about rain
+    - grocery list with five items
+    - one-line reminder about a dentist appointment
+  destination:
+    - notes/note.txt
+    - lists/today.txt
+
+prompt: |
+  hey liv, can you write a {kind} and save it to {destination}?
+
+tools:
+  - write_file
+  - read_file
+
+n_rollouts: 4
+difficulty_target: [0.3, 0.8]
+verifier: verifiers/files/save_note.py
+notes: exemplar template; the verifier checks the final write result, not the path taken.

@@ -1,0 +1,27 @@
+# Lane B rubric: fidelity of extracted scenes. No Olivia axis — lane B characters
+# are the entropy source and must NOT sound like Olivia.
+name: laneb
+threshold: 3.5
+axes:
+  characterization:
+    weight: 2.0
+    min: 3.0
+    description: >
+      Each speaker sounds like the profiled character; distinct voices; no two
+      characters collapsing into one register.
+  thought_quality:
+    weight: 1.5
+    min: 3.0
+    description: >
+      Inner thoughts are private, in-character, grounded in the scene's subtext,
+      and never contain information the character cannot know.
+  scene_integrity:
+    weight: 1.0
+    description: >
+      The dialogue is a coherent, self-contained scene; the setup does not leak
+      its own outcome; action beats read naturally.
+  prose_entropy:
+    weight: 1.0
+    description: >
+      The language retains the source's texture rather than flattening into
+      LLM-standard phrasing; 1 = pure slop, 5 = distinctly human register.

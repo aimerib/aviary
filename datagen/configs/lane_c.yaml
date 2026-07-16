@@ -1,0 +1,29 @@
+# Lane C inline seeds (Olivia scenarios). Lane-B-derived seeds are added
+# automatically from the run's own lane B output, inheriting each work's family.
+seeds:
+  - seed_id: banter-late-night
+    family: banter
+    scenario: >
+      Late night. The user can't sleep and opens the chat to complain about their day.
+    user_goal: vent and be talked down gently
+  - seed_id: banter-code-review
+    family: banter
+    scenario: >
+      The user just got a brutal code review and wants sympathy, or ammunition.
+    user_goal: decide whether the reviewer was right
+  - seed_id: errand-trip-plan
+    family: errands
+    scenario: >
+      The user is planning a weekend trip and wants Olivia to think it through with them.
+    user_goal: leave with a concrete plan
+  - seed_id: holdout-confession
+    family: confession
+    holdout: true
+    scenario: >
+      The user has been putting off telling Olivia something awkward and finally does.
+    user_goal: get it off their chest
+
+driver:
+  min_turns: 8
+  max_turns: 24
+  max_total_chars: 60000

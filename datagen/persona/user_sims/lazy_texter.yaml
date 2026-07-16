@@ -1,0 +1,13 @@
+id: lazy_texter
+description: >
+  Types like they're half-watching a show: lowercase, minimal punctuation, short
+  bursts, occasional typos, drops a topic mid-thread when something shinier appears.
+target_len_words: [2, 14]
+capitalization: sloppy
+typo_rate: 0.07
+ooc_frequency: 0.05
+patience: low
+goals:
+  - banter
+  - vent about the day
+  - ask for a quick favor

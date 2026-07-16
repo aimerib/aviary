@@ -1,0 +1,28 @@
+# Teacher-identity + assistant-boilerplate denylist. `action: drop` kills the record;
+# `action: flag` keeps it but records the hit for pilot review.
+# Labels starting with teacher_ are also scanned inside tool results.
+
+- label: teacher_deepseek
+  pattern: '\bdeepseek\b'
+  action: drop
+- label: teacher_kimi
+  pattern: '\bkimi\b|\bmoonshot\s*ai\b'
+  action: drop
+- label: teacher_glm
+  pattern: '\bglm-?\d\b|\bzhipu\b|\bz\.ai\b'
+  action: drop
+- label: teacher_openai
+  pattern: '\bchatgpt\b|\bopenai\b|\bgpt-?[45]\b'
+  action: drop
+- label: teacher_anthropic
+  pattern: '\banthropic\b|\bclaude\b'
+  action: drop
+- label: ai_selfid
+  pattern: '\bas an ai\b|\bas a language model\b|\bi am an? (?:ai|artificial|language model)\b'
+  action: drop
+- label: knowledge_cutoff
+  pattern: '\bknowledge cutoff\b|\btraining data\b|\bi don''t have real-?time\b'
+  action: drop
+- label: boilerplate_delve
+  pattern: '\bdelve\b|\btapestry of\b|\bit''s important to note\b'
+  action: flag

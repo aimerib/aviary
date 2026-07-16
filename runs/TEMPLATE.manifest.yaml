@@ -1,22 +1,31 @@
-# Copy to runs/<YYYY-MM-DD>-<name>.manifest.yaml. One manifest per
-# pilot/burn. This file is the ONLY trace of a run that lives in git;
-# the data itself lives in the private HF dataset repo named below.
+# Manifest v2 — written/updated by `aviary pilot|burn|gate|render`; this template
+# documents the shape. One manifest per run; the ONLY trace of a run in git.
+# Data lives in $AVIARY_DATA_DIR/<run_id>/ and ships to the private HF repo below.
 
+manifest_version: 2
 run_id: 2026-07-XX-pilot
 kind: pilot                    # pilot | burn
-started: ""                    # ISO 8601
+lanes: [a, b, c]               # lanes enabled this run
+started: ""                    # ISO 8601, written by the CLI
 finished: ""
 
 provenance:
-  hermes_commit: ""            # exact SHA of the pinned checkout
+  hermes_commit: ""            # pinned tag/SHA from teachers.yaml (lane A)
   task_bank_commit: ""         # SHA of this repo at rollout time
-  datagen_config_hash: ""      # sha256 over datagen/configs + toolsets + persona
-  serializer_contract: v1      # bump ONLY with a golden-file change
+  datagen_config_hash: ""      # sha256 over datagen/{configs,toolsets,persona,prompts}
+  serializer_contract: v2      # bump ONLY with a golden-file change (render/CONTRACT.md)
 
 teachers:
-  easy_mid: ""                 # dated snapshot ID, e.g. deepseek-v4-flash-YYYYMMDD
-  hard: ""                     # dated snapshot ID, e.g. deepseek-v4-pro-YYYYMMDD
-  # never `latest` — see CLAUDE.md provenance rule
+  roster:                      # dated snapshot IDs only — never `latest`
+    - {id: deepseek-v4-flash-20260610, provider: deepseek, route: direct}
+    - {id: glm-5-20260430, provider: zhipu, route: direct}
+    - {id: kimi-k3-20260522, provider: moonshot, route: openrouter}
+  assignments:                 # role -> roster id, per lane; judge is cross-vendor
+    lane_a: {easy_mid: "", hard: ""}
+    lane_b: {profiles: "", scenes: "", dialogue: ""}
+    lane_c: {user_sim: "", character: ""}
+    judge: {primary: "", secondary: ""}
+    harmonizer: {primary: ""}
 
 counts:
   instances: 0
@@ -25,15 +34,23 @@ counts:
   judged: 0
   rendered_train: 0
   rendered_eval: 0
+  rendered_dpo_pairs: 0
+  rendered_nsp: 0
 
 keep_rates:
   verify: 0.0
   judge: 0.0
 
-spend_usd: 0.0
+spend_usd:
+  total: 0.0
+  by_teacher: {}
+  by_lane: {}
+
+prompt_set_hash: ""            # frozen PromptSet hash; mid-run prompt edits refuse to run
 
 artifacts:
   hf_dataset: ""               # e.g. aimeri/aviary-2026-07-XX-pilot (private)
-  eval_families_held_out: []   # template ids with holdout: true this run
+  eval_families_held_out: []   # families (incl. lane B work_ids) with holdout: true
+  eval_param_seed: null        # seed for unseen-parameterization eval selection
 
 notes: ""

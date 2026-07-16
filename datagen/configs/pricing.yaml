@@ -1,0 +1,14 @@
+# $/Mtok per dated snapshot — cost ledger source. FILL WITH REAL PRICES alongside
+# the teachers.yaml verification pass; zero means spend tracking silently undercounts.
+deepseek-v4-flash-20260610:
+  input_per_mtok: 0.0   # TODO verify
+  output_per_mtok: 0.0  # TODO verify
+deepseek-v4-pro-20260610:
+  input_per_mtok: 0.0   # TODO verify
+  output_per_mtok: 0.0  # TODO verify
+glm-5-20260430:
+  input_per_mtok: 0.0   # TODO verify
+  output_per_mtok: 0.0  # TODO verify
+kimi-k3-20260522:
+  input_per_mtok: 0.0   # TODO verify (OpenRouter pass-through price)
+  output_per_mtok: 0.0  # TODO verify

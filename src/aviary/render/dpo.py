@@ -5,9 +5,9 @@ from __future__ import annotations
 
 from collections import defaultdict
 
+from aviary.render.serializer import SERIALIZER_CONTRACT, ThoughtMode, render_conversation
 from aviary.schema.records import ConversationRecord
 from aviary.schema.results import RenderedPair
-from aviary.render.serializer import SERIALIZER_CONTRACT, ThoughtMode, render_conversation
 
 
 def _prompt_boundary(rec: ConversationRecord) -> int:

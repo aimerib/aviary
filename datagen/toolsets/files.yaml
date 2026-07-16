@@ -1,0 +1,23 @@
+# files-family tool allowlist + schemas. Widening this list REQUIRES updating the
+# family's verifier fixtures in the same change (CLAUDE.md rule).
+family: files
+tools:
+  - type: function
+    function:
+      name: write_file
+      description: Write a text file, creating parent directories if needed.
+      parameters:
+        type: object
+        properties:
+          path: {type: string}
+          content: {type: string}
+        required: [path, content]
+  - type: function
+    function:
+      name: read_file
+      description: Read a text file.
+      parameters:
+        type: object
+        properties:
+          path: {type: string}
+        required: [path]
