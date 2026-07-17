@@ -114,6 +114,44 @@ def test_ingest_rejects_unknown_role():
         ingest_hermes_record(bad, make_ctx())
 
 
+def test_ingest_rejects_orphan_tool_result():
+    # A tool result with no preceding tool call must drop the record, not
+    # fabricate a call id.
+    bad = {
+        **HERMES_RECORD,
+        "conversations": [
+            {"from": "human", "value": "save it"},
+            {"from": "tool", "value": '{"ok": true}'},
+        ],
+    }
+    with pytest.raises(IngestError, match="no preceding tool call"):
+        ingest_hermes_record(bad, make_ctx())
+
+
+def test_ingest_matches_tool_result_by_explicit_id():
+    # Out-of-order results pair by id, not arrival order.
+    record = {
+        **HERMES_RECORD,
+        "conversations": [
+            {"from": "human", "value": "do both"},
+            {
+                "from": "gpt",
+                "value": "On it.",
+                "tool_calls": [
+                    {"id": "call_a", "function": {"name": "write_file", "arguments": "{}"}},
+                    {"id": "call_b", "function": {"name": "write_file", "arguments": "{}"}},
+                ],
+            },
+            {"from": "tool", "tool_call_id": "call_b", "value": '{"ok": true}'},
+            {"from": "tool", "tool_call_id": "call_a", "value": '{"ok": true}'},
+            {"from": "gpt", "value": "Done."},
+        ],
+    }
+    rec = ingest_hermes_record(record, make_ctx())
+    assert rec.messages[2].tool_call_id == "call_b"
+    assert rec.messages[3].tool_call_id == "call_a"
+
+
 def _pilot_manifest(**overrides) -> RunManifest:
     base = dict(
         run_id="2026-07-15-pilot",

@@ -59,7 +59,12 @@
     "source": {
       "kind": "task_instance",
       "detail": {
-        "fixture": "fx_savenote_pass"
+        "fixture": "fx_savenote_pass",
+        "template_id": "files.save_note",
+        "params": {
+          "kind": "grocery list with five items",
+          "destination": "lists/groceries.txt"
+        }
       }
     }
   },

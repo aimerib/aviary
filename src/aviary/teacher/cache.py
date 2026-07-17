@@ -4,8 +4,12 @@ resumability, and its files are the recorded-fixture format for FakeTeacherClien
 from __future__ import annotations
 
 import json
+import os
+import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING
+
+from pydantic import ValidationError
 
 from aviary.hashing import canonical_json, sha256_text
 
@@ -31,17 +35,31 @@ class ResponseCache:
         path = self._path(request_key(req))
         if not path.exists():
             return None
-        payload = json.loads(path.read_text())
-        return ChatResponse.model_validate(payload["response"])
+        try:
+            payload = json.loads(path.read_text())
+            return ChatResponse.model_validate(payload["response"])
+        except (json.JSONDecodeError, KeyError, ValidationError):
+            # A truncated/corrupt file (e.g. crash mid-write before the atomic put
+            # below existed, or a partial disk) is a cache MISS, not a fatal error.
+            return None
 
     def put(self, req: ChatRequest, resp: ChatResponse) -> None:
         key = request_key(req)
         path = self._path(key)
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(
-            json.dumps(
-                {"request": req.model_dump(mode="json"), "response": resp.model_dump(mode="json")},
-                ensure_ascii=False,
-                indent=2,
-            )
+        data = json.dumps(
+            {"request": req.model_dump(mode="json"), "response": resp.model_dump(mode="json")},
+            ensure_ascii=False,
+            indent=2,
         )
+        # Write-temp-then-rename so an interrupted write can never leave a corrupt
+        # file at the key path that poisons the next run's resume. mkstemp keeps the
+        # temp unique so concurrent writers of the same key don't clobber each other.
+        fd, tmp_name = tempfile.mkstemp(dir=path.parent, suffix=".tmp")
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                f.write(data)
+            os.replace(tmp_name, path)
+        except BaseException:
+            Path(tmp_name).unlink(missing_ok=True)
+            raise

@@ -7,7 +7,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from aviary.teacher.cache import ResponseCache
-from aviary.teacher.client import ChatRequest, ChatResponse, Usage
+from aviary.teacher.client import ChatRequest, ChatResponse, TeacherError, Usage
 
 
 class FakeTeacherClient:
@@ -30,4 +30,6 @@ class FakeTeacherClient:
             return ChatResponse(
                 text=self.script(req), usage=Usage(input_tokens=1, output_tokens=1), model=req.model
             )
-        raise AssertionError(f"no fixture or script for request to {req.model}")
+        # Match the real client's contract: callers that `except TeacherError` must
+        # catch the fake's "can't produce a response" too.
+        raise TeacherError(f"no fixture or script for request to {req.model}")

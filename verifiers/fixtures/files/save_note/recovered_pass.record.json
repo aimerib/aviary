@@ -102,7 +102,8 @@
       "detail": {
         "template_id": "files.save_note",
         "params": {
-          "kind": "haiku"
+          "kind": "haiku about rain",
+          "destination": "notes/haiku.txt"
         }
       }
     }

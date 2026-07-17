@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+import re
 from pathlib import Path
 from typing import Literal
 
@@ -9,6 +11,21 @@ import yaml
 from pydantic import BaseModel, Field, field_validator
 
 UNDATED_HINTS = ("latest", ":free")
+# A pinned snapshot ends in a dated suffix: …-YYYYMMDD (optionally after / or _).
+# e.g. deepseek-v4-flash-20260610, moonshotai/kimi-k3-20260522.
+_DATED_SUFFIX = re.compile(r"[-_/]20\d{6}$")
+
+
+def assert_dated_snapshot(v: str) -> str:
+    """Provenance rule: teacher ids/wire models must be pinned dated snapshots,
+    never `latest`/`:free`, and never undated or truncated. The date suffix is
+    REQUIRED (positive check) — a blacklist alone lets a typo'd id like
+    `…-2026061` slip into a paid burn and the manifest."""
+    if any(h in v.lower() for h in UNDATED_HINTS):
+        raise ValueError(f"model id {v!r} is not a pinned dated snapshot (undated hint)")
+    if not _DATED_SUFFIX.search(v):
+        raise ValueError(f"model id {v!r} lacks a dated snapshot suffix (expected …-YYYYMMDD)")
+    return v
 
 
 class TeacherEntry(BaseModel):
@@ -19,10 +36,7 @@ class TeacherEntry(BaseModel):
     @field_validator("id")
     @classmethod
     def _dated(cls, v: str) -> str:
-        low = v.lower()
-        if any(h in low for h in UNDATED_HINTS):
-            raise ValueError(f"teacher id {v!r} is not a pinned dated snapshot")
-        return v
+        return assert_dated_snapshot(v)
 
 
 class Teachers(BaseModel):
@@ -64,6 +78,10 @@ class Provenance(BaseModel):
     hermes_commit: str = ""
     task_bank_commit: str = ""
     datagen_config_hash: str = ""
+    # Hash of gate/render inputs NOT under datagen/ (rubrics, scrub patterns,
+    # verifiers, tasks). Frozen at generation, re-asserted at gate/render so a
+    # rubric/verifier/task edit can't silently change keep/judge/dedupe outcomes.
+    gate_inputs_hash: str = ""
     serializer_contract: str = "v2"
 
 
@@ -77,6 +95,9 @@ class RunManifest(BaseModel):
     manifest_version: Literal[2] = 2
     run_id: str
     kind: Literal["pilot", "burn"]
+    # running until the generation body completes; failed if it raised. Distinguishes
+    # a crash from an in-progress run (finished="" alone can't) in the only in-git trace.
+    status: Literal["running", "complete", "failed"] = "running"
     lanes: list[str] = Field(default_factory=lambda: ["a", "b", "c"])
     started: str = ""
     finished: str = ""
@@ -94,6 +115,9 @@ class RunManifest(BaseModel):
         return cls.model_validate(yaml.safe_load(path.read_text()))
 
     def save(self, path: Path) -> None:
-        path.write_text(
-            yaml.safe_dump(self.model_dump(mode="json"), sort_keys=False, allow_unicode=True)
-        )
+        # Atomic: a crash mid-write must not truncate the only in-git trace of a run.
+        path.parent.mkdir(parents=True, exist_ok=True)
+        data = yaml.safe_dump(self.model_dump(mode="json"), sort_keys=False, allow_unicode=True)
+        tmp = path.with_suffix(path.suffix + ".tmp")
+        tmp.write_text(data)
+        os.replace(tmp, path)

@@ -14,7 +14,7 @@ from pathlib import Path
 
 import yaml
 
-from aviary.lanes.a_agentic.taskbank import TaskInstance
+from aviary.lanes.a_agentic.taskbank import TaskInstance, rollout_order
 
 KNOWN_KEYS = {
     "environment",
@@ -32,16 +32,14 @@ KNOWN_KEYS = {
 
 
 def emit_batch_inputs(instances: list[TaskInstance], out_path: Path) -> int:
-    """One line per rollout: instances repeat n_rollouts times (rejection sampling).
-    Line order is the prompt_index contract used by ingest."""
+    """One line per rollout, in the prompt_index order defined by rollout_order().
+    ingest maps prompt_index i back to the same expansion."""
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    n = 0
+    lines = rollout_order(instances)
     with out_path.open("w", encoding="utf-8") as f:
-        for inst in instances:
-            for _ in range(inst.n_rollouts):
-                f.write(json.dumps({"prompt": inst.prompt}, ensure_ascii=False) + "\n")
-                n += 1
-    return n
+        for inst in lines:
+            f.write(json.dumps({"prompt": inst.prompt}, ensure_ascii=False) + "\n")
+    return len(lines)
 
 
 def emit_batch_config(
@@ -68,6 +66,26 @@ def emit_batch_config(
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(yaml.safe_dump(config, sort_keys=False, allow_unicode=True))
     return out_path
+
+
+def verify_hermes_pin(hermes_checkout: Path, expected_pin: str) -> str:
+    """Return the checkout's `git describe`, raising if it doesn't match expected_pin.
+    Called at run start (not just from `just install`) so a burn can never record a
+    hermes pin the working checkout doesn't actually match."""
+    import subprocess
+
+    head = subprocess.run(
+        ["git", "-C", str(hermes_checkout), "describe", "--tags", "--always"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()
+    if expected_pin and head != expected_pin:
+        raise ValueError(
+            f"hermes checkout at {head!r} but teachers.yaml pins {expected_pin!r} — "
+            "align the checkout (`just install`) before generating"
+        )
+    return head
 
 
 def verify_config_keys(hermes_checkout: Path) -> set[str]:

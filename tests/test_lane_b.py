@@ -157,6 +157,26 @@ def test_lane_b_end_to_end(tmp_path):
     assert len(client.requests) == calls_before
 
 
+def test_lane_b_runs_books_in_parallel(tmp_path):
+    # Independent books run concurrently (max_workers>1) and still produce one record
+    # per book with the right family; separate per-work checkpoints don't collide.
+    store = RunStore("parrun", root=tmp_path)
+    cfg = LaneBConfig(
+        books=[
+            BookConfig(work_id="book_a", path=BOOK, holdout=False),
+            BookConfig(work_id="book_b", path=BOOK, holdout=False),
+        ],
+        chunk_target_chars=100_000,
+    )
+    models = {k: "deepseek-v4-flash-20260610" for k in ("profiles", "scenes", "dialogue")}
+    n = run_lane_b(
+        cfg, store, FakeTeacherClient(script=scripted), make_prompts(), models, max_workers=2
+    )
+    assert n == 2
+    fams = {r.provenance.family for r in read_jsonl(store.raw("b"), ConversationRecord)}
+    assert fams == {"book_a", "book_b"}
+
+
 def test_alias_resolution_and_speaker_gate(tmp_path):
     bad_dialogue = json.loads(DIALOGUE_JSON)
     bad_dialogue["turns"][0]["speaker"] = "Mysterious Stranger"

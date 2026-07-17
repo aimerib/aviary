@@ -9,7 +9,13 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def data_dir() -> Path:
-    root = Path(os.environ.get("AVIARY_DATA_DIR", "~/.local/share/aviary")).expanduser()
+    root = Path(os.environ.get("AVIARY_DATA_DIR", "~/.local/share/aviary")).expanduser().resolve()
+    # Data-in-git rule: run data must never live inside the working tree.
+    if root == REPO_ROOT or REPO_ROOT in root.parents:
+        raise RuntimeError(
+            f"AVIARY_DATA_DIR ({root}) is inside the repo ({REPO_ROOT}); run data must live "
+            "outside the working tree (data-in-git rule). Point it elsewhere."
+        )
     root.mkdir(parents=True, exist_ok=True)
     return root
 

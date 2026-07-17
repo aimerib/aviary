@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 
-from aviary.lanes.a_agentic.taskbank import TaskInstance
+from aviary.lanes.a_agentic.taskbank import TaskInstance, rollout_order
 from aviary.schema.records import (
     ConversationRecord,
     Message,
@@ -47,11 +47,6 @@ class IngestContext:
     prompt_set_hash: str
 
 
-def flatten_rollout_lines(instances: list[TaskInstance]) -> list[TaskInstance]:
-    """Mirror emit_batch_inputs: index i of the output = instance behind prompt_index i."""
-    return [inst for inst in instances for _ in range(inst.n_rollouts)]
-
-
 def _parse_tool_calls(raw_calls: list, turn_idx: int) -> tuple[ToolCall, ...]:
     calls = []
     for j, raw in enumerate(raw_calls):
@@ -70,7 +65,7 @@ def _parse_tool_calls(raw_calls: list, turn_idx: int) -> tuple[ToolCall, ...]:
 
 def ingest_hermes_record(raw: dict, ctx: IngestContext) -> ConversationRecord:
     prompt_index = raw["prompt_index"]
-    lines = flatten_rollout_lines(ctx.instances)
+    lines = rollout_order(ctx.instances)
     try:
         inst = lines[prompt_index]
     except IndexError as e:
@@ -90,7 +85,23 @@ def ingest_hermes_record(raw: dict, ctx: IngestContext) -> ConversationRecord:
                 Message(role="assistant", speaker="Olivia", content=value, tool_calls=calls)
             )
         elif role == "tool":
-            call_id = pending_call_ids.pop(0) if pending_call_ids else f"call_orphan_{i}"
+            # Prefer explicit id pairing; fall back to FIFO only when the tool
+            # turn carries none. A result with no matching open call is a broken
+            # trajectory -> drop the record, never invent a tool_call_id (which
+            # would feed a mis-paired <tool_call> to the choke-point serializer).
+            explicit_id = turn.get("tool_call_id") or turn.get("id")
+            if explicit_id is not None:
+                if explicit_id not in pending_call_ids:
+                    raise IngestError(
+                        f"tool result at turn {i} references unknown tool_call_id "
+                        f"{explicit_id!r}"
+                    )
+                pending_call_ids.remove(explicit_id)
+                call_id = explicit_id
+            elif pending_call_ids:
+                call_id = pending_call_ids.pop(0)
+            else:
+                raise IngestError(f"tool result at turn {i} with no preceding tool call")
             messages.append(Message(role="tool", tool_call_id=call_id, content=value))
         else:
             messages.append(Message(role="user", content=value))

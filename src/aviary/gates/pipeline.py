@@ -105,11 +105,18 @@ def run_gates(
             )
         )
 
-    # 1. verify (outcome only)
+    # 1. verify (outcome only). A verifier import/resolve failure drops THAT record,
+    # never the whole run (paid pipeline: one bad plugin must not lose all progress).
     verified: list[ConversationRecord] = []
     for rec in records:
-        results = [run_verifier(p, rec) for p in resolver(rec)]
-        vid = ",".join(verifier_id(p, REPO_ROOT) for p in resolver(rec))
+        try:
+            paths = resolver(rec)  # resolve once: recorded vid == verifiers that ran
+            results = [run_verifier(p, rec) for p in paths]
+        except Exception as e:
+            log.warning("verify errored for %s: %s", rec.provenance.record_id, e)
+            reject(rec, "error")
+            continue
+        vid = ",".join(verifier_id(p, REPO_ROOT) for p in paths)
         passed = bool(results) and all(r.passed for r in results)
         details = {r.verifier_id: r.details for r in results}
         rec = rec.model_copy(
@@ -128,9 +135,15 @@ def run_gates(
     # 2. judge (cross-vendor); rejects retained for DPO
     judged: list[ConversationRecord] = []
     for rec in verified:
-        rubric = rubric_by_lane[rec.provenance.lane]
-        judge_model = roster.judge_for(_generator_id(rec)).id
-        scores = judge_record(rec, rubric, client, judge_model, prompts)
+        try:
+            rubric = rubric_by_lane[rec.provenance.lane]
+            judge_model = roster.judge_for(_generator_id(rec)).id
+            scores = judge_record(rec, rubric, client, judge_model, prompts)
+        except Exception as e:
+            # A malformed judge reply / transient LLM error drops one record.
+            log.warning("judge errored for %s: %s", rec.provenance.record_id, e)
+            reject(rec, "error")
+            continue
         rec = rec.model_copy(
             update={"gate_state": rec.gate_state.model_copy(update={"judge": scores})}
         )
@@ -168,7 +181,13 @@ def run_gates(
     # 5. harmonize (span-protected; lane policy)
     harmonizer_model = roster.assigned("harmonizer", "primary").id
     for rec in unique:
-        outcome = harmonize_record(rec, client, prompts, harmonizer_model)
+        try:
+            outcome = harmonize_record(rec, client, prompts, harmonizer_model)
+        except Exception as e:
+            # A transient LLM error in harmonize drops one record, not the run.
+            log.warning("harmonize errored for %s: %s", rec.provenance.record_id, e)
+            reject(rec, "error")
+            continue
         if outcome.dropped:
             stats.drop("span_violation")
             rejected.append(outcome.record)

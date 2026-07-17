@@ -1,8 +1,14 @@
 """Verifier for files.save_note: outcome gate on the FINAL file state.
 
-Passes iff the last write to the requested path succeeded and the final assistant
-turn confirms it. Path taken is irrelevant: a failed write followed by a successful
-retry passes (recovered-failure trajectories are prime data).
+Passes iff the file the user asked for — the task's `destination` param — ends in
+a successful write with non-empty content, and the final assistant turn confirms
+it. Path taken is irrelevant: a failed write followed by a successful retry passes
+(recovered-failure trajectories are prime data).
+
+Scope: this gates that SOMETHING substantive reached the RIGHT path. Whether the
+content is genuinely a haiku / a five-item list / etc. is a semantic judgement and
+belongs to the judge stage, not a pure verifier — so we check the destination and
+non-emptiness here, not correctness.
 """
 
 import json
@@ -14,29 +20,44 @@ VERIFIER_ID = "files/save_note"
 
 
 def verify(rec: ConversationRecord) -> VerifierResult:
-    # final state per path = last tool result for the last write_file call to it
+    params = rec.provenance.source.detail.get("params", {})
+    destination = params.get("destination")
+
+    # Final state per path = last write_file result + the content it carried.
     final_write_ok: dict[str, bool] = {}
-    calls: dict[str, str] = {}  # call id -> path
+    final_write_content: dict[str, str] = {}
+    calls: dict[str, tuple[str, str]] = {}  # call id -> (path, content)
     for m in rec.messages:
         if m.role == "assistant":
             for tc in m.tool_calls:
                 if tc.name == "write_file" and "path" in tc.arguments:
-                    calls[tc.id] = str(tc.arguments["path"])
+                    calls[tc.id] = (
+                        str(tc.arguments["path"]),
+                        str(tc.arguments.get("content", "")),
+                    )
         elif m.role == "tool" and m.tool_call_id in calls:
+            path, content = calls[m.tool_call_id]
             try:
                 result = json.loads(m.content)
             except json.JSONDecodeError:
                 result = {}
-            final_write_ok[calls[m.tool_call_id]] = bool(result.get("ok")) and not result.get(
-                "error"
-            )
+            final_write_ok[path] = bool(result.get("ok")) and not result.get("error")
+            final_write_content[path] = content
 
-    target_paths = [p for p in final_write_ok if not p.endswith("/.keep")]
-    wrote_target = bool(target_paths) and all(final_write_ok[p] for p in target_paths)
+    # Fail closed if provenance doesn't name the requested destination: without it
+    # we cannot assert the outcome, and accepting any successful write is exactly
+    # the hole this verifier is meant to close.
+    wrote_target = bool(destination) and final_write_ok.get(destination, False)
+    content_nonempty = bool(destination) and bool(final_write_content.get(destination, "").strip())
+
     last = rec.messages[-1]
     confirmed = last.role == "assistant" and not last.tool_calls and bool(last.content.strip())
 
-    checks = {"final_write_succeeded": wrote_target, "confirmed_to_user": confirmed}
+    checks = {
+        "wrote_requested_path": wrote_target,
+        "content_nonempty": content_nonempty,
+        "confirmed_to_user": confirmed,
+    }
     return VerifierResult(
         passed=all(checks.values()),
         verifier_id=VERIFIER_ID,

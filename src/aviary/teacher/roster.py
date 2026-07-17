@@ -11,7 +11,7 @@ from pathlib import Path
 import yaml
 from pydantic import BaseModel, field_validator
 
-from aviary.schema.manifest import UNDATED_HINTS
+from aviary.schema.manifest import assert_dated_snapshot
 
 
 class TeacherRoute(BaseModel):
@@ -27,9 +27,7 @@ class TeacherRoute(BaseModel):
     @field_validator("id", "wire_model")
     @classmethod
     def _dated(cls, v: str) -> str:
-        if any(h in v.lower() for h in UNDATED_HINTS):
-            raise ValueError(f"model id {v!r} is not a pinned dated snapshot")
-        return v
+        return assert_dated_snapshot(v)
 
 
 class Roster(BaseModel):

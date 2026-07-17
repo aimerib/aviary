@@ -91,3 +91,15 @@ def expand(template: TaskTemplate) -> list[TaskInstance]:
 
 def expand_all(templates: list[TaskTemplate]) -> list[TaskInstance]:
     return [inst for t in templates for inst in expand(t)]
+
+
+def rollout_order(instances: list[TaskInstance]) -> list[TaskInstance]:
+    """The prompt_index contract, in ONE place.
+
+    One entry per rollout line: each instance repeats n_rollouts times (rejection
+    sampling). emit_batch_inputs writes prompts in exactly this order, and ingest
+    maps a trajectory's prompt_index i back to rollout_order(instances)[i]. Both
+    sides MUST consume this primitive — if the two expansions ever drift, every
+    lane-A record is silently mislabeled (wrong instance -> wrong family/holdout,
+    which can leak holdout across the split)."""
+    return [inst for inst in instances for _ in range(inst.n_rollouts)]

@@ -41,7 +41,9 @@ def call_json[M: BaseModel](
             request = request.model_copy(
                 update={
                     "messages": [
-                        *req.messages,
+                        # Accumulate on the running request so a 2nd repair still
+                        # sees the 1st failed attempt (not just the most recent one).
+                        *request.messages,
                         {"role": "assistant", "content": resp.text},
                         {
                             "role": "user",

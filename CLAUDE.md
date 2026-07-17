@@ -30,7 +30,11 @@ Three lanes, one spine. Every lane's adapter normalizes into ONE record schema
 Volumes are a funnel by design; rejection is a feature. Verify-rejected rollouts
 feed difficulty tuning. **Judge-rejected, verifier-passed siblings additionally
 feed the DPO artifact** (chosen = kept sibling, rejected = judge-failed sibling,
-margin-gated) — see `src/aviary/render/dpo.py`.
+margin-gated) — see `src/aviary/render/dpo.py`. Scope: DPO pairs are **lane A
+only** (only lane A emits multiple rollout siblings of one instance sharing a
+byte-identical prompt — `sibling_group`; lanes B/C leave it unset) and are
+emitted **with-thoughts only** (`ThoughtMode.WITH`), unlike the SFT path which
+emits both thought modes.
 
 ## Vocabulary
 

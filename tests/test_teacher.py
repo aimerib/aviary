@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from aviary.teacher.cache import ResponseCache, request_key
-from aviary.teacher.client import ChatRequest, ChatResponse, Usage
+from aviary.teacher.client import ChatRequest, ChatResponse, TeacherError, Usage
 from aviary.teacher.cost import CostLedger
 from aviary.teacher.fake import FakeTeacherClient
 from aviary.teacher.prompts import PromptSet, PromptSetError
@@ -46,21 +46,37 @@ def req(text: str = "hi") -> ChatRequest:
     )
 
 
+def _roster_with_id(model_id: str) -> Roster:
+    return Roster(
+        teachers=[
+            {
+                "id": model_id,
+                "provider": "deepseek",
+                "route": "direct",
+                "base_url": "x",
+                "wire_model": model_id,
+                "api_key_env": "K",
+            }
+        ],
+        assignments={},
+    )
+
+
 def test_undated_model_id_rejected():
     with pytest.raises(ValueError, match="dated snapshot"):
-        Roster(
-            teachers=[
-                {
-                    "id": "deepseek-latest",
-                    "provider": "deepseek",
-                    "route": "direct",
-                    "base_url": "x",
-                    "wire_model": "deepseek-latest",
-                    "api_key_env": "K",
-                }
-            ],
-            assignments={},
-        )
+        _roster_with_id("deepseek-latest")
+
+
+def test_truncated_and_bare_model_ids_rejected():
+    # The old blacklist accepted these; the positive dated-suffix check must not.
+    for bad in ("deepseek-v4-flash-2026061", "deepseek-v4-flash", "deepseek-v4-flash-19991231x"):
+        with pytest.raises(ValueError, match="dated snapshot"):
+            _roster_with_id(bad)
+
+
+def test_dated_snapshot_ids_accepted():
+    for good in ("deepseek-v4-flash-20260610", "glm-5-20260430"):
+        assert _roster_with_id(good).teachers[0].id == good
 
 
 def test_cross_vendor_judge():
@@ -82,13 +98,28 @@ def test_cache_roundtrip(tmp_path: Path):
     assert request_key(r) != request_key(req("other"))
 
 
+def test_cache_corrupt_file_is_miss(tmp_path: Path):
+    # A truncated/corrupt cache file (crash mid-write) must degrade to a miss, not
+    # crash the next run on JSONDecodeError.
+    cache = ResponseCache(tmp_path)
+    r = req()
+    path = cache._path(request_key(r))
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text('{"response": {"text": "half')  # truncated JSON
+    assert cache.get(r) is None
+    # And it can be overwritten cleanly afterwards.
+    cache.put(r, ChatResponse(text="ok", model=r.model))
+    hit = cache.get(r)
+    assert hit is not None and hit.text == "ok"
+
+
 def test_fake_client_replays_fixture(tmp_path: Path):
     cache = ResponseCache(tmp_path)
     r = req()
     cache.put(r, ChatResponse(text="recorded", model=r.model))
     fake = FakeTeacherClient(fixtures_dir=tmp_path)
     assert fake.complete(r).text == "recorded"
-    with pytest.raises(AssertionError):
+    with pytest.raises(TeacherError):
         fake.complete(req("unrecorded"))
 
 

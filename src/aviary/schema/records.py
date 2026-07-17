@@ -79,7 +79,7 @@ class JudgeScores(BaseModel):
 
 
 DropReason = Literal[
-    "verify", "judge", "scrub", "dedupe", "span_violation", "structural", "degenerate"
+    "verify", "judge", "scrub", "dedupe", "span_violation", "structural", "degenerate", "error"
 ]
 
 

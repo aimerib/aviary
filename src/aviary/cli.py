@@ -57,25 +57,16 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _install() -> int:
-    import subprocess
-
-    from aviary.lanes.a_agentic.hermes_config import verify_config_keys
+    from aviary.lanes.a_agentic.hermes_config import verify_config_keys, verify_hermes_pin
     from aviary.paths import REPO_ROOT, hermes_dir
     from aviary.teacher.roster import Roster
 
     roster = Roster.load(REPO_ROOT / "datagen" / "configs" / "teachers.yaml")
     hd = hermes_dir()
-    head = subprocess.run(
-        ["git", "-C", str(hd), "describe", "--tags", "--always"],
-        capture_output=True,
-        text=True,
-        check=True,
-    ).stdout.strip()
-    if roster.hermes_pin and head != roster.hermes_pin:
-        print(
-            f"hermes checkout at {head!r} but teachers.yaml pins {roster.hermes_pin!r}",
-            file=sys.stderr,
-        )
+    try:
+        head = verify_hermes_pin(hd, roster.hermes_pin)
+    except ValueError as e:
+        print(str(e), file=sys.stderr)
         return 1
     verify_config_keys(hd)
 

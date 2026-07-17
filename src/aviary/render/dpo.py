@@ -1,5 +1,9 @@
 """DPO pair emission from rollout siblings. Chosen = judge-passed, rejected = judge-failed
-(both verifier-passed), margin-gated. Text is produced only by the serializer."""
+(both verifier-passed), margin-gated. Text is produced only by the serializer.
+
+Scope (see CLAUDE.md): pairs form only within a `sibling_group`, which only lane A
+sets — so DPO is effectively lane-A-only (lanes B/C have no rollout siblings of one
+instance). Callers render with-thoughts pairs only (the default ThoughtMode.WITH)."""
 
 from __future__ import annotations
 

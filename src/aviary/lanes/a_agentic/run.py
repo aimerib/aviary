@@ -90,6 +90,7 @@ def run_hermes_batch(
     num_workers: int,
     batch_size: int,
     run_name: str,
+    timeout_s: int | None = None,
 ) -> Path:
     """Emit inputs+config, invoke batch_runner, return the trajectories.jsonl path."""
     verify_config_keys(hermes_dir)
@@ -107,20 +108,27 @@ def run_hermes_batch(
         out_path=config,
     )
     log.info("hermes batch: %d rollout lines -> %s", n, out_dir / run_name)
-    subprocess.run(
-        [
-            "python",
-            "batch_runner.py",
-            "--config",
-            str(config),
-            "--run_name",
-            run_name,
-            "--dataset_file",
-            str(inputs),
-        ],
-        cwd=hermes_dir,
-        check=True,
-    )
+    try:
+        subprocess.run(
+            [
+                "python",
+                "batch_runner.py",
+                "--config",
+                str(config),
+                "--run_name",
+                run_name,
+                "--dataset_file",
+                str(inputs),
+            ],
+            cwd=hermes_dir,
+            check=True,
+            timeout=timeout_s,
+        )
+    except subprocess.TimeoutExpired as e:
+        # A hung/looping rollout must not block the whole burn indefinitely.
+        raise BurnGuardError(
+            f"hermes batch exceeded {timeout_s}s wall-clock and was killed"
+        ) from e
     return out_dir / run_name / "trajectories.jsonl"
 
 

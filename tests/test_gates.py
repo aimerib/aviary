@@ -83,6 +83,9 @@ def test_scrub_patterns():
     assert any(h.startswith("drop:ai_selfid") for h in scan_record(bad, patterns))
     leaky = banter("r2", "Well, DeepSeek would say otherwise.")
     assert any("teacher_deepseek" in h for h in scan_record(leaky, patterns))
+    for glm in ("glm-4", "glm-4.6", "glm45", "GLM-5.2"):
+        rec = banter(f"r2-{glm}", f"As {glm}, I would say otherwise.")
+        assert any("teacher_glm" in h for h in scan_record(rec, patterns)), glm
     email = banter("r3", "Just email bob@example.com about it.")
     assert any("pii_email" in h for h in scan_record(email, patterns))
     clean = banter("r4", "Your day sounds like a spreadsheet crime scene.")
@@ -236,3 +239,43 @@ def test_gate_pipeline_end_to_end(tmp_path):
     rejected = list(read_jsonl(store.gated_rejected(), ConversationRecord))
     reasons = {r.provenance.record_id: r.gate_state.drop_reason for r in rejected}
     assert reasons == {"g2": "dedupe", "g3": "scrub", "g4": "verify"}
+
+
+def test_run_gates_isolates_stage_errors(tmp_path):
+    # A verifier that blows up on one record must drop only that record; the run
+    # completes and writes outputs (paid pipeline: no all-or-nothing aborts).
+    from aviary.io.jsonl import write_jsonl
+
+    store = RunStore("errrun", root=tmp_path)
+    good = banter("ok", "Your calendar is a crime and I have receipts.")
+    boom = banter("boom", "Your inbox is also a crime, differently.")
+    write_jsonl(store.raw("c"), [good, boom])
+
+    lanec = sorted((REPO / "verifiers" / "lanec").glob("*.py"))
+
+    def resolver(rec):
+        if rec.provenance.record_id == "boom":
+            raise RuntimeError("verifier resolution blew up")
+        return lanec
+
+    patterns = load_patterns(
+        REPO / "gates" / "scrub" / "denylist.yaml", REPO / "gates" / "scrub" / "pii_patterns.yaml"
+    )
+    rubrics = {"c": Rubric.load(REPO / "gates" / "judge" / "quality.rubric.yaml")}
+    stats = run_gates(
+        store,
+        resolver,
+        rubrics,
+        patterns,
+        ROSTER,
+        FakeTeacherClient(script=_good_judge),
+        make_prompts(),
+    )
+    assert stats.total == 2
+    reasons = {
+        r.provenance.record_id: r.gate_state.drop_reason
+        for r in read_jsonl(store.gated_rejected(), ConversationRecord)
+    }
+    assert reasons["boom"] == "error"
+    kept_ids = {r.provenance.record_id for r in read_jsonl(store.gated_kept(), ConversationRecord)}
+    assert "ok" in kept_ids

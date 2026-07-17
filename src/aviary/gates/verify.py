@@ -7,6 +7,7 @@ path. Every verifier ships fixtures: clean_pass, clean_fail, recovered_pass.
 
 from __future__ import annotations
 
+import functools
 import importlib.util
 from dataclasses import dataclass
 from pathlib import Path
@@ -26,8 +27,13 @@ def verifier_id(path: Path, repo_root: Path) -> str:
     return str(path.relative_to(repo_root)).removeprefix("verifiers/").removesuffix(".py")
 
 
+@functools.cache
 def load_verifier(path: Path):
-    """Load a verifier module by file path; it must define verify(rec) -> VerifierResult."""
+    """Load a verifier module by file path; it must define verify(rec) -> VerifierResult.
+
+    Memoized on path: verifier files are byte-stable within a run and pure, so a
+    module is exec'd once instead of per (record x verifier) — a big win at burn
+    scale. Call load_verifier.cache_clear() if a verifier file changes in-process."""
     if not path.exists():
         raise VerifierLoadError(f"verifier not found: {path}")
     spec = importlib.util.spec_from_file_location(f"aviary_verifier_{path.stem}", path)

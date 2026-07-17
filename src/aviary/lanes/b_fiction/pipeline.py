@@ -6,12 +6,16 @@ cache makes reruns cheap, so the pipeline is resumable and idempotent.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 from dataclasses import dataclass
 from pathlib import Path
 
 import yaml
+from pydantic import BaseModel
 
+from aviary.hashing import canonical_json
 from aviary.io.jsonl import read_jsonl, write_jsonl
 from aviary.io.store import RunStore
 from aviary.lanes.b_fiction.assemble import assemble_record
@@ -23,6 +27,32 @@ from aviary.teacher.client import TeacherClient
 from aviary.teacher.prompts import PromptSet
 
 log = logging.getLogger(__name__)
+
+def _fingerprint(payload: dict) -> str:
+    return hashlib.sha256(canonical_json(payload).encode()).hexdigest()[:16]
+
+
+def _read_checkpoint[M: BaseModel](path: Path, fingerprint: str, model: type[M]) -> list[M] | None:
+    """Reuse a stage checkpoint ONLY when its recorded fingerprint matches the
+    current inputs (prompt hash, model, source text, config). A missing sidecar or
+    a mismatch returns None so the stage re-extracts — never trust stale extracted
+    data under a new run/config (the "idempotent" claim holds only for equal inputs)."""
+    meta = path.with_suffix(".meta.json")
+    if not path.exists() or not meta.exists():
+        return None
+    try:
+        recorded = json.loads(meta.read_text()).get("fingerprint")
+    except json.JSONDecodeError:
+        return None
+    if recorded != fingerprint:
+        log.warning("lane B checkpoint %s stale (inputs changed) — re-extracting", path.name)
+        return None
+    return list(read_jsonl(path, model))
+
+
+def _write_checkpoint(path: Path, fingerprint: str, records: list) -> None:
+    write_jsonl(path, records)
+    path.with_suffix(".meta.json").write_text(json.dumps({"fingerprint": fingerprint}))
 
 
 @dataclass
@@ -57,14 +87,25 @@ def run_lane_b(
     client: TeacherClient,
     prompts: PromptSet,
     models: dict[str, str],  # {"profiles": id, "scenes": id, "dialogue": id}
+    max_workers: int = 1,
 ) -> int:
-    """Returns number of records written to raw/lane_b.jsonl."""
+    """Returns number of records written to raw/lane_b.jsonl. Books are independent
+    (separate per-work checkpoints), so they run concurrently when max_workers > 1;
+    default 1 preserves serial behavior."""
+    from aviary.teacher.pool import TeacherPool
+
+    pool = TeacherPool(client, max_workers=max_workers)
+    results = pool.run(
+        [lambda b=book: _run_book(b, cfg, store, client, prompts, models) for book in cfg.books]
+    )
     records = []
-    for book in cfg.books:
-        try:
-            records.extend(_run_book(book, cfg, store, client, prompts, models))
-        except ExtractionError as e:
-            log.warning("book %s failed extraction: %s", book.work_id, e)
+    for book, res in zip(cfg.books, results, strict=True):
+        if isinstance(res, ExtractionError):
+            log.warning("book %s failed extraction: %s", book.work_id, res)
+        elif isinstance(res, Exception):
+            raise res  # non-extraction failures are bugs, not skippable rejects
+        else:
+            records.extend(res)
     n = write_jsonl(store.raw("b"), records)
     log.info("lane B: %d records from %d books", n, len(cfg.books))
     return n
@@ -79,22 +120,48 @@ def _run_book(
     models: dict[str, str],
 ) -> list:
     text = load_book_text(book.path)
+    text_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
     chunks = chunk_text(text, target_chars=cfg.chunk_target_chars)
     if book.max_chunks:
         chunks = chunks[: book.max_chunks]
 
     profiles_path = store.stage("b", f"profiles_{book.work_id}")
-    if profiles_path.exists():
-        profiles = next(read_jsonl(profiles_path, ProfileSet))
+    profiles_fp = _fingerprint(
+        {
+            "stage": "profiles",
+            "prompt_set_hash": prompts.hash,
+            "model": models["profiles"],
+            "text_hash": text_hash,
+            "profile_sample_chars": cfg.profile_sample_chars,
+        }
+    )
+    cached_profiles = _read_checkpoint(profiles_path, profiles_fp, ProfileSet)
+    if cached_profiles:
+        profiles = cached_profiles[0]
     else:
         profiles = extract_profiles(
             book.work_id, text[: cfg.profile_sample_chars], client, prompts, models["profiles"]
         )
-        write_jsonl(profiles_path, [profiles])
+        _write_checkpoint(profiles_path, profiles_fp, [profiles])
 
     scenes_path = store.stage("b", f"scenes_{book.work_id}")
-    if scenes_path.exists():
-        extracted = list(read_jsonl(scenes_path, ExtractedScene))
+    scenes_fp = _fingerprint(
+        {
+            "stage": "scenes",
+            "prompt_set_hash": prompts.hash,
+            "scenes_model": models["scenes"],
+            "dialogue_model": models["dialogue"],
+            "text_hash": text_hash,
+            "profiles_fp": profiles_fp,
+            "chunk_target_chars": cfg.chunk_target_chars,
+            "max_chunks": book.max_chunks,
+            "min_turns": cfg.min_turns,
+            "min_thought_coverage": cfg.min_thought_coverage,
+        }
+    )
+    cached_scenes = _read_checkpoint(scenes_path, scenes_fp, ExtractedScene)
+    if cached_scenes is not None:
+        extracted = cached_scenes
     else:
         extracted = []
         for chunk in chunks:
@@ -115,7 +182,7 @@ def _run_book(
                     continue
                 if result is not None:
                     extracted.append(result)
-        write_jsonl(scenes_path, extracted)
+        _write_checkpoint(scenes_path, scenes_fp, extracted)
     log.info("book %s: %d chunks -> %d scenes kept", book.work_id, len(chunks), len(extracted))
 
     return [

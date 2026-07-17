@@ -9,7 +9,7 @@
   pattern: '\bkimi\b|\bmoonshot\s*ai\b'
   action: drop
 - label: teacher_glm
-  pattern: '\bglm-?\d\b|\bzhipu\b|\bz\.ai\b'
+  pattern: '\bglm[-\s]?\d+(?:\.\d+)?\b|\bzhipu\b|\bz\.ai\b'
   action: drop
 - label: teacher_openai
   pattern: '\bchatgpt\b|\bopenai\b|\bgpt-?[45]\b'
