@@ -98,6 +98,51 @@ def test_exhausts_attempts_on_persistent_503(monkeypatch):
     assert calls["n"] == 3
 
 
+_EXTRA_ROSTER = Roster(
+    teachers=[
+        {
+            "id": "deepseek-v4-flash-20260610",
+            "provider": "deepseek",
+            "route": "direct",
+            "base_url": "https://api.test/v1",
+            "wire_model": "deepseek-v4-flash",
+            "api_key_env": "DEEPSEEK_API_KEY",
+            "json_extra_body": {"thinking": {"type": "disabled"}},
+        }
+    ],
+    assignments={},
+)
+
+
+def _capture_client(monkeypatch, captured):
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "k")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        import json as _json
+
+        captured.append(_json.loads(request.content))
+        return _ok_response()
+
+    client = HttpTeacherClient(_EXTRA_ROSTER)
+    client._http = httpx.Client(transport=httpx.MockTransport(handler))
+    return client
+
+
+def test_json_extra_body_merged_only_on_json_calls(monkeypatch):
+    # Extraction (response_json) gets the reasoning-off control; a plain generative
+    # call must NOT — roleplay/generation keeps its reasoning.
+    captured: list[dict] = []
+    client = _capture_client(monkeypatch, captured)
+
+    client.complete(_req().model_copy(update={"response_json": True}))
+    assert captured[-1].get("thinking") == {"type": "disabled"}
+    assert captured[-1]["response_format"] == {"type": "json_object"}
+
+    client.complete(_req())  # response_json defaults False
+    assert "thinking" not in captured[-1]
+    assert "response_format" not in captured[-1]
+
+
 def test_transport_error_is_retried(monkeypatch):
     _client.sleeps = []  # type: ignore[attr-defined]
     calls = {"n": 0}

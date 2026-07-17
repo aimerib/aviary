@@ -1,8 +1,14 @@
-# Teacher roster. Provenance rule: every id is a pinned DATED snapshot, never `latest`.
+# Teacher roster.
 #
-# !! VERIFY BEFORE FIRST PAID RUN: the ids/wire_models below are the intended roster
-# shape with placeholder snapshot dates — confirm each against the provider's current
-# dated snapshot list and update pricing.yaml to match. `aviary` will refuse undated ids.
+# Provenance model (decided 2026-07-17): DeepSeek/GLM/Kimi ship ROLLING model names
+# with no dated snapshots, so `id` and `wire_model` are decoupled:
+#   * `id`         — an aviary provenance pin `<name>-YYYYMMDD`, date = when we
+#                    verified behavior against the live provider. Dated-validated;
+#                    keyed by pricing.yaml, recorded in the manifest.
+#   * `wire_model` — the provider's real (rolling) name, sent on the wire as-is.
+# Rolling names CAN drift under a fixed id; the response cache pins behavior within a
+# run, and re-verifying bumps the id date. Verified against live provider docs
+# 2026-07-17 (prices in pricing.yaml).
 #
 # No Claude-class model anywhere (generation OR judging) — user decision 2026-07-16
 # (Anthropic ToS risk). Judge policy is cross-vendor: a record is judged by a
@@ -11,55 +17,57 @@
 hermes_pin: v0.18.2
 
 teachers:
-  - id: deepseek-v4-flash-20260610
+  - id: deepseek-v4-flash-20260717   # pin date; wire name is rolling
     provider: deepseek
     route: direct
     base_url: https://api.deepseek.com/v1
-    wire_model: deepseek-v4-flash-20260610
+    wire_model: deepseek-v4-flash
     api_key_env: DEEPSEEK_API_KEY
     max_concurrency: 8
+    json_extra_body: {thinking: {type: disabled}}   # extraction needs direct JSON, not reasoning
 
-  - id: deepseek-v4-pro-20260610
+  - id: deepseek-v4-pro-20260717
     provider: deepseek
     route: direct
     base_url: https://api.deepseek.com/v1
-    wire_model: deepseek-v4-pro-20260610
+    wire_model: deepseek-v4-pro
     api_key_env: DEEPSEEK_API_KEY
     max_concurrency: 4
+    json_extra_body: {thinking: {type: disabled}}   # verified 2026-07-17: thinking-on returns empty content on long scenes
 
-  - id: glm-5-20260430
+  - id: glm-5.2-20260717
     provider: zhipu
     route: direct
-    base_url: https://api.z.ai/api/paas/v4
-    wire_model: glm-5-20260430
+    base_url: https://api.z.ai/api/coding/paas/v4   # coding-plan endpoint (flat $30/mo sub)
+    wire_model: glm-5.2
     api_key_env: GLM_API_KEY
     api_key_env_fallback: ZAI_API_KEY
     max_concurrency: 6
 
-  - id: kimi-k3-20260522
+  - id: kimi-k3-20260717
     provider: moonshot
     route: openrouter
     base_url: https://openrouter.ai/api/v1
-    wire_model: moonshotai/kimi-k3-20260522
+    wire_model: moonshotai/kimi-k3
     api_key_env: OPENROUTER_API_KEY
     max_concurrency: 6
 
 assignments:
   lane_a:
-    easy_mid: deepseek-v4-flash-20260610
-    hard: deepseek-v4-pro-20260610
+    easy_mid: deepseek-v4-flash-20260717
+    hard: deepseek-v4-pro-20260717
   lane_b:
-    profiles: deepseek-v4-flash-20260610
-    scenes: deepseek-v4-flash-20260610
-    dialogue: kimi-k3-20260522        # long-form prose: use a different idiolect than lane A
+    profiles: deepseek-v4-flash-20260717
+    scenes: deepseek-v4-flash-20260717
+    dialogue: deepseek-v4-pro-20260717  # A/B outcome 2026-07-17: kimi too costly/throttled, glm dropped long scenes; pro = reliable + cheap (idiolect overlaps lane A, accepted)
   lane_c:
-    user_sim: glm-5-20260430          # user side ≠ character side, by design
-    character: deepseek-v4-pro-20260610
+    user_sim: glm-5.2-20260717        # user side ≠ character side, by design
+    character: deepseek-v4-pro-20260717
   judge:
-    primary: glm-5-20260430
-    secondary: kimi-k3-20260522
-    tertiary: deepseek-v4-flash-20260610
+    primary: glm-5.2-20260717
+    secondary: kimi-k3-20260717
+    tertiary: deepseek-v4-flash-20260717
   harmonizer:
-    primary: deepseek-v4-flash-20260610
+    primary: deepseek-v4-flash-20260717
 
 judge_policy: cross_vendor

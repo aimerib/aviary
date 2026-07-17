@@ -5,7 +5,17 @@
 # holdout: true holds out the ENTIRE work at family level (split rule).
 # max_chunks caps extraction per book for pilots; remove for burns.
 
-books: []
+books:
+  # First lane-B smoke (2026-07-17). Prose fiction, ~40% dialogue with first-person
+  # interiority — dialogue+thoughts ramp in from chunk 1 (chunk 0 is the prologue),
+  # so max_chunks:3 reaches real scenes while keeping spend tiny.
+  - work_id: heavens_vault_loop
+    title: "Heaven's Vault - Book 1 - The Loop"
+    author: Jon Ingold
+    path: "/Volumes/AI/personal/library/Jon Ingold/Heaven's Vault - Book 1 - The Loop (1006)/Heaven's Vault - Book 1 - The Loop - Jon Ingold.epub"
+    holdout: false
+    max_chunks: 3
+
 # - work_id: example_novel
 #   title: Example Novel
 #   author: A. Writer

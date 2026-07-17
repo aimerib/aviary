@@ -72,7 +72,12 @@ def judge_record(
         system=prompts["judge_prompt"].format(axes=axes_desc),
         messages=[{"role": "user", "content": judge_transcript(rec)}],
         temperature=0.0,
-        max_tokens=1024,
+        # Judges are reasoning models (e.g. GLM) kept in thinking mode ON PURPOSE —
+        # rubric scoring benefits from deliberation. The verdict JSON is small, but
+        # reasoning tokens come out of this budget first, so on long transcripts 1024
+        # was exhausted by reasoning and returned empty content (record dropped as a
+        # judge error). 8192 gives reasoning + verdict room. (2026-07-17)
+        max_tokens=8192,
     )
     reply = call_json(client, req, _JudgeReply, lane=rec.provenance.lane)
 

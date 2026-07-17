@@ -79,6 +79,26 @@ def test_dated_snapshot_ids_accepted():
         assert _roster_with_id(good).teachers[0].id == good
 
 
+def test_wire_model_is_not_dated_validated():
+    # id/wire_model are decoupled: `id` is the dated provenance pin, `wire_model`
+    # carries the provider's real (rolling, undated) name. A dated `id` with a bare
+    # rolling wire name must validate.
+    roster = Roster(
+        teachers=[
+            {
+                "id": "deepseek-v4-flash-20260717",
+                "provider": "deepseek",
+                "route": "direct",
+                "base_url": "x",
+                "wire_model": "deepseek-v4-flash",  # undated on purpose
+                "api_key_env": "K",
+            }
+        ],
+        assignments={},
+    )
+    assert roster.teachers[0].wire_model == "deepseek-v4-flash"
+
+
 def test_cross_vendor_judge():
     judge = ROSTER.judge_for("deepseek-v4-flash-20260610")
     assert judge.provider == "zhipu"

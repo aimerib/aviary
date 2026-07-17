@@ -1,7 +1,9 @@
 # ~200-rollout calibration run. Lane A joins `lanes` once AVIARY_HERMES_DIR is set
 # and the task bank has templates.
 kind: pilot
-lanes: [b, c]
+# Narrowed to lane B for the first spend-capped fiction smoke (2026-07-17).
+# Restore [b, c] (and add `a` once AVIARY_HERMES_DIR is set) after the smoke.
+lanes: [b]
 eval_param_fraction: 0.15
 split_seed: 20260716
 dpo_min_margin: 1.0

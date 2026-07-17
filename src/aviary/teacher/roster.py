@@ -1,7 +1,10 @@
 """Teacher roster: datagen/configs/teachers.yaml -> routes and role assignments.
 
-Every model id is a pinned dated snapshot (provenance rule). The judge policy is
-cross-vendor: a record is judged by a different vendor than generated it.
+Every teacher `id` is a dated provenance pin (…-YYYYMMDD) we assign at verify time
+— the manifest's provenance token. `wire_model` carries the provider's real name,
+which for DeepSeek/GLM/Kimi is a rolling (undated) alias, so only `id` is
+dated-validated. The judge policy is cross-vendor: a record is judged by a
+different vendor than generated it.
 """
 
 from __future__ import annotations
@@ -9,22 +12,32 @@ from __future__ import annotations
 from pathlib import Path
 
 import yaml
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from aviary.schema.manifest import assert_dated_snapshot
 
 
 class TeacherRoute(BaseModel):
-    id: str  # dated snapshot id used everywhere in aviary
+    id: str  # aviary provenance token: a dated pin (…-YYYYMMDD) we assign
     provider: str  # deepseek | zhipu | moonshot
     route: str  # direct | openrouter
     base_url: str
-    wire_model: str  # model name sent on the wire (may differ from id)
+    # Name sent on the wire. DeepSeek/GLM/Kimi ship ROLLING names (deepseek-v4-flash,
+    # glm-5.2, moonshotai/kimi-k3) with no dated snapshots, so this is intentionally
+    # NOT dated-validated — provenance is carried by `id`, which is (see docstring).
+    wire_model: str
     api_key_env: str
     api_key_env_fallback: str | None = None
     max_concurrency: int = 4
+    # Extra request-body keys merged into the payload ONLY on JSON-extraction calls
+    # (response_json). Home for reasoning-model controls that must be OFF for
+    # structured output — e.g. DeepSeek {thinking: {type: disabled}}: in thinking
+    # mode the model spends its whole max_tokens budget on reasoning and returns
+    # empty content, so long-scene extraction silently fails. Left off generative /
+    # roleplay calls, which keep their reasoning.
+    json_extra_body: dict = Field(default_factory=dict)
 
-    @field_validator("id", "wire_model")
+    @field_validator("id")
     @classmethod
     def _dated(cls, v: str) -> str:
         return assert_dated_snapshot(v)

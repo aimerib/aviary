@@ -1,14 +1,27 @@
-# $/Mtok per dated snapshot — cost ledger source. FILL WITH REAL PRICES alongside
-# the teachers.yaml verification pass; zero means spend tracking silently undercounts.
-deepseek-v4-flash-20260610:
-  input_per_mtok: 0.0   # TODO verify
-  output_per_mtok: 0.0  # TODO verify
-deepseek-v4-pro-20260610:
-  input_per_mtok: 0.0   # TODO verify
-  output_per_mtok: 0.0  # TODO verify
-glm-5-20260430:
-  input_per_mtok: 0.0   # TODO verify
-  output_per_mtok: 0.0  # TODO verify
-kimi-k3-20260522:
-  input_per_mtok: 0.0   # TODO verify (OpenRouter pass-through price)
-  output_per_mtok: 0.0  # TODO verify
+# $/Mtok per teacher `id` (the dated provenance pin in teachers.yaml) — cost ledger
+# source. Verified against live provider docs 2026-07-17.
+#
+# The ledger has one flat input rate (no cache-hit field), so these use the
+# cache-MISS list price on input — a conservative (upper-bound) spend estimate.
+# DeepSeek cache hits are ~50x cheaper, so real input spend runs below the ledger;
+# that's the safe direction for a spend cap.
+
+deepseek-v4-flash-20260717:
+  input_per_mtok: 0.14     # cache-hit is $0.0028
+  output_per_mtok: 0.28
+
+deepseek-v4-pro-20260717:
+  input_per_mtok: 0.435    # cache-hit is $0.003625
+  output_per_mtok: 0.87
+
+# GLM is a flat $30/mo coding-plan subscription (usage-metered, hard-stops at quota),
+# NOT per-token billed — so $0/Mtok is CORRECT here, not an unfilled TODO. The
+# CostLedger "$0 understates spend" warning is expected for this teacher; real cost
+# is the fixed monthly sub, tracked outside the per-token ledger.
+glm-5.2-20260717:
+  input_per_mtok: 0.0
+  output_per_mtok: 0.0
+
+kimi-k3-20260717:
+  input_per_mtok: 3.0      # OpenRouter list; effective ~$0.67 after cache
+  output_per_mtok: 15.0

@@ -113,6 +113,9 @@ class HttpTeacherClient:
         }
         if req.response_json:
             payload["response_format"] = {"type": "json_object"}
+            # Reasoning-off (and any other structured-output) controls belong only on
+            # JSON calls — see TeacherRoute.json_extra_body.
+            payload.update(route.json_extra_body)
         r = self._http.post(
             f"{route.base_url.rstrip('/')}/chat/completions",
             json=payload,

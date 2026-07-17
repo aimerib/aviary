@@ -10,6 +10,7 @@ import datetime as _dt
 import logging
 import os
 import random
+import re
 from pathlib import Path
 
 import yaml
@@ -182,7 +183,11 @@ def cmd_generate(kind: str) -> str:
     cfg = RunConfig.load(configs_dir() / f"{kind}.yaml")
     roster = Roster.load(configs_dir() / "teachers.yaml")
     prompts = load_prompt_set()
-    run_id = f"{_dt.date.today().isoformat()}-{kind}"
+    # Optional label distinguishes same-day runs of the same kind — e.g. A/B teacher
+    # experiments (AVIARY_RUN_LABEL=glm -> 2026-07-17-pilot-glm). Sanitized to keep
+    # run_id a safe path/filename segment.
+    label = re.sub(r"[^A-Za-z0-9._-]", "-", os.environ.get("AVIARY_RUN_LABEL", "")).strip("-")
+    run_id = f"{_dt.date.today().isoformat()}-{kind}" + (f"-{label}" if label else "")
     store = RunStore(run_id)
     _assert_fresh_run(run_id, store)
     client, ledger = make_clients(roster, run_id)
