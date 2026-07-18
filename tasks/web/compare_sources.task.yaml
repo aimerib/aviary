@@ -1,0 +1,38 @@
+id: web.compare_sources
+family: web
+holdout: false
+
+description: >
+  Teach grounded multi-source research: search, actually read at least two
+  sources, and save a short comparison that cites the sources it really used.
+  The verifier kills hallucinated citations — a cited URL must have appeared in
+  a tool result during the session.
+
+params:
+  topic:
+    - whether standing desks actually improve focus
+    - if sourdough is really easier to digest than regular bread
+    - whether cold showers do anything for recovery
+    - if electric cars are actually cheaper to own than gas ones
+    - whether learning an instrument helps adult brains
+  destination:
+    - research/comparison.md
+    - notes/two-takes.md
+
+prompt: |
+  hey liv, i keep running into opposite claims about {topic}. can you look at a
+  couple of actual sources and save me a short comparison in {destination}? link
+  what you used so i can read more.
+
+tools:
+  - web_search
+  - web_fetch
+  - write_file
+
+n_rollouts: 4
+difficulty_target: [0.3, 0.8]
+verifier: verifiers/web/compare_sources.py
+notes: >
+  First web-family template. Difficulty comes from the grounding requirement:
+  the final file must cite >=2 distinct URLs that were actually fetched/returned
+  by tools this session — summarizing from priors with decorative links fails.

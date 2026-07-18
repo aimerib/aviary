@@ -2,7 +2,7 @@
 # One file = one template = one task family member.
 
 id: web.compare_sources        # <family>.<short_name>, unique repo-wide
-family: web                    # web | files | nightrunner | chains | social
+family: web                    # web | files | chains | social
 holdout: false                 # true => eval-only; renderer HARD-FAILS if
                                # this template ever appears in a train render
 
