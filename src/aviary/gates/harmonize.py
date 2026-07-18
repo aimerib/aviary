@@ -25,11 +25,11 @@ from aviary.teacher.client import ChatRequest, TeacherClient
 from aviary.teacher.prompts import PromptSet
 
 # lane -> which message roles are ELIGIBLE for paraphrase (lane b intentionally
-# absent). Eligibility is further gated on voice by _is_olivia_voiced.
+# absent). Eligibility is further gated on voice by is_olivia_voiced.
 DEFAULT_POLICY: dict[str, tuple[str, ...]] = {"a": ("assistant",), "c": ("assistant",)}
 
 
-def _is_olivia_voiced(rec: ConversationRecord) -> bool:
+def is_olivia_voiced(rec: ConversationRecord) -> bool:
     """Whether this record's assistant turns are Olivia's voice (harmonizable) rather
     than an RP character's (protected). Lane A is Olivia by construction; lane C is
     Olivia only when every assistant turn is spoken by OLIVIA_SPEAKER."""
@@ -74,7 +74,7 @@ def harmonize_record(
         return HarmonizeOutcome(record=rec)
     # Voice gate: never rewrite a non-Olivia voice (lane-C RP characters), even though
     # the lane is policy-eligible. Their voice is entropy, protected like lane B.
-    if not _is_olivia_voiced(rec):
+    if not is_olivia_voiced(rec):
         return HarmonizeOutcome(record=rec)
 
     new_messages = []

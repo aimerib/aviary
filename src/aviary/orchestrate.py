@@ -387,8 +387,9 @@ def cmd_gate(run_id: str) -> None:
     quality = Rubric.load(REPO_ROOT / "gates" / "judge" / "quality.rubric.yaml")
     rubrics = {
         "a": quality,
-        "c": quality,
+        "c": quality,  # Olivia simple-chats; character-RP records use c_character
         "b": Rubric.load(REPO_ROOT / "gates" / "judge" / "laneb.rubric.yaml"),
+        "c_character": Rubric.load(REPO_ROOT / "gates" / "judge" / "character_rp.rubric.yaml"),
     }
     patterns = load_patterns(
         REPO_ROOT / "gates" / "scrub" / "denylist.yaml",

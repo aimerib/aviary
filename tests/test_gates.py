@@ -190,6 +190,29 @@ def test_lane_b_records_skip_harmonize():
     assert client.requests == []
 
 
+def test_rubric_selection_is_voice_aware():
+    # Lane-C Olivia chats -> quality rubric; character-RP records -> character rubric.
+    # Judging a character on olivia_voice is meaningless, so voice must pick the rubric.
+    from aviary.gates.judge import Rubric
+    from aviary.gates.pipeline import _rubric_for
+
+    quality = Rubric(name="quality", axes={}, threshold=3.5)
+    character = Rubric(name="character_rp", axes={}, threshold=3.5)
+    rubrics = {"c": quality, "c_character": character}
+
+    olivia = banter("r1", "hello there")  # lane c, speaker Olivia
+    rp = olivia.model_copy(
+        update={
+            "messages": [
+                m.model_copy(update={"speaker": "Aliya"}) if m.role == "assistant" else m
+                for m in olivia.messages
+            ]
+        }
+    )
+    assert _rubric_for(olivia, rubrics).name == "quality"
+    assert _rubric_for(rp, rubrics).name == "character_rp"
+
+
 def test_lane_c_character_rp_is_protected_from_olivia_voice():
     # A lane-C record where the character side plays a fiction character (speaker !=
     # Olivia) must NOT be harmonized — paraphrasing it into Olivia's voice would leak

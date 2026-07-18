@@ -1,0 +1,35 @@
+# Lane C CHARACTER-RP rubric: for self-play records where the character side plays a
+# fiction character (NOT Olivia). Judges character fidelity, never olivia_voice —
+# Olivia must be transparent in roleplay. Selected per-record by voice (see
+# gates/pipeline: non-Olivia lane-C records route here instead of quality.rubric).
+name: character_rp
+threshold: 3.5
+axes:
+  character_fidelity:
+    weight: 2.0
+    min: 3.0
+    description: >
+      Every turn stays true to the character's established persona, voice, and
+      knowledge from the card — never drifts into a generic assistant, a different
+      character, or an "Olivia" register. 5 = unmistakably this character; 1 =
+      could be anyone / breaks character.
+  coherence:
+    weight: 1.0
+    description: >
+      Turns follow from the scene and prior turns; no contradictions, forgotten
+      facts, or non sequiturs.
+  immersion:
+    weight: 1.0
+    description: >
+      Stays in-scene: action + dialogue in a roleplay register, no fourth-wall
+      breaks or out-of-character leaks, and NEVER writes the user's turns or actions.
+  naturalness:
+    weight: 1.0
+    description: >
+      Reads like human-written prose: varied rhythm, no LLM-slop phrasing, no purple
+      filler; turn length fits the moment.
+  responsiveness:
+    weight: 1.0
+    description: >
+      Gives the other party something to engage with — reacts to what the user did
+      and advances the scene rather than stalling, deflecting, or passively echoing.

@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from aviary.gates import dedupe as dedupe_mod
-from aviary.gates.harmonize import harmonize_record
+from aviary.gates.harmonize import harmonize_record, is_olivia_voiced
 from aviary.gates.judge import Rubric, judge_record
 from aviary.gates.scrub import ScrubPattern, scan_record
 from aviary.gates.verify import run_verifier, verifier_id
@@ -73,6 +73,16 @@ def _generator_id(rec: ConversationRecord) -> str:
         if role in rec.provenance.teachers:
             return rec.provenance.teachers[role]
     return next(iter(rec.provenance.teachers.values()))
+
+
+def _rubric_for(rec: ConversationRecord, rubrics: dict[str, Rubric]) -> Rubric:
+    """Pick the rubric by VOICE, not just lane. Lane C is mixed: Olivia simple-chats
+    use the Olivia quality rubric, but character-RP records must be judged on
+    character fidelity — scoring them on olivia_voice is meaningless (Olivia is
+    transparent in roleplay). Same voice signal the harmonizer keys off."""
+    if rec.provenance.lane == "c" and not is_olivia_voiced(rec):
+        return rubrics["c_character"]
+    return rubrics[rec.provenance.lane]
 
 
 def run_gates(
@@ -136,7 +146,7 @@ def run_gates(
     judged: list[ConversationRecord] = []
     for rec in verified:
         try:
-            rubric = rubric_by_lane[rec.provenance.lane]
+            rubric = _rubric_for(rec, rubric_by_lane)
             judge_model = roster.judge_for(_generator_id(rec)).id
             scores = judge_record(rec, rubric, client, judge_model, prompts)
         except Exception as e:
