@@ -1,10 +1,17 @@
 """Span-protected Olivia-voice paraphrase.
 
+Voice gate (NOT merely a lane gate): the harmonizer may rewrite a turn only when it
+is Olivia's voice. Lane A assistant turns are Olivia by construction. Lane C is
+MIXED — inline seeds play Olivia (simple chats), but lane-B-seeded records play a
+fiction character ("You play X and only X"); paraphrasing those into Olivia's voice
+would leak the assistant persona into roleplay and destroy character fidelity. So
+lane-C records are harmonized only when the character IS Olivia (every assistant
+turn's speaker == OLIVIA_SPEAKER); RP character voices are protected exactly like
+lane B — they are the entropy, not Olivia's.
+
 Structural protection by construction: only Message.content / Message.thought of
-user/assistant turns are candidates, and per policy only assistant turns in lanes
-a/c are actually rewritten (lane B character voices are the entropy source — off).
-Sub-span protection via mask/restore; any restore failure drops the record
-(Gemma-rule scar tissue: never bend the boundary).
+user/assistant turns are candidates. Sub-span protection via mask/restore; any
+restore failure drops the record (Gemma-rule scar tissue: never bend the boundary).
 """
 
 from __future__ import annotations
@@ -12,12 +19,24 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from aviary.gates.spans import extract_protected_spans, mask_spans, restore_spans
+from aviary.lanes.c_selfplay.seeds import OLIVIA_SPEAKER
 from aviary.schema.records import ConversationRecord
 from aviary.teacher.client import ChatRequest, TeacherClient
 from aviary.teacher.prompts import PromptSet
 
-# lane -> which message roles get paraphrased; lane b intentionally absent
+# lane -> which message roles are ELIGIBLE for paraphrase (lane b intentionally
+# absent). Eligibility is further gated on voice by _is_olivia_voiced.
 DEFAULT_POLICY: dict[str, tuple[str, ...]] = {"a": ("assistant",), "c": ("assistant",)}
+
+
+def _is_olivia_voiced(rec: ConversationRecord) -> bool:
+    """Whether this record's assistant turns are Olivia's voice (harmonizable) rather
+    than an RP character's (protected). Lane A is Olivia by construction; lane C is
+    Olivia only when every assistant turn is spoken by OLIVIA_SPEAKER."""
+    if rec.provenance.lane == "a":
+        return True
+    speakers = {m.speaker for m in rec.messages if m.role == "assistant"}
+    return speakers == {OLIVIA_SPEAKER}
 
 
 @dataclass
@@ -52,6 +71,10 @@ def harmonize_record(
 ) -> HarmonizeOutcome:
     roles = (policy or DEFAULT_POLICY).get(rec.provenance.lane, ())
     if not roles:
+        return HarmonizeOutcome(record=rec)
+    # Voice gate: never rewrite a non-Olivia voice (lane-C RP characters), even though
+    # the lane is policy-eligible. Their voice is entropy, protected like lane B.
+    if not _is_olivia_voiced(rec):
         return HarmonizeOutcome(record=rec)
 
     new_messages = []

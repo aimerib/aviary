@@ -16,6 +16,11 @@ from aviary.io.jsonl import read_jsonl
 from aviary.io.store import RunStore
 from aviary.schema.records import ConversationRecord
 
+# The assistant persona. Present ONLY in tasks (lane A) and Olivia simple-chats
+# (inline lane-C seeds). RP records play a fiction character and must never carry
+# this speaker — the harmonizer keys off it to know whose voice it may rewrite.
+OLIVIA_SPEAKER = "Olivia"
+
 
 class Seed(BaseModel):
     seed_id: str
@@ -36,7 +41,7 @@ def load_inline_seeds(path: Path, olivia_system: str) -> list[Seed]:
                 seed_id=s["seed_id"],
                 family=s["family"],
                 holdout=s.get("holdout", False),
-                character_name="Olivia",
+                character_name=OLIVIA_SPEAKER,
                 card=f"{olivia_system}\n\n## Scenario\n{s['scenario']}",
                 scenario=s["scenario"],
                 user_goal=s.get("user_goal", ""),

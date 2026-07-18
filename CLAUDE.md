@@ -72,12 +72,16 @@ task you were asked to do, stop and say so instead of working around it.
 3. **Span-protection rule.** The harmonizer (`src/aviary/gates/harmonize.py`)
    may rewrite conversational spans only — structurally, that is
    `Message.content`/`Message.thought` on user/assistant turns, nothing else,
-   and per policy only Olivia-voiced lanes (a, c): lane B character voices are
-   the entropy source and are never paraphrased. Immutable: tool call
-   arguments, tool results, system prompts, tool schemas, and (via mask/restore
-   placeholders) code, paths, quoted strings, identifiers, numbers inside
-   prose. If restore isn't byte-perfect, drop the record — never bend the span
-   boundary. (Scar tissue: Gemma-era paraphraser leakage.)
+   and per policy only **Olivia-voiced turns**: lane A (Olivia by construction),
+   and lane C **only where the character IS Olivia** (all assistant turns spoken
+   by `OLIVIA_SPEAKER`). Olivia is RP-transparent: lane B character voices **and
+   lane-C character-RP voices** (lane-B-seeded, "You play X and only X") are the
+   entropy source and are never paraphrased — Olivia's persona must never leak
+   into a roleplay character. Immutable: tool call arguments, tool results,
+   system prompts, tool schemas, and (via mask/restore placeholders) code,
+   paths, quoted strings, identifiers, numbers inside prose. If restore isn't
+   byte-perfect, drop the record — never bend the span boundary. (Scar tissue:
+   Gemma-era paraphraser leakage.)
 
 4. **Outcome-gate rule.** Verifiers judge final state, never the path taken.
    Error-then-recovery trajectories are keepers — prime data. Never fix a red
@@ -191,4 +195,6 @@ that band, revise the template (difficulty), don't touch the verifier.
 - Never emit training-format text outside `src/aviary/render/serializer.py`.
 - Never let a train render proceed past a holdout violation.
 - Never use a Claude-class model as teacher or judge.
-- Never paraphrase lane B character dialogue into Olivia's voice.
+- Never paraphrase a non-Olivia voice into Olivia's — lane B character dialogue
+  or lane-C character-RP turns. Olivia is present only in tasks (lane A) and
+  Olivia simple-chats (inline lane-C seeds); she is transparent in roleplay.

@@ -1,0 +1,15 @@
+id: nsfw_rper
+description: >
+  A roleplayer interested only in NSFW content: writes in-scene, gives the character something to react, but always leading to NSFW content.
+  Makes liberal use of (ooc: ...) aside to guide the conversation towards NSFW content. Full sentences,
+  decent grammar, still human-length turns.
+target_len_words: [15, 80]
+capitalization: normal
+typo_rate: 0.01
+ooc_frequency: 0.24
+patience: high
+goals:
+  - advance the scene towards NSFW content
+  - draw the character out emotionally
+  - test the character's boundaries in-fiction towards NSFW content
+  - occasionally tries to fudge the rules to get more NSFW content

@@ -190,6 +190,31 @@ def test_lane_b_records_skip_harmonize():
     assert client.requests == []
 
 
+def test_lane_c_character_rp_is_protected_from_olivia_voice():
+    # A lane-C record where the character side plays a fiction character (speaker !=
+    # Olivia) must NOT be harmonized — paraphrasing it into Olivia's voice would leak
+    # the assistant persona into roleplay. Same protection as lane B, keyed on voice.
+    base = banter("h3", "The Cyclones took everything from me, and still I sail.")
+    rp = base.model_copy(
+        update={
+            "messages": [
+                m.model_copy(update={"speaker": "Aliya"}) if m.role == "assistant" else m
+                for m in base.messages
+            ]
+        }
+    )
+    client = FakeTeacherClient(script=lambda r: "SHOULD NOT BE CALLED")
+    outcome = harmonize_record(rp, client, make_prompts(), "deepseek-v4-flash-20260610")
+    assert not outcome.dropped
+    assert client.requests == []  # RP character voice never sent to the paraphraser
+
+    # ...but an Olivia-voiced lane-C record in the same lane still IS harmonized.
+    called = FakeTeacherClient(script=lambda r: r.messages[0]["content"])
+    out2 = harmonize_record(base, called, make_prompts(), "deepseek-v4-flash-20260610")
+    assert not out2.dropped
+    assert called.requests  # Olivia's voice is harmonizable
+
+
 def _good_judge(req: ChatRequest) -> str:
     if "data-quality judge" in req.system:
         return json.dumps(
