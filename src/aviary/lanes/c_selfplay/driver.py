@@ -108,9 +108,15 @@ def run_selfplay(
                 or [{"role": "user", "content": "(start the conversation)"}],
                 temperature=0.9,
                 max_tokens=300,
+                reasoning_off=True,  # the user-sim texts like a human, doesn't reason
             ),
             lane="c",
         ).text.strip()
+        # An empty turn (reasoning-model quirk) must never enter the transcript: it
+        # would be sent back as empty-content history and some providers 400 on it.
+        if not user_raw:
+            stop_reason = "empty_turn"
+            break
         if END_SENTINEL in user_raw:
             stop_reason = "user_ended"
             break
@@ -123,10 +129,15 @@ def run_selfplay(
                 system=character_system,
                 messages=_history(state.messages, "character"),
                 temperature=0.85,
-                max_tokens=1024,
+                max_tokens=2048,
+                reasoning_off=True,  # in-the-moment roleplay, not reason-then-reply
             ),
             lane="c",
         ).text.strip()
+        if not char_text:
+            state.messages.pop()  # drop the now-dangling user turn; end on a clean exchange
+            stop_reason = "empty_turn"
+            break
         state.messages.append(
             Message(role="assistant", speaker=seed.character_name, content=char_text)
         )

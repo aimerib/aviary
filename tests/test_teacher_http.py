@@ -128,17 +128,23 @@ def _capture_client(monkeypatch, captured):
     return client
 
 
-def test_json_extra_body_merged_only_on_json_calls(monkeypatch):
-    # Extraction (response_json) gets the reasoning-off control; a plain generative
-    # call must NOT — roleplay/generation keeps its reasoning.
+def test_json_extra_body_merged_on_json_and_reasoning_off(monkeypatch):
     captured: list[dict] = []
     client = _capture_client(monkeypatch, captured)
 
+    # Extraction (response_json) gets the reasoning-off control + json format.
     client.complete(_req().model_copy(update={"response_json": True}))
     assert captured[-1].get("thinking") == {"type": "disabled"}
     assert captured[-1]["response_format"] == {"type": "json_object"}
 
-    client.complete(_req())  # response_json defaults False
+    # Direct-output prose call (reasoning_off, e.g. lane C roleplay): thinking off,
+    # but NO json format forced.
+    client.complete(_req().model_copy(update={"reasoning_off": True}))
+    assert captured[-1].get("thinking") == {"type": "disabled"}
+    assert "response_format" not in captured[-1]
+
+    # Plain generative call keeps reasoning and stays free-form.
+    client.complete(_req())
     assert "thinking" not in captured[-1]
     assert "response_format" not in captured[-1]
 

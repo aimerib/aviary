@@ -30,6 +30,7 @@ class ChatRequest(BaseModel):
     temperature: float = 0.8
     max_tokens: int = 2048
     response_json: bool = False  # ask for a JSON object response
+    reasoning_off: bool = False  # disable the model's thinking mode (direct output)
 
 
 class Usage(BaseModel):
@@ -113,8 +114,11 @@ class HttpTeacherClient:
         }
         if req.response_json:
             payload["response_format"] = {"type": "json_object"}
-            # Reasoning-off (and any other structured-output) controls belong only on
-            # JSON calls — see TeacherRoute.json_extra_body.
+        # route.json_extra_body carries the provider's thinking-off control. Apply it
+        # on JSON extraction (structured output wants no reasoning) OR when the caller
+        # explicitly asks for direct output (reasoning_off) — e.g. lane C roleplay
+        # turns, which must respond in-the-moment, not reason then reply.
+        if req.response_json or req.reasoning_off:
             payload.update(route.json_extra_body)
         r = self._http.post(
             f"{route.base_url.rstrip('/')}/chat/completions",

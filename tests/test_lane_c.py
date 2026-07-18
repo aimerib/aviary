@@ -100,6 +100,33 @@ def test_selfplay_degenerate_loop_stops():
     assert not result.passed
 
 
+def test_selfplay_empty_turn_ends_cleanly():
+    # A reasoning-model empty reply must never enter the transcript — it would be sent
+    # back as empty-content history and 400 some providers. The conversation ends and
+    # the now-dangling user turn is dropped so the record closes on a full exchange.
+    def script(req: ChatRequest) -> str:
+        if "HUMAN USER" in req.system:
+            return "so tell me about the crash"
+        return "   " if len(req.messages) >= 3 else "I remember the storm, the ship breaking apart."
+
+    rec = run_selfplay(
+        SEED,
+        persona(),
+        LaneCConfig(min_turns=8, max_turns=8),
+        FakeTeacherClient(script=script),
+        MODELS,
+        prompts(),
+        run_id="t",
+        prompt_set_hash="h",
+        rng=random.Random(3),
+    )
+    assert rec.provenance.source.detail["stop_reason"] == "empty_turn"
+    assert all(m.content.strip() for m in rec.messages)  # no empty turn leaked in
+    users = [m for m in rec.messages if m.role == "user"]
+    assts = [m for m in rec.messages if m.role == "assistant"]
+    assert len(users) == len(assts)  # dangling user turn dropped; ends on an exchange
+
+
 def test_selfplay_max_turns_and_alternation():
     def script(req: ChatRequest) -> str:
         if "HUMAN USER" in req.system:
