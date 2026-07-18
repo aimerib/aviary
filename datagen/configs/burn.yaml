@@ -12,6 +12,18 @@ lane_c:
   conversations_per_seed: 3
   personas: [lazy_texter, engaged_rper, nsfw_rper, task_asker]
   rng_seed: 20260716
-burn_bands_verify: [0.25, 0.65]
-burn_bands_judge: [0.6, 0.95]
+# Per-lane keep-rate bands. The burn guard checks EACH burn lane against its own
+# band using the blessing pilot's per-lane rates, and refuses to burn a lane the
+# pilot never measured. Lanes differ by design — don't blend them into one band.
+#   verify = structural-verifier pass rate; judge = rubric pass rate among verified.
+burn_bands:
+  a:  # agentic/Olivia — PROVISIONAL, lane A not yet piloted; tighten after first A pilot
+    verify: [0.30, 0.85]
+    judge: [0.50, 0.95]
+  b:  # fiction extraction — judges LOW by design (thought_quality floor, ~28% observed)
+    verify: [0.40, 0.95]
+    judge: [0.15, 0.50]
+  c:  # self-play RP — PROVISIONAL; set from the first AO3-seeded lane C pilot
+    verify: [0.35, 0.95]
+    judge: [0.35, 0.90]
 burn_max_pilot_age_days: 14

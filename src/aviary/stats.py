@@ -71,6 +71,9 @@ def format_stats(stats: RunStats, manifest: RunManifest | None) -> str:
             f"keep rates: verify={manifest.keep_rates.verify:.2f} "
             f"judge={manifest.keep_rates.judge:.2f}  spend=${manifest.spend_usd.total:.2f}"
         )
+        for lane in sorted(manifest.keep_rates.by_lane):
+            r = manifest.keep_rates.by_lane[lane]
+            lines.append(f"  lane {lane}: verify={r.verify:.2f} judge={r.judge:.2f}")
     if stats.band_violations:
         lines.append("\nDIFFICULTY BAND VIOLATIONS:")
         lines.extend(f"  - {v}" for v in stats.band_violations)

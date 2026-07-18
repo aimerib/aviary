@@ -24,6 +24,7 @@ from aviary.schema.manifest import (
     Artifacts,
     Counts,
     KeepRates,
+    LaneKeepRate,
     Provenance,
     RunManifest,
     Teachers,
@@ -58,6 +59,18 @@ class LaneCRunConfig(BaseModel):
     rng_seed: int = DEFAULT_SEED
 
 
+class LaneBand(BaseModel):
+    """Acceptable [min, max] verify/judge keep rates for ONE lane at burn time.
+    Bands are guardrails against surprise regressions (a task that drifted too
+    easy/hard, a rubric that broke), not precise targets — set them wide enough
+    to pass a healthy pilot, tight enough to catch a collapse. Lanes differ by
+    design: lane B judges low on the thought_quality floor, so its judge band
+    sits far below lane A's."""
+
+    verify: tuple[float, float] = (0.25, 0.95)
+    judge: tuple[float, float] = (0.2, 0.95)
+
+
 class RunConfig(BaseModel):
     kind: str
     lanes: list[str]
@@ -69,8 +82,10 @@ class RunConfig(BaseModel):
     lane_a_batch_size: int = 20
     lane_a_timeout_s: int = 14400  # wall-clock cap on the hermes batch subprocess (4h)
     lane_c: LaneCRunConfig = Field(default_factory=LaneCRunConfig)
-    burn_bands_verify: tuple[float, float] = (0.25, 0.65)
-    burn_bands_judge: tuple[float, float] = (0.6, 0.95)
+    # Per-lane keep-rate bands the burn guard enforces against the blessing pilot.
+    # Every lane the burn runs MUST have a band here and MUST have been measured by
+    # the pilot, or the guard refuses (never burn an unpiloted lane — esp. lane A).
+    burn_bands: dict[str, LaneBand] = Field(default_factory=dict)
     burn_max_pilot_age_days: int = 14
 
     @classmethod
@@ -193,16 +208,14 @@ def cmd_generate(kind: str) -> str:
     client, ledger = make_clients(roster, run_id)
 
     if kind == "burn":
-        from aviary.lanes.a_agentic.run import BurnBands, guard_burn
+        from aviary.lanes.a_agentic.run import guard_burn
 
         guard_burn(
             runs_dir(),
             datagen_config_hash(),
-            BurnBands(
-                verify=cfg.burn_bands_verify,
-                judge=cfg.burn_bands_judge,
-                max_age_days=cfg.burn_max_pilot_age_days,
-            ),
+            cfg.burn_bands,
+            cfg.lanes,
+            cfg.burn_max_pilot_age_days,
             _dt.date.today().isoformat(),
         )
 
@@ -415,7 +428,12 @@ def cmd_gate(run_id: str) -> None:
     manifest.counts.verified = stats.verified
     manifest.counts.judged = stats.judged
     manifest.keep_rates = KeepRates(
-        verify=round(stats.verify_rate, 4), judge=round(stats.judge_rate, 4)
+        verify=round(stats.verify_rate, 4),
+        judge=round(stats.judge_rate, 4),
+        by_lane={
+            lane: LaneKeepRate(verify=round(s.verify_rate, 4), judge=round(s.judge_rate, 4))
+            for lane, s in stats.by_lane.items()
+        },
     )
     for teacher_id, usd in ledger.to_spend().by_teacher.items():
         manifest.spend_usd.by_teacher[teacher_id] = (

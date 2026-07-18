@@ -63,9 +63,18 @@ class Counts(BaseModel):
     rendered_nsp: int = 0
 
 
-class KeepRates(BaseModel):
+class LaneKeepRate(BaseModel):
     verify: float = 0.0
     judge: float = 0.0
+
+
+class KeepRates(BaseModel):
+    # Aggregate across all lanes — a human-readable summary only. The burn guard
+    # reads `by_lane`, because lanes have structurally different rates by design
+    # (lane B judges low on the thought_quality floor; a blended figure hides it).
+    verify: float = 0.0
+    judge: float = 0.0
+    by_lane: dict[str, LaneKeepRate] = Field(default_factory=dict)
 
 
 class Spend(BaseModel):

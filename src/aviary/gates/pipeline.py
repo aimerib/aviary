@@ -49,15 +49,38 @@ def default_resolver(template_verifiers: dict[str, str]) -> VerifierResolver:
 
 
 @dataclass
+class LaneGateStats:
+    """Verify/judge counters for one lane. Bands are per-lane, so the gate must
+    keep rates disaggregated — a lane B judge floor of ~28% must not drag the
+    lane A figure below its own band (and vice versa)."""
+
+    total: int = 0
+    verified: int = 0
+    judged: int = 0
+
+    @property
+    def verify_rate(self) -> float:
+        return self.verified / self.total if self.total else 0.0
+
+    @property
+    def judge_rate(self) -> float:
+        return self.judged / self.verified if self.verified else 0.0
+
+
+@dataclass
 class GateStats:
     total: int = 0
     verified: int = 0
     judged: int = 0
     kept: int = 0
     drops: dict[str, int] = field(default_factory=dict)
+    by_lane: dict[str, LaneGateStats] = field(default_factory=dict)
 
     def drop(self, reason: str) -> None:
         self.drops[reason] = self.drops.get(reason, 0) + 1
+
+    def lane(self, key: str) -> LaneGateStats:
+        return self.by_lane.setdefault(key, LaneGateStats())
 
     @property
     def verify_rate(self) -> float:
@@ -100,6 +123,8 @@ def run_gates(
         records.extend(read_jsonl(path, ConversationRecord))
 
     stats = GateStats(total=len(records))
+    for rec in records:
+        stats.lane(rec.provenance.lane).total += 1
     kept: list[ConversationRecord] = []
     rejected: list[ConversationRecord] = []
 
@@ -138,6 +163,7 @@ def run_gates(
         )
         if passed:
             stats.verified += 1
+            stats.lane(rec.provenance.lane).verified += 1
             verified.append(rec)
         else:
             reject(rec, "verify")
@@ -159,6 +185,7 @@ def run_gates(
         )
         if scores.passed:
             stats.judged += 1
+            stats.lane(rec.provenance.lane).judged += 1
             judged.append(rec)
         else:
             reject(rec, "judge")

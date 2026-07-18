@@ -7,9 +7,10 @@ import pytest
 
 from aviary.lanes.a_agentic.hermes_config import emit_batch_config, emit_batch_inputs
 from aviary.lanes.a_agentic.ingest import IngestContext, IngestError, ingest_hermes_record
-from aviary.lanes.a_agentic.run import BurnBands, BurnGuardError, guard_burn
+from aviary.lanes.a_agentic.run import BurnGuardError, guard_burn
 from aviary.lanes.a_agentic.taskbank import expand_all, load_taskbank
-from aviary.schema.manifest import RunManifest, Teachers
+from aviary.orchestrate import LaneBand
+from aviary.schema.manifest import LaneKeepRate, RunManifest, Teachers
 
 REPO = Path(__file__).resolve().parents[1]
 
@@ -161,26 +162,63 @@ def _pilot_manifest(**overrides) -> RunManifest:
     )
     m = RunManifest.model_validate({**base, **overrides})
     m.provenance.datagen_config_hash = "hash1"
-    m.keep_rates.verify = 0.4
-    m.keep_rates.judge = 0.8
+    # Lane B judges low by design; lane A high. A per-lane guard must accept both.
+    m.keep_rates.by_lane = {
+        "a": LaneKeepRate(verify=0.6, judge=0.8),
+        "b": LaneKeepRate(verify=0.7, judge=0.25),
+    }
     return m
 
 
+# Bands mirroring the shipped burn.yaml shape: lane B's judge band sits far below A's.
+_BANDS = {
+    "a": LaneBand(verify=(0.30, 0.85), judge=(0.50, 0.95)),
+    "b": LaneBand(verify=(0.40, 0.95), judge=(0.15, 0.50)),
+}
+
+
 def test_burn_guard_paths(tmp_path):
-    bands = BurnBands(max_age_days=14)
     with pytest.raises(BurnGuardError, match="no finished pilot"):
-        guard_burn(tmp_path, "hash1", bands, "2026-07-16")
+        guard_burn(tmp_path, "hash1", _BANDS, ["a", "b"], 14, "2026-07-16")
 
     m = _pilot_manifest()
     m.save(tmp_path / "2026-07-15-pilot.manifest.yaml")
-    assert guard_burn(tmp_path, "hash1", bands, "2026-07-16").run_id == "2026-07-15-pilot"
+    ok = guard_burn(tmp_path, "hash1", _BANDS, ["a", "b"], 14, "2026-07-16")
+    assert ok.run_id == "2026-07-15-pilot"
 
     with pytest.raises(BurnGuardError, match="config changed"):
-        guard_burn(tmp_path, "OTHER", bands, "2026-07-16")
+        guard_burn(tmp_path, "OTHER", _BANDS, ["a", "b"], 14, "2026-07-16")
     with pytest.raises(BurnGuardError, match="old"):
-        guard_burn(tmp_path, "hash1", bands, "2026-08-16")
+        guard_burn(tmp_path, "hash1", _BANDS, ["a", "b"], 14, "2026-08-16")
 
-    m.keep_rates.verify = 0.05  # too hard: outside band
+
+def test_burn_guard_lane_b_low_judge_is_in_band(tmp_path):
+    # The whole point: lane B's ~25% judge rate is HEALTHY, not a failure. A single
+    # global judge floor would have rejected this pilot; the per-lane band accepts it.
+    m = _pilot_manifest()
+    m.save(tmp_path / "2026-07-15-pilot.manifest.yaml")
+    assert guard_burn(tmp_path, "hash1", _BANDS, ["b"], 14, "2026-07-16").run_id
+
+
+def test_burn_guard_refuses_unpiloted_lane(tmp_path):
+    # Burning a lane the pilot never measured (lane A here) is a hard stop.
+    m = _pilot_manifest()
+    m.keep_rates.by_lane = {"b": LaneKeepRate(verify=0.7, judge=0.25)}
+    m.save(tmp_path / "2026-07-15-pilot.manifest.yaml")
+    with pytest.raises(BurnGuardError, match="never measured"):
+        guard_burn(tmp_path, "hash1", _BANDS, ["a", "b"], 14, "2026-07-16")
+
+
+def test_burn_guard_out_of_band_rejected(tmp_path):
+    m = _pilot_manifest()
+    m.keep_rates.by_lane["a"] = LaneKeepRate(verify=0.05, judge=0.8)  # too hard
     m.save(tmp_path / "2026-07-15-pilot.manifest.yaml")
     with pytest.raises(BurnGuardError, match="verify keep rate"):
-        guard_burn(tmp_path, "hash1", bands, "2026-07-16")
+        guard_burn(tmp_path, "hash1", _BANDS, ["a", "b"], 14, "2026-07-16")
+
+
+def test_burn_guard_missing_band_rejected(tmp_path):
+    m = _pilot_manifest()
+    m.save(tmp_path / "2026-07-15-pilot.manifest.yaml")
+    with pytest.raises(BurnGuardError, match="no burn_bands entry"):
+        guard_burn(tmp_path, "hash1", _BANDS, ["a", "b", "c"], 14, "2026-07-16")
