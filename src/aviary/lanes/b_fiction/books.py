@@ -1,9 +1,10 @@
 """Book acquisition + chunking. Pure functions, no LLM, no network.
 
 Sources: local .txt (incl. Project Gutenberg dumps — boilerplate stripped),
-.epub (stdlib zipfile + html.parser; EPUB is zipped XHTML), and .html
-(otwarchive-downloader output). Book files live outside the repo, listed in
-datagen/configs/lane_b.yaml.
+.epub / .kepub (stdlib zipfile + html.parser; both are zipped XHTML — .kepub is
+Kobo's epub), and .html (otwarchive-downloader output). Amazon .azw/.azw3/.kfx/
+.mobi are a separate DRM-bearing family and are NOT read here. Book files live
+outside the repo, listed in datagen/configs/lane_b.yaml.
 """
 
 from __future__ import annotations
@@ -76,7 +77,9 @@ def load_book_text(path: Path) -> str:
         return strip_gutenberg(path.read_text(encoding="utf-8", errors="replace"))
     if suffix in (".html", ".htm", ".xhtml"):
         return html_to_text(path.read_text(encoding="utf-8", errors="replace"))
-    if suffix == ".epub":
+    # .kepub is a Kobo EPUB — structurally a zipped-XHTML epub, same reader. (Amazon
+    # .azw/.azw3/.kfx/.mobi are a different, DRM-bearing family and NOT handled here.)
+    if suffix in (".epub", ".kepub"):
         return _load_epub(path)
     raise ValueError(f"unsupported book format: {path.name}")
 

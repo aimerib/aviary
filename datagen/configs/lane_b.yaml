@@ -1,28 +1,205 @@
-# Lane B book list. Paths are LOCAL — book files never enter the repo (data-in-git
-# rule). Sources: your ebook library (.epub/.txt), otwarchive-downloader output
-# (.html), Gutenberg dumps (.txt, boilerplate auto-stripped).
-#
-# holdout: true holds out the ENTIRE work at family level (split rule).
-# max_chunks caps extraction per book for pilots; remove for burns.
+# Lane-B corpus book list. 39 works that yielded >=1 scene in run 2026-07-17-
+# pilot-corpus (from a 65-book sweep of the library, epub + DRM-free .kepub).
+# Dropped: ~25 non-fiction that slipped the sweep + Le Guin (real fiction, but
+# sparse-dialogue mythic style extracts poorly under min_turns=6 — a lane B bias).
+# Lane B rewards interiority-rich prose; judge keep-rate ~28% (thought_quality floor).
 
 books:
-  # First lane-B smoke (2026-07-17). Prose fiction, ~40% dialogue with first-person
-  # interiority — dialogue+thoughts ramp in from chunk 1 (chunk 0 is the prologue),
-  # so max_chunks:3 reaches real scenes while keeping spend tiny.
-  - work_id: heavens_vault_loop
+  - work_id: isaac_asimov_foundation
+    title: "Foundation"
+    author: "Isaac Asimov"
+    path: "/Volumes/AI/personal/library/Isaac Asimov/Foundation (649)/Foundation - Isaac Asimov.kepub"
+    holdout: false
+  - work_id: jon_ingold_heaven_s_vault_book_1_the_loop
     title: "Heaven's Vault - Book 1 - The Loop"
-    author: Jon Ingold
+    author: "Jon Ingold"
     path: "/Volumes/AI/personal/library/Jon Ingold/Heaven's Vault - Book 1 - The Loop (1006)/Heaven's Vault - Book 1 - The Loop - Jon Ingold.epub"
     holdout: false
-    max_chunks: 3
-
-# - work_id: example_novel
-#   title: Example Novel
-#   author: A. Writer
-#   path: ~/books/example_novel.epub
-#   holdout: false
-#   max_chunks: 10
-
+  - work_id: frank_patrick_herbert_dune
+    title: "Dune"
+    author: "Frank Patrick Herbert"
+    path: "/Volumes/AI/personal/library/Frank Patrick Herbert/Dune (666)/Dune - Frank Patrick Herbert.kepub"
+    holdout: false
+  - work_id: jon_ingold_heaven_s_vault_book_2_the_vault
+    title: "Heaven's Vault - Book 2 - The Vault"
+    author: "Jon Ingold"
+    path: "/Volumes/AI/personal/library/Jon Ingold/Heaven's Vault - Book 2 - The Vault (1005)/Heaven's Vault - Book 2 - The Vault - Jon Ingold.epub"
+    holdout: false
+  - work_id: stephen_king_wolves_of_the_calla
+    title: "Wolves of the Calla"
+    author: "Stephen King"
+    path: "/Volumes/AI/personal/library/Stephen King/Wolves of the Calla (656)/Wolves of the Calla - Stephen King.kepub"
+    holdout: false
+  - work_id: frank_patrick_herbert_children_of_dune
+    title: "Children of Dune"
+    author: "Frank Patrick Herbert"
+    path: "/Volumes/AI/personal/library/Frank Patrick Herbert/Children of Dune (654)/Children of Dune - Frank Patrick Herbert.kepub"
+    holdout: false
+  - work_id: agatha_christie_the_secret_adversary
+    title: "The Secret Adversary"
+    author: "Agatha Christie"
+    path: "/Volumes/AI/personal/library/Agatha Christie/The Secret Adversary (317)/The Secret Adversary - Agatha Christie.kepub"
+    holdout: false
+  - work_id: agatha_christie_the_mysterious_affair_at_styles
+    title: "The Mysterious Affair at Styles"
+    author: "Agatha Christie"
+    path: "/Volumes/AI/personal/library/Agatha Christie/The Mysterious Affair at Styles (644)/The Mysterious Affair at Styles - Agatha Christie.kepub"
+    holdout: false
+  - work_id: jon_ingold_heaven_s_vault_book_3_the_flood
+    title: "Heaven's Vault - Book 3 - The Flood"
+    author: "Jon Ingold"
+    path: "/Volumes/AI/personal/library/Jon Ingold/Heaven's Vault - Book 3 - The Flood (1007)/Heaven's Vault - Book 3 - The Flood - Jon Ingold.epub"
+    holdout: true
+  - work_id: isaac_asimov_pebble_in_the_sky
+    title: "Pebble in the Sky"
+    author: "Isaac Asimov"
+    path: "/Volumes/AI/personal/library/Isaac Asimov/Pebble in the Sky (648)/Pebble in the Sky - Isaac Asimov.kepub"
+    holdout: false
+  - work_id: isaac_asimov_the_stars_like_dust
+    title: "The Stars, Like Dust"
+    author: "Isaac Asimov"
+    path: "/Volumes/AI/personal/library/Isaac Asimov/The Stars, Like Dust (660)/The Stars, Like Dust - Isaac Asimov.kepub"
+    holdout: false
+  - work_id: frank_patrick_herbert_dune_messiah
+    title: "Dune Messiah"
+    author: "Frank Patrick Herbert"
+    path: "/Volumes/AI/personal/library/Frank Patrick Herbert/Dune Messiah (650)/Dune Messiah - Frank Patrick Herbert.kepub"
+    holdout: false
+  - work_id: terry_pratchett_small_gods
+    title: "Small Gods"
+    author: "Terry Pratchett"
+    path: "/Volumes/AI/personal/library/Terry Pratchett/Small Gods (636)/Small Gods - Terry Pratchett.kepub"
+    holdout: false
+  - work_id: erin_hunter_into_the_wild
+    title: "Into the Wild"
+    author: "Erin Hunter"
+    path: "/Volumes/AI/personal/library/Erin Hunter/Into the Wild (653)/Into the Wild - Erin Hunter.kepub"
+    holdout: false
+  - work_id: diana_wynne_jones_howl_s_moving_castle
+    title: "Howl's Moving Castle"
+    author: "Diana Wynne Jones"
+    path: "/Volumes/AI/personal/library/Diana Wynne Jones/Howl's Moving Castle (637)/Howl's Moving Castle - Diana Wynne Jones.kepub"
+    holdout: false
+  - work_id: george_r_r_martin_a_dance_with_dragons
+    title: "A Dance With Dragons"
+    author: "George R. R. Martin"
+    path: "/Volumes/AI/personal/library/George R. R. Martin/A Dance With Dragons (663)/A Dance With Dragons - George R. R. Martin.kepub"
+    holdout: false
+  - work_id: robert_jordan_the_eye_of_the_world
+    title: "The Eye of the World"
+    author: "Robert Jordan"
+    path: "/Volumes/AI/personal/library/Robert Jordan/The Eye of the World (638)/The Eye of the World - Robert Jordan.kepub"
+    holdout: false
+  - work_id: isaac_asimov_the_end_of_eternity
+    title: "The End of Eternity"
+    author: "Isaac Asimov"
+    path: "/Volumes/AI/personal/library/Isaac Asimov/The End of Eternity (314)/The End of Eternity - Isaac Asimov.kepub"
+    holdout: true
+  - work_id: chronicle_books_tales_of_east_africa
+    title: "Tales of East Africa"
+    author: "Chronicle Books"
+    path: "/Volumes/AI/personal/library/Chronicle Books/Tales of East Africa (500)/Tales of East Africa - Chronicle Books.kepub"
+    holdout: false
+  - work_id: isaac_asimov_the_currents_of_space
+    title: "The Currents of Space"
+    author: "Isaac Asimov"
+    path: "/Volumes/AI/personal/library/Isaac Asimov/The Currents of Space (652)/The Currents of Space - Isaac Asimov.kepub"
+    holdout: false
+  - work_id: jeremy_kubica_the_cs_detective_an_algorithmic_ta
+    title: "The CS Detective_ An Algorithmic Tale of C"
+    author: "Jeremy Kubica"
+    path: "/Volumes/AI/personal/library/Jeremy Kubica/The CS Detective_ An Algorithmic Tale of Crime, Conspiracy, and Computation (499)/The CS Detective_ An Algorithmic Tale of C - Jeremy Kubica.kepub"
+    holdout: false
+  - work_id: vernor_vinge_the_children_of_the_sky
+    title: "The Children of the Sky"
+    author: "Vernor Vinge"
+    path: "/Volumes/AI/personal/library/Vernor Vinge/The Children of the Sky (661)/The Children of the Sky - Vernor Vinge.kepub"
+    holdout: false
+  - work_id: jon_ingold_heaven_s_vault_book_4_the_rising_ligh
+    title: "Heaven's Vault - Book 4 - The Rising Light"
+    author: "Jon Ingold"
+    path: "/Volumes/AI/personal/library/Jon Ingold/Heaven's Vault - Book 4 - The Rising Light (1008)/Heaven's Vault - Book 4 - The Rising Light - Jon Ingold.epub"
+    holdout: false
+  - work_id: vernor_vinge_a_deepness_in_the_sky
+    title: "A Deepness in the Sky"
+    author: "Vernor Vinge"
+    path: "/Volumes/AI/personal/library/Vernor Vinge/A Deepness in the Sky (657)/A Deepness in the Sky - Vernor Vinge.kepub"
+    holdout: false
+  - work_id: dan_brown_inferno
+    title: "Inferno"
+    author: "Dan Brown"
+    path: "/Volumes/AI/personal/library/Dan Brown/Inferno (665)/Inferno - Dan Brown.kepub"
+    holdout: false
+  - work_id: hugh_howey_wool
+    title: "Wool"
+    author: "Hugh Howey"
+    path: "/Volumes/AI/personal/library/Hugh Howey/Wool (632)/Wool - Hugh Howey.kepub"
+    holdout: false
+  - work_id: nalo_hopkinson_falling_in_love_with_hominids
+    title: "Falling in Love With Hominids"
+    author: "Nalo Hopkinson"
+    path: "/Volumes/AI/personal/library/Nalo Hopkinson/Falling in Love With Hominids (450)/Falling in Love With Hominids - Nalo Hopkinson.kepub"
+    holdout: false
+  - work_id: vernor_vinge_a_fire_upon_the_deep
+    title: "A Fire Upon the Deep"
+    author: "Vernor Vinge"
+    path: "/Volumes/AI/personal/library/Vernor Vinge/A Fire Upon the Deep (651)/A Fire Upon the Deep - Vernor Vinge.kepub"
+    holdout: false
+  - work_id: tomi_adeyemi_children_of_blood_and_bone
+    title: "Children of Blood and Bone"
+    author: "Tomi Adeyemi"
+    path: "/Volumes/AI/personal/library/Tomi Adeyemi/Children of Blood and Bone (672)/Children of Blood and Bone - Tomi Adeyemi.kepub"
+    holdout: false
+  - work_id: stephen_king_the_eyes_of_the_dragon
+    title: "The Eyes of the Dragon"
+    author: "Stephen King"
+    path: "/Volumes/AI/personal/library/Stephen King/The Eyes of the Dragon (639)/The Eyes of the Dragon - Stephen King.kepub"
+    holdout: false
+  - work_id: ken_follett_the_pillars_of_the_earth
+    title: "The Pillars of the Earth"
+    author: "Ken Follett"
+    path: "/Volumes/AI/personal/library/Ken Follett/The Pillars of the Earth (641)/The Pillars of the Earth - Ken Follett.kepub"
+    holdout: false
+  - work_id: samuel_r_delany_return_to_neveryon
+    title: "Return to Neveryon"
+    author: "Samuel R. Delany"
+    path: "/Volumes/AI/personal/library/Samuel R. Delany/Return to Neveryon (520)/Return to Neveryon - Samuel R. Delany.kepub"
+    holdout: true
+  - work_id: edgar_allan_poe_the_complete_collection
+    title: "The Complete Collection"
+    author: "Edgar Allan Poe"
+    path: "/Volumes/AI/personal/library/Edgar Allan Poe/The Complete Collection (645)/The Complete Collection - Edgar Allan Poe.kepub"
+    holdout: false
+  - work_id: kay_redfield_jamison_an_unquiet_mind
+    title: "An Unquiet Mind"
+    author: "Kay Redfield Jamison"
+    path: "/Volumes/AI/personal/library/Kay Redfield Jamison/An Unquiet Mind (640)/An Unquiet Mind - Kay Redfield Jamison.kepub"
+    holdout: true
+  - work_id: giorgia_lupi_dear_data_postcard_kit_for_two_frie
+    title: "Dear Data Postcard Kit_ For Two Friends to"
+    author: "Giorgia Lupi"
+    path: "/Volumes/AI/personal/library/Giorgia Lupi/Dear Data Postcard Kit_ For Two Friends to Draw and Share (468)/Dear Data Postcard Kit_ For Two Friends to - Giorgia Lupi.kepub"
+    holdout: false
+  - work_id: samuel_r_delany_neveryona_or_the_tale_of_signs_a
+    title: "Neveryona_ Or, the Tale of Signs and Citie"
+    author: "Samuel R. Delany"
+    path: "/Volumes/AI/personal/library/Samuel R. Delany/Neveryona_ Or, the Tale of Signs and Cities (548)/Neveryona_ Or, the Tale of Signs and Citie - Samuel R. Delany.kepub"
+    holdout: false
+  - work_id: solomon_northup_twelve_years_a_slave
+    title: "Twelve Years a Slave"
+    author: "Solomon Northup"
+    path: "/Volumes/AI/personal/library/Solomon Northup/Twelve Years a Slave (491)/Twelve Years a Slave - Solomon Northup.kepub"
+    holdout: false
+  - work_id: h_p_lovecraft_the_definitive_h_p_lovecraft_67_ta
+    title: "The Definitive H.P. Lovecraft_ 67 Tales of"
+    author: "H. P. Lovecraft"
+    path: "/Volumes/AI/personal/library/H. P. Lovecraft/The Definitive H.P. Lovecraft_ 67 Tales of Horror (658)/The Definitive H.P. Lovecraft_ 67 Tales of - H. P. Lovecraft.kepub"
+    holdout: false
+  - work_id: leo_tolstoy_war_and_peace
+    title: "War and Peace"
+    author: "Leo Tolstoy"
+    path: "/Volumes/AI/personal/library/Leo Tolstoy/War and Peace (662)/War and Peace - Leo Tolstoy.kepub"
+    holdout: false
 profile_sample_chars: 60000
 chunk_target_chars: 16000
 min_turns: 6
