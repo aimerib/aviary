@@ -160,3 +160,39 @@ def test_inline_seeds_and_personas_load():
     personas = load_personas(REPO / "datagen" / "persona" / "user_sims")
     assert {"lazy_texter", "engaged_rper", "task_asker"} <= set(personas)
     assert personas["lazy_texter"].typo_rate > 0
+
+
+def test_seeds_from_lane_b_caps_with_even_stride(tmp_path):
+    # RP seeds come from a designated lane B run, capped by an even stride so the cap
+    # spans works rather than taking the first N.
+    from aviary.io.jsonl import write_jsonl
+    from aviary.io.store import RunStore
+    from aviary.lanes.c_selfplay.seeds import seeds_from_lane_b
+    from aviary.schema.records import ConversationRecord, Message, Provenance, SourceRef
+
+    def rec(i: int) -> ConversationRecord:
+        return ConversationRecord(
+            system=f"profiles\n\n## Scene\nsetting {i}",
+            messages=[
+                Message(role="user", content="hi"),
+                Message(role="assistant", speaker="Alice", content="hey"),
+                Message(role="assistant", speaker="Bob", content="yo"),
+            ],
+            provenance=Provenance(
+                record_id=f"r{i}",
+                lane="b",
+                run_id="src",
+                family=f"work{i}",
+                source=SourceRef(kind="book_scene", detail={"chunk_idx": 0, "scene_idx": 0}),
+            ),
+        )
+
+    store = RunStore("src", root=tmp_path)
+    write_jsonl(store.raw("b"), [rec(i) for i in range(20)])
+
+    all_seeds = seeds_from_lane_b(store)
+    assert len(all_seeds) == 20  # one seed per work
+    capped = seeds_from_lane_b(store, max_seeds=5)
+    assert len(capped) == 5
+    assert capped == seeds_from_lane_b(store, max_seeds=5)  # deterministic
+    assert capped[-1].family != all_seeds[4].family  # stride spans, not first-5

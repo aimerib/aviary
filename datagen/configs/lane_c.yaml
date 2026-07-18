@@ -1,5 +1,13 @@
-# Lane C inline seeds (Olivia scenarios). Lane-B-derived seeds are added
-# automatically from the run's own lane B output, inheriting each work's family.
+# Lane C inline seeds are OLIVIA simple-chats (minority slice). RP character seeds
+# come from a DESIGNATED lane B run below — an RP-appropriate corpus (AO3), never the
+# published-fiction prose corpus (novel characters are off-distribution for RP).
+# Books feed lane B prose entropy; AO3 feeds lane B prose AND the lane C RP seeds.
+
+# The lane B run whose characters seed RP self-play. Update to your AO3 lane B run.
+# Unset -> fall back to this run's own lane B output (combined [b,c] run).
+seed_from_run: 2026-07-18-pilot-ao3scale
+max_lane_b_seeds: 60  # cap total RP seeds; deterministic even stride across works
+
 seeds:
   - seed_id: banter-late-night
     family: banter

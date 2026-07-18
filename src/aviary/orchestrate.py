@@ -283,14 +283,20 @@ def _generate_lane_c(cfg, store, roster, client, prompts) -> int:
     from aviary.lanes.c_selfplay.usersim import load_personas
     from aviary.teacher.pool import TeacherPool
 
+    raw = yaml.safe_load((configs_dir() / "lane_c.yaml").read_text()) or {}
     seeds = load_inline_seeds(configs_dir() / "lane_c.yaml", prompts["olivia_system"])
-    seeds += seeds_from_lane_b(store)
+    # RP characters seed from a DESIGNATED lane B run (an RP-appropriate corpus, e.g.
+    # AO3), not necessarily this run's lane B. Published-fiction characters are
+    # off-distribution for RP, so lane C never seeds from the prose corpus. Falls back
+    # to this run's own lane B output when seed_from_run is unset (combined [b,c] run).
+    seed_run = raw.get("seed_from_run")
+    seed_store = RunStore(seed_run) if seed_run else store
+    seeds += seeds_from_lane_b(seed_store, max_seeds=raw.get("max_lane_b_seeds"))
     personas = load_personas(REPO_ROOT / "datagen" / "persona" / "user_sims")
     models = {
         "user_sim": roster.assigned("lane_c", "user_sim").id,
         "character": roster.assigned("lane_c", "character").id,
     }
-    raw = yaml.safe_load((configs_dir() / "lane_c.yaml").read_text()) or {}
     lane_cfg = LaneCConfig(**raw.get("driver", {}))
 
     # Draw one seed per conversation up front, in a fixed order: each conversation is

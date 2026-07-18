@@ -50,9 +50,14 @@ def load_inline_seeds(path: Path, olivia_system: str) -> list[Seed]:
     return seeds
 
 
-def seeds_from_lane_b(store: RunStore, max_per_work: int = 3) -> list[Seed]:
+def seeds_from_lane_b(
+    store: RunStore, max_per_work: int = 3, max_seeds: int | None = None
+) -> list[Seed]:
     """Reuse extracted scenes as self-play seeds: the character side plays one
-    participant, the user-sim plays the other."""
+    participant, the user-sim plays the other. `store` is the lane B run whose
+    characters seed the RP — point it at an RP-appropriate corpus (AO3), NOT the
+    published-fiction prose corpus (novel characters are off-distribution for RP).
+    `max_seeds` caps the total via a deterministic even stride across works."""
     path = store.raw("b")
     if not path.exists():
         return []
@@ -78,4 +83,7 @@ def seeds_from_lane_b(store: RunStore, max_per_work: int = 3) -> list[Seed]:
                 user_goal=f"Play {speakers[1]} in this scene.",
             )
         )
+    if max_seeds is not None and len(seeds) > max_seeds:
+        step = len(seeds) / max_seeds
+        seeds = [seeds[int(i * step)] for i in range(max_seeds)]
     return seeds
