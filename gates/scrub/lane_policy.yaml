@@ -1,0 +1,12 @@
+# Per-lane scrub policy: which pattern labels do NOT apply to a lane.
+# Default posture (no entry): every pattern applies — synthetic corpora should
+# contain no real PII, so shapes drop/flag as configured.
+#
+# Lane D inverts the posture (radioactive-but-personal): the corpus IS the
+# owner's real life. Their own emails/phones are SIGNAL and must survive —
+# exempted here. api-key/ssn shapes still drop (never signal), and the
+# teacher-identity denylist still applies. Third-party PROTECTION comes from the
+# pseudonymizer instead (attached by the orchestrator; personal rules live in a
+# LOCAL file lane_d.yaml points at, never committed).
+d:
+  exempt_labels: [pii_email, pii_phone]

@@ -100,6 +100,9 @@ class Provenance(BaseModel):
 
 class Artifacts(BaseModel):
     hf_dataset: str = ""
+    # Lanes whose run data never ships anywhere (lane D: personal corpus stays
+    # under $AVIARY_DATA_DIR only). Recorded so the exemption is auditable.
+    ship_exempt_lanes: list[str] = Field(default_factory=list)
     eval_families_held_out: list[str] = Field(default_factory=list)
     eval_param_seed: int | None = None
 

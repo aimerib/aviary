@@ -38,9 +38,26 @@ def render_run(
     split_seed: int,
     dpo_min_margin: float,
     extra_corpus: list[ConversationRecord] | None = None,
+    include_lanes: set[str] | None = None,
 ) -> RenderCounts:
     kept = list(read_jsonl(store.gated_kept(), ConversationRecord))
     rejected = list(read_jsonl(store.gated_rejected(), ConversationRecord))
+
+    if include_lanes is not None:
+        # Target record-set boundary: a render may only include the lanes its build
+        # target declares (e.g. lane D never enters a flash render; nothing
+        # Olivia-voiced enters a sorcha render). Exclusions are logged, never silent.
+        before = len(kept) + len(extra_corpus or [])
+        kept = [r for r in kept if r.provenance.lane in include_lanes]
+        extra_corpus = [r for r in (extra_corpus or []) if r.provenance.lane in include_lanes]
+        rejected = [r for r in rejected if r.provenance.lane in include_lanes]
+        excluded = before - len(kept) - len(extra_corpus)
+        if excluded:
+            log.info(
+                "render: %d records outside target lanes %s excluded",
+                excluded,
+                sorted(include_lanes),
+            )
 
     # corpus-wide dedupe: prior runs' kept records (extra_corpus) come first so
     # new duplicates lose to existing corpus members

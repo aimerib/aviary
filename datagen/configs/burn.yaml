@@ -26,4 +26,9 @@ burn_bands:
   c:  # self-play RP — PROVISIONAL; set from the first AO3-seeded lane C pilot
     verify: [0.35, 0.95]
     judge: [0.35, 0.90]
+  # Lane D (personal; sorcha target only) — INERT for v2.2: lanes above never
+  # include d. Provisional band until a real lane D pilot exists.
+  d:
+    verify: [0.5, 1.0]
+    judge: [0.3, 0.98]
 burn_max_pilot_age_days: 14

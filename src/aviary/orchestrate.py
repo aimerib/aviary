@@ -288,6 +288,14 @@ def cmd_generate(kind: str) -> str:
 
         if "a" in cfg.lanes:
             rollouts += _generate_lane_a(cfg, store, roster, prompts, run_id, target)
+
+        if "d" in cfg.lanes:
+            rollouts += _generate_lane_d(store, run_id)
+            # Lane D ships nowhere: run data stays under $AVIARY_DATA_DIR only,
+            # exempt from the ship-to-HF step. The manifest records the exemption.
+            manifest.artifacts.ship_exempt_lanes = sorted(
+                {*manifest.artifacts.ship_exempt_lanes, "d"}
+            )
     except Exception:
         # Leave a durable failure marker instead of a manifest that looks complete.
         manifest.status = "failed"
@@ -415,10 +423,23 @@ def _generate_lane_a(cfg, store, roster, prompts, run_id, target: Target) -> int
     return ingest_trajectories(trajectories, ctx, store)
 
 
+def _generate_lane_d(store: RunStore, run_id: str) -> int:
+    """Pure normalization — no teacher calls. Sources are local paths in
+    lane_d.yaml (never committed); output stays in the run store."""
+    from aviary.lanes.d_personal.adapter import LaneDConfig, parse_all
+
+    lane_cfg = LaneDConfig.load(configs_dir() / "lane_d.yaml")
+    if not lane_cfg.sources:
+        log.warning("lane D enabled but lane_d.yaml declares no sources; skipping")
+        return 0
+    records = list(parse_all(lane_cfg, run_id))
+    return write_jsonl(store.raw("d"), records)
+
+
 def cmd_gate(run_id: str) -> None:
     from aviary.gates.judge import Rubric
     from aviary.gates.pipeline import default_resolver, run_gates
-    from aviary.gates.scrub import load_patterns
+    from aviary.gates.scrub import load_lane_policies, load_patterns
     from aviary.lanes.a_agentic.taskbank import load_taskbank
 
     manifest = find_manifest(run_id)
@@ -450,6 +471,23 @@ def cmd_gate(run_id: str) -> None:
         REPO_ROOT / "gates" / "scrub" / "denylist.yaml",
         REPO_ROOT / "gates" / "scrub" / "pii_patterns.yaml",
     )
+    scrub_policies = load_lane_policies(REPO_ROOT / "gates" / "scrub" / "lane_policy.yaml")
+    if "d" in scrub_policies:
+        # Third-party protection for lane D: stable pseudonyms, mapping persisted
+        # under the run dir. Rules are personal -> a LOCAL file lane_d.yaml points
+        # at (unset = no-op rules, synthetic smoke only).
+        from aviary.gates.pseudonym import Pseudonymizer, PseudonymRules
+
+        lane_d_cfg_path = configs_dir() / "lane_d.yaml"
+        rules_path = None
+        if lane_d_cfg_path.exists():
+            raw_d = yaml.safe_load(lane_d_cfg_path.read_text()) or {}
+            if raw_d.get("pseudonym_rules"):
+                rules_path = Path(raw_d["pseudonym_rules"]).expanduser()
+        pseudo = Pseudonymizer(
+            PseudonymRules.load(rules_path), store.root / "scrub" / "pseudonyms.json"
+        )
+        scrub_policies["d"].transform = pseudo.apply
     template_verifiers = {t.id: t.verifier for t in load_taskbank(REPO_ROOT / "tasks")}
     stats = run_gates(
         store,
@@ -461,6 +499,7 @@ def cmd_gate(run_id: str) -> None:
         prompts,
         persona_speaker=target.persona_speaker,
         harmonize_policy={k: tuple(v) for k, v in target.harmonize.items()},
+        scrub_policies=scrub_policies,
         dedupe_threshold=cfg.dedupe_threshold,
         # Judge fan-out capped by the tightest judge provider so any per-record
         # routing stays within limits.
@@ -490,6 +529,7 @@ def cmd_render(run_id: str, prior_run_ids: list[str] | None = None) -> None:
     manifest = find_manifest(run_id)
     _assert_frozen_inputs(manifest)
     cfg = RunConfig.load(configs_dir() / f"{manifest.kind}.yaml")
+    target = Target.resolve()
     store = RunStore(run_id)
     extra: list[ConversationRecord] = []
     for prior in prior_run_ids or []:
@@ -501,6 +541,7 @@ def cmd_render(run_id: str, prior_run_ids: list[str] | None = None) -> None:
         split_seed=cfg.split_seed,
         dpo_min_margin=cfg.dpo_min_margin,
         extra_corpus=extra,
+        include_lanes=set(target.lanes),
     )
     manifest.counts.rendered_train = counts.train
     manifest.counts.rendered_eval = counts.eval
@@ -509,6 +550,7 @@ def cmd_render(run_id: str, prior_run_ids: list[str] | None = None) -> None:
     kept = list(read_jsonl(store.gated_kept(), ConversationRecord))
     manifest.artifacts = Artifacts(
         hf_dataset=manifest.artifacts.hf_dataset,
+        ship_exempt_lanes=manifest.artifacts.ship_exempt_lanes,
         eval_families_held_out=sorted({r.provenance.family for r in kept if r.provenance.holdout}),
         eval_param_seed=cfg.split_seed,
     )

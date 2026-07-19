@@ -1,0 +1,31 @@
+# Lane D — personal streams (Sorcha builds only; see docs/lane_d_timing.md).
+# DISABLED by default: no run config lists lane d, and this scaffold declares no
+# sources. Enable by adding sources here and `d` to a run config's lanes, under
+# AVIARY_TARGET=sorcha-v1.
+#
+# Sources are LOCAL paths, never committed (lane B book convention). The
+# radioactive-data rule applies to this file too: paths are fine, content and
+# real names are not.
+#
+# sources:
+#   - id: chat                       # family prefix: chat/<YYYY-MM>
+#     parser: generic_jsonl          # see lanes/d_personal/adapter.py for the format
+#     path: /local/exports/chat.jsonl
+#     assistant_sender: <owner handle in the export>
+sources: []
+
+# Silence longer than this splits a stream into separate records; the record is
+# the session, and holdout is time-blocked because temporal adjacency is the
+# leakage mode for personal logs.
+session_gap_minutes: 240
+max_messages_per_record: 200
+min_messages_per_record: 2
+
+# Whole months held out per source, e.g. [chat/2026-05]. Flows through the
+# family-level split rule unchanged.
+holdout_families: []
+
+# LOCAL pseudonymization rules (PseudonymRules yaml: preserve + name_patterns).
+# Personal by nature -> lives outside the repo; unset means no pseudonymization
+# (fine for synthetic smoke runs only).
+# pseudonym_rules: /local/aviary/pseudonym_rules.yaml
