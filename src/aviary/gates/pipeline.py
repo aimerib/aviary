@@ -117,6 +117,7 @@ def run_gates(
     client: TeacherClient,
     prompts: PromptSet,
     dedupe_threshold: float = 0.8,
+    judge_workers: int = 1,
 ) -> GateStats:
     records: list[ConversationRecord] = []
     for path in store.raw_files():
@@ -168,16 +169,24 @@ def run_gates(
         else:
             reject(rec, "verify")
 
-    # 2. judge (cross-vendor); rejects retained for DPO
+    # 2. judge (cross-vendor); rejects retained for DPO. Judgments are independent
+    # single calls, so they fan out through TeacherPool (results in input order —
+    # everything downstream stays deterministic); a serial pass over thousands of
+    # records was a ~day of wall clock.
+    from aviary.teacher.pool import TeacherPool
+
+    def _judge(rec: ConversationRecord):
+        rubric = _rubric_for(rec, rubric_by_lane)
+        judge_model = roster.judge_for(_generator_id(rec)).id
+        return judge_record(rec, rubric, client, judge_model, prompts)
+
+    pool = TeacherPool(client, roster, max_workers=max(1, judge_workers))
+    outcomes = pool.run([lambda r=rec: _judge(r) for rec in verified])
     judged: list[ConversationRecord] = []
-    for rec in verified:
-        try:
-            rubric = _rubric_for(rec, rubric_by_lane)
-            judge_model = roster.judge_for(_generator_id(rec)).id
-            scores = judge_record(rec, rubric, client, judge_model, prompts)
-        except Exception as e:
+    for rec, scores in zip(verified, outcomes, strict=True):
+        if isinstance(scores, Exception):
             # A malformed judge reply / transient LLM error drops one record.
-            log.warning("judge errored for %s: %s", rec.provenance.record_id, e)
+            log.warning("judge errored for %s: %s", rec.provenance.record_id, scores)
             reject(rec, "error")
             continue
         rec = rec.model_copy(

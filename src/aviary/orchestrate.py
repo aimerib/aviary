@@ -445,6 +445,9 @@ def cmd_gate(run_id: str) -> None:
         client,
         prompts,
         dedupe_threshold=cfg.dedupe_threshold,
+        # Judge fan-out capped by the tightest judge provider so any per-record
+        # routing stays within limits.
+        judge_workers=_lane_workers(roster, "judge", ("primary", "secondary", "tertiary")),
     )
     manifest.counts.verified = stats.verified
     manifest.counts.judged = stats.judged

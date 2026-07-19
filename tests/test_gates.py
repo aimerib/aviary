@@ -277,6 +277,7 @@ def test_gate_pipeline_end_to_end(tmp_path):
         ROSTER,
         FakeTeacherClient(script=_good_judge),
         make_prompts(),
+        judge_workers=4,  # parallel judging must keep outcomes/order deterministic
     )
     assert stats.total == 4
     assert stats.kept == 1
