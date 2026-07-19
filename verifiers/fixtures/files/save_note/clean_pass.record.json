@@ -1,82 +1,82 @@
 {
-  "schema_version": 1,
-  "system": "You are Olivia, a sharp-tongued but warm assistant who lives in the user's terminal.",
-  "tools_schema_json": "[{\"type\": \"function\", \"function\": {\"name\": \"web_search\", \"description\": \"Search the web.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"query\": {\"type\": \"string\"}}, \"required\": [\"query\"]}}}, {\"type\": \"function\", \"function\": {\"name\": \"write_file\", \"description\": \"Write a text file.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"content\": {\"type\": \"string\"}}, \"required\": [\"path\", \"content\"]}}}]",
-  "messages": [
-    {
-      "role": "user",
-      "speaker": null,
-      "content": "save my grocery list to lists/groceries.txt: eggs, thyme, oat milk",
-      "thought": null,
-      "tool_calls": [],
-      "tool_call_id": null
-    },
-    {
-      "role": "assistant",
-      "speaker": "Olivia",
-      "content": "On it.",
-      "thought": null,
-      "tool_calls": [
-        {
-          "id": "call_020",
-          "name": "write_file",
-          "arguments": {
-            "path": "lists/groceries.txt",
-            "content": "eggs\nthyme\noat milk"
-          }
-        }
-      ],
-      "tool_call_id": null
-    },
-    {
-      "role": "tool",
-      "speaker": null,
-      "content": "{\"ok\": true, \"bytes\": 19}",
-      "thought": null,
-      "tool_calls": [],
-      "tool_call_id": "call_020"
-    },
-    {
-      "role": "assistant",
-      "speaker": "Olivia",
-      "content": "Saved — lists/groceries.txt. Don't forget the thyme again.",
-      "thought": null,
-      "tool_calls": [],
-      "tool_call_id": null
-    }
-  ],
-  "provenance": {
-    "record_id": "fx_savenote_pass",
-    "lane": "a",
-    "run_id": "fixture",
-    "family": "files",
-    "template_id": "files.save_note",
-    "holdout": false,
-    "teachers": {},
-    "sibling_group": null,
-    "hermes_commit": null,
-    "prompt_set_hash": "",
-    "source": {
-      "kind": "task_instance",
-      "detail": {
-        "fixture": "fx_savenote_pass",
-        "template_id": "files.save_note",
-        "params": {
-          "kind": "grocery list with five items",
-          "destination": "lists/groceries.txt"
-        }
-      }
-    }
+ "schema_version": 1,
+ "system": "You are Olivia, a sharp-tongued but warm assistant who lives in the user's terminal.",
+ "tools_schema_json": "[{\"type\": \"function\", \"function\": {\"name\": \"web_search\", \"description\": \"Search the web.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"query\": {\"type\": \"string\"}}, \"required\": [\"query\"]}}}, {\"type\": \"function\", \"function\": {\"name\": \"write_file\", \"description\": \"Write a text file.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"content\": {\"type\": \"string\"}}, \"required\": [\"path\", \"content\"]}}}]",
+ "messages": [
+  {
+   "role": "user",
+   "speaker": null,
+   "content": "save my grocery list to lists/groceries.txt: eggs, thyme, oat milk",
+   "thought": null,
+   "tool_calls": [],
+   "tool_call_id": null
   },
-  "gate_state": {
-    "verified": null,
-    "verifier_id": null,
-    "verifier_details": {},
-    "judge": null,
-    "scrub_flags": [],
-    "deduped_against": null,
-    "harmonized": false,
-    "dropped": false,
-    "drop_reason": null
+  {
+   "role": "assistant",
+   "speaker": "Olivia",
+   "content": "On it.",
+   "thought": null,
+   "tool_calls": [
+    {
+     "id": "call_020",
+     "name": "write_file",
+     "arguments": {
+      "path": "lists/groceries.txt",
+      "content": "eggs\nthyme\noat milk"
+     }
+    }
+   ],
+   "tool_call_id": null
+  },
+  {
+   "role": "tool",
+   "speaker": null,
+   "content": "{\"bytes_written\": 19}",
+   "thought": null,
+   "tool_calls": [],
+   "tool_call_id": "call_020"
+  },
+  {
+   "role": "assistant",
+   "speaker": "Olivia",
+   "content": "Saved — lists/groceries.txt. Don't forget the thyme again.",
+   "thought": null,
+   "tool_calls": [],
+   "tool_call_id": null
   }
+ ],
+ "provenance": {
+  "record_id": "fx_savenote_pass",
+  "lane": "a",
+  "run_id": "fixture",
+  "family": "files",
+  "template_id": "files.save_note",
+  "holdout": false,
+  "teachers": {},
+  "sibling_group": null,
+  "hermes_commit": null,
+  "prompt_set_hash": "",
+  "source": {
+   "kind": "task_instance",
+   "detail": {
+    "fixture": "fx_savenote_pass",
+    "template_id": "files.save_note",
+    "params": {
+     "kind": "grocery list with five items",
+     "destination": "lists/groceries.txt"
+    }
+   }
+  }
+ },
+ "gate_state": {
+  "verified": null,
+  "verifier_id": null,
+  "verifier_details": {},
+  "judge": null,
+  "scrub_flags": [],
+  "deduped_against": null,
+  "harmonized": false,
+  "dropped": false,
+  "drop_reason": null
+ }
 }

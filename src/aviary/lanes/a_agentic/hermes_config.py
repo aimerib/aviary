@@ -1,33 +1,35 @@
-"""Emit hermes-agent batch_runner inputs and configs.
+"""Emit hermes-agent batch_runner inputs and CLI invocations.
 
-Config keys mirror the pinned checkout's datagen-config-examples/ (v0.18.2:
-environment, toolsets, num_workers, batch_size, max_items, model,
-ephemeral_system_prompt, output_dir). `just install` verifies the pinned checkout;
-verify_config_keys() cross-checks our emitted keys against its examples so we
-never invent hermes config keys (CLAUDE.md rule).
+The pinned batch_runner.py takes NO config file: it is a fire CLI driven entirely
+by flags, samples toolsets per prompt from a named distribution in its hardcoded
+registries (toolset_distributions.py / toolsets.py), and writes output to
+<cwd>/data/<run_name>/. verify_hermes_interface() cross-checks every flag we pass
+against the pinned checkout's batch_runner.py main() signature, and our
+distribution/tool names against its registries, so we never invent the hermes
+interface (CLAUDE.md rule).
 """
 
 from __future__ import annotations
 
+import ast
 import json
 from pathlib import Path
 
-import yaml
-
 from aviary.lanes.a_agentic.taskbank import TaskInstance, rollout_order
 
-KNOWN_KEYS = {
-    "environment",
-    "toolsets",
-    "num_workers",
+# Every flag build_batch_command() emits. Verified as a subset of the pinned
+# batch_runner.py main() kwargs before any batch runs.
+PASSED_FLAGS = {
+    "dataset_file",
     "batch_size",
-    "max_items",
+    "run_name",
+    "distribution",
     "model",
+    "base_url",
+    "api_key",
+    "num_workers",
+    "max_turns",
     "ephemeral_system_prompt",
-    "output_dir",
-    "compression",
-    "eval_every",
-    "eval_size",
 }
 
 
@@ -42,30 +44,35 @@ def emit_batch_inputs(instances: list[TaskInstance], out_path: Path) -> int:
     return len(lines)
 
 
-def emit_batch_config(
+def build_batch_command(
     *,
-    toolsets: list[str],
+    dataset_file: Path,
+    run_name: str,
+    distribution: str,
     wire_model: str,
+    base_url: str,
+    api_key: str,
     system_prompt: str,
-    output_dir: Path,
     num_workers: int,
     batch_size: int,
-    out_path: Path,
-) -> Path:
-    config = {
-        "toolsets": toolsets,
-        "num_workers": num_workers,
-        "batch_size": batch_size,
-        "model": wire_model,
-        "ephemeral_system_prompt": system_prompt,
-        "output_dir": str(output_dir),
-    }
-    unknown = set(config) - KNOWN_KEYS
-    if unknown:
-        raise ValueError(f"unknown hermes config keys (never invent them): {sorted(unknown)}")
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(yaml.safe_dump(config, sort_keys=False, allow_unicode=True))
-    return out_path
+    max_turns: int,
+) -> list[str]:
+    """The batch_runner argv (run with cwd=<hermes checkout>). Contains the API
+    key — never log the returned command."""
+    return [
+        "python",
+        "batch_runner.py",
+        f"--dataset_file={dataset_file}",
+        f"--batch_size={batch_size}",
+        f"--run_name={run_name}",
+        f"--distribution={distribution}",
+        f"--model={wire_model}",
+        f"--base_url={base_url}",
+        f"--api_key={api_key}",
+        f"--num_workers={num_workers}",
+        f"--max_turns={max_turns}",
+        f"--ephemeral_system_prompt={system_prompt}",
+    ]
 
 
 def verify_hermes_pin(hermes_checkout: Path, expected_pin: str) -> str:
@@ -88,22 +95,88 @@ def verify_hermes_pin(hermes_checkout: Path, expected_pin: str) -> str:
     return head
 
 
-def verify_config_keys(hermes_checkout: Path) -> set[str]:
-    """Collect config keys used by the pinned checkout's datagen-config-examples/;
-    raises if our KNOWN_KEYS contains anything the examples don't show."""
-    examples = hermes_checkout / "datagen-config-examples"
-    seen: set[str] = set()
-    for path in examples.glob("*.yaml"):
-        data = yaml.safe_load(path.read_text())
-        if isinstance(data, dict):
-            seen.update(data.keys())
-    if not seen:
-        raise FileNotFoundError(f"no datagen config examples under {examples}")
-    invented = KNOWN_KEYS - seen
+def _module_dict_literal(path: Path, name: str) -> dict:
+    """Extract a module-level dict assignment entry-by-entry without importing
+    hermes code. Entries whose values aren't pure literals (e.g. hermes-cli's
+    `_HERMES_CORE_TOOLS` reference) are skipped — if a skipped entry is one we
+    actually need, the required-tools check downstream fails loudly."""
+    tree = ast.parse(path.read_text())
+    for node in tree.body:
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if (
+                    isinstance(target, ast.Name)
+                    and target.id == name
+                    and isinstance(node.value, ast.Dict)
+                ):
+                    out = {}
+                    for key, value in zip(node.value.keys, node.value.values, strict=True):
+                        try:
+                            out[ast.literal_eval(key)] = ast.literal_eval(value)
+                        except ValueError:
+                            continue
+                    return out
+    raise ValueError(f"{name} dict not found in {path.name}")
+
+
+def _main_kwargs(batch_runner: Path) -> set[str]:
+    tree = ast.parse(batch_runner.read_text())
+    for node in tree.body:
+        if isinstance(node, ast.FunctionDef) and node.name == "main":
+            return {a.arg for a in node.args.args + node.args.kwonlyargs}
+    raise ValueError(f"no main() found in {batch_runner.name}")
+
+
+def _toolset_tools(toolsets: dict, name: str) -> set[str]:
+    """A toolset's tools, with its `includes` expanded recursively."""
+    entry = toolsets.get(name, {})
+    tools = set(entry.get("tools", []))
+    for included in entry.get("includes", []):
+        tools |= _toolset_tools(toolsets, included)
+    return tools
+
+
+def verify_hermes_interface(
+    hermes_checkout: Path,
+    distribution: str | None = None,
+    required_tools: list[str] | tuple[str, ...] = (),
+) -> set[str]:
+    """Cross-check aviary's assumptions against the pinned checkout's source.
+
+    Always: every flag we pass exists in batch_runner.py main(). With a
+    distribution: it exists in DISTRIBUTIONS, and every required tool (the task
+    bank's union) is served by a toolset the distribution enables at 100% —
+    probabilistic toolsets don't count, a task's tools must ALWAYS be present.
+    Returns the set of always-present tools."""
+    flags = _main_kwargs(hermes_checkout / "batch_runner.py")
+    invented = PASSED_FLAGS - flags
     if invented:
         raise ValueError(
-            f"aviary assumes hermes config keys not present in the pinned checkout's "
-            f"examples: {sorted(invented)} — update KNOWN_KEYS/emit_batch_config to match "
-            f"the checkout, not the other way around"
+            f"aviary passes batch_runner flags the pinned checkout's main() does not "
+            f"accept: {sorted(invented)} — update build_batch_command to match the "
+            "checkout, not the other way around"
         )
-    return seen
+    if distribution is None:
+        return set()
+
+    distributions = _module_dict_literal(
+        hermes_checkout / "toolset_distributions.py", "DISTRIBUTIONS"
+    )
+    if distribution not in distributions:
+        raise ValueError(
+            f"unknown hermes distribution {distribution!r}; pinned checkout has: "
+            f"{sorted(distributions)}"
+        )
+    toolsets = _module_dict_literal(hermes_checkout / "toolsets.py", "TOOLSETS")
+    always_present: set[str] = set()
+    for toolset_name, probability in distributions[distribution]["toolsets"].items():
+        if probability >= 100:
+            always_present |= _toolset_tools(toolsets, toolset_name)
+    missing = set(required_tools) - always_present
+    if missing:
+        raise ValueError(
+            f"task bank needs tools not guaranteed by distribution {distribution!r}: "
+            f"{sorted(missing)} (always-present: {sorted(always_present)}) — pick a "
+            "distribution whose 100% toolsets cover the task bank"
+        )
+    return always_present

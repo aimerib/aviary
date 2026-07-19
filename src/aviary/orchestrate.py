@@ -81,6 +81,12 @@ class RunConfig(BaseModel):
     lane_a_num_workers: int = 4
     lane_a_batch_size: int = 20
     lane_a_timeout_s: int = 14400  # wall-clock cap on the hermes batch subprocess (4h)
+    # Hermes toolset distribution for the batch. Must enable, at 100%, toolsets
+    # covering the task bank's tool union (verified before the batch runs).
+    # terminal_web = terminal+file+web all at 100%: deterministic, covers the
+    # files/web families, and the extra tools ride along as distractors.
+    lane_a_distribution: str = "terminal_web"
+    lane_a_max_turns: int = 10
     lane_c: LaneCRunConfig = Field(default_factory=LaneCRunConfig)
     # Per-lane keep-rate bands the burn guard enforces against the blessing pilot.
     # Every lane the burn runs MUST have a band here and MUST have been measured by
@@ -363,16 +369,25 @@ def _generate_lane_a(cfg, store, roster, prompts, run_id) -> int:
         log.warning("lane A enabled but the task bank is empty; skipping")
         return 0
     teacher = roster.assigned("lane_a", "easy_mid")
-    toolsets = sorted({tool for t in templates for tool in t.tools})
+    api_key = os.environ.get(teacher.api_key_env) or (
+        os.environ.get(teacher.api_key_env_fallback) if teacher.api_key_env_fallback else None
+    )
+    if not api_key:
+        raise RuntimeError(f"missing API key for lane A teacher: set {teacher.api_key_env}")
+    required_tools = sorted({tool for t in templates for tool in t.tools})
     trajectories = run_hermes_batch(
         hermes_dir(),
         instances,
-        toolsets=toolsets,
+        distribution=cfg.lane_a_distribution,
+        required_tools=required_tools,
         wire_model=teacher.wire_model,
+        base_url=teacher.base_url,
+        api_key=api_key,
         system_prompt=prompts["olivia_system"],
         store=store,
         num_workers=cfg.lane_a_num_workers,
         batch_size=cfg.lane_a_batch_size,
+        max_turns=cfg.lane_a_max_turns,
         run_name=run_id,
         timeout_s=cfg.lane_a_timeout_s,
     )

@@ -7,6 +7,7 @@ whose keep rates sit inside the expected bands and whose config hash matches.
 from __future__ import annotations
 
 import logging
+import shutil
 import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -14,9 +15,9 @@ from typing import TYPE_CHECKING
 from aviary.io.jsonl import read_raw_jsonl, write_jsonl
 from aviary.io.store import RunStore
 from aviary.lanes.a_agentic.hermes_config import (
-    emit_batch_config,
+    build_batch_command,
     emit_batch_inputs,
-    verify_config_keys,
+    verify_hermes_interface,
 )
 from aviary.lanes.a_agentic.ingest import IngestContext, IngestError, ingest_hermes_record
 from aviary.lanes.a_agentic.taskbank import TaskInstance
@@ -102,53 +103,59 @@ def run_hermes_batch(
     hermes_dir: Path,
     instances: list[TaskInstance],
     *,
-    toolsets: list[str],
+    distribution: str,
+    required_tools: list[str],
     wire_model: str,
+    base_url: str,
+    api_key: str,
     system_prompt: str,
     store: RunStore,
     num_workers: int,
     batch_size: int,
+    max_turns: int,
     run_name: str,
     timeout_s: int | None = None,
 ) -> Path:
-    """Emit inputs+config, invoke batch_runner, return the trajectories.jsonl path."""
-    verify_config_keys(hermes_dir)
+    """Emit inputs, invoke batch_runner (CLI flags, cwd=<checkout>), and collect
+    its output into the run store. batch_runner writes to <checkout>/data/<run_name>/
+    (hardcoded); we copy trajectories.jsonl out immediately so the run store stays
+    the single source of truth."""
+    verify_hermes_interface(hermes_dir, distribution=distribution, required_tools=required_tools)
     out_dir = store.hermes_out()
     inputs = out_dir / "inputs.jsonl"
-    config = out_dir / "batch_config.yaml"
     n = emit_batch_inputs(instances, inputs)
-    emit_batch_config(
-        toolsets=toolsets,
+    cmd = build_batch_command(
+        dataset_file=inputs,
+        run_name=run_name,
+        distribution=distribution,
         wire_model=wire_model,
+        base_url=base_url,
+        api_key=api_key,
         system_prompt=system_prompt,
-        output_dir=out_dir / run_name,
         num_workers=num_workers,
         batch_size=batch_size,
-        out_path=config,
+        max_turns=max_turns,
     )
-    log.info("hermes batch: %d rollout lines -> %s", n, out_dir / run_name)
+    # cmd carries the API key — log the shape, never the command.
+    log.info(
+        "hermes batch: %d rollout lines, distribution=%s -> %s",
+        n,
+        distribution,
+        hermes_dir / "data" / run_name,
+    )
     try:
-        subprocess.run(
-            [
-                "python",
-                "batch_runner.py",
-                "--config",
-                str(config),
-                "--run_name",
-                run_name,
-                "--dataset_file",
-                str(inputs),
-            ],
-            cwd=hermes_dir,
-            check=True,
-            timeout=timeout_s,
-        )
+        subprocess.run(cmd, cwd=hermes_dir, check=True, timeout=timeout_s)
     except subprocess.TimeoutExpired as e:
         # A hung/looping rollout must not block the whole burn indefinitely.
         raise BurnGuardError(
             f"hermes batch exceeded {timeout_s}s wall-clock and was killed"
         ) from e
-    return out_dir / run_name / "trajectories.jsonl"
+    produced = hermes_dir / "data" / run_name / "trajectories.jsonl"
+    if not produced.exists():
+        raise BurnGuardError(f"hermes batch finished but wrote no {produced}")
+    collected = out_dir / "trajectories.jsonl"
+    shutil.copy2(produced, collected)
+    return collected
 
 
 def ingest_trajectories(trajectories: Path, ctx: IngestContext, store: RunStore) -> int:

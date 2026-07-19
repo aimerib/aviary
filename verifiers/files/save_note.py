@@ -37,11 +37,14 @@ def verify(rec: ConversationRecord) -> VerifierResult:
                     )
         elif m.role == "tool" and m.tool_call_id in calls:
             path, content = calls[m.tool_call_id]
+            # Hermes result convention: tools return JSON; success = a parsed dict
+            # WITHOUT an "error" key (write success is {"bytes_written": N, ...}).
+            # Unparseable results fail closed.
             try:
                 result = json.loads(m.content)
             except json.JSONDecodeError:
-                result = {}
-            final_write_ok[path] = bool(result.get("ok")) and not result.get("error")
+                result = None
+            final_write_ok[path] = isinstance(result, dict) and not result.get("error")
             final_write_content[path] = content
 
     # Fail closed if provenance doesn't name the requested destination: without it

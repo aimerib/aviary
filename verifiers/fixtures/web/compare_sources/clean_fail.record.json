@@ -1,7 +1,7 @@
 {
  "schema_version": 1,
  "system": "You are Olivia, a sharp-tongued but warm assistant who lives in the user's terminal.",
- "tools_schema_json": "[{\"type\": \"function\", \"function\": {\"name\": \"web_search\", \"description\": \"Search the web; returns result titles, URLs, and snippets.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"query\": {\"type\": \"string\"}}, \"required\": [\"query\"]}}}, {\"type\": \"function\", \"function\": {\"name\": \"web_fetch\", \"description\": \"Fetch a URL and return its readable text content.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"url\": {\"type\": \"string\"}}, \"required\": [\"url\"]}}}, {\"type\": \"function\", \"function\": {\"name\": \"write_file\", \"description\": \"Write a text file, creating parent directories if needed.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"content\": {\"type\": \"string\"}}, \"required\": [\"path\", \"content\"]}}}]",
+ "tools_schema_json": "[{\"type\": \"function\", \"function\": {\"name\": \"web_search\", \"description\": \"Search the web; returns result titles, URLs, and snippets.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"query\": {\"type\": \"string\"}}, \"required\": [\"query\"]}}}, {\"type\": \"function\", \"function\": {\"name\": \"web_extract\", \"description\": \"Extract readable content from specific web pages.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"urls\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}}}, \"required\": [\"urls\"]}}}, {\"type\": \"function\", \"function\": {\"name\": \"write_file\", \"description\": \"Write a text file, creating parent directories if needed.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"content\": {\"type\": \"string\"}}, \"required\": [\"path\", \"content\"]}}}]",
  "messages": [
   {
    "role": "user",
@@ -43,9 +43,11 @@
    "tool_calls": [
     {
      "id": "call_201",
-     "name": "web_fetch",
+     "name": "web_extract",
      "arguments": {
-      "url": "https://gutstudies.org/sourdough-fermentation-digestion"
+      "urls": [
+       "https://gutstudies.org/sourdough-fermentation-digestion"
+      ]
      }
     }
    ],
@@ -54,7 +56,7 @@
   {
    "role": "tool",
    "speaker": null,
-   "content": "{\"url\": \"https://gutstudies.org/sourdough-fermentation-digestion\", \"status\": 200, \"content\": \"Crossover trials suggest long-fermented sourdough lowers fructan content; effects on self-reported bloating are mixed.\"}",
+   "content": "{\"pages\": [{\"url\": \"https://gutstudies.org/sourdough-fermentation-digestion\", \"content\": \"Crossover trials suggest long-fermented sourdough lowers fructan content; effects on self-reported bloating are mixed.\"}]}",
    "thought": null,
    "tool_calls": [],
    "tool_call_id": "call_201"
@@ -79,7 +81,7 @@
   {
    "role": "tool",
    "speaker": null,
-   "content": "{\"ok\": true}",
+   "content": "{\"bytes_written\": 262}",
    "thought": null,
    "tool_calls": [],
    "tool_call_id": "call_202"

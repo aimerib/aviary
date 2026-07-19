@@ -138,7 +138,7 @@ task you were asked to do, stop and say so instead of working around it.
 | `src/aviary/render/`  | THE serializer, split, DPO pairing, render orchestration |
 | `tasks/<family>/`     | Lane A task templates (YAML; schema: `tasks/TEMPLATE.task.yaml`) |
 | `verifiers/`          | Verifier plugins (pure functions) + `fixtures/`; laneb/, lanec/ structural verifiers |
-| `datagen/configs/`    | teachers roster, pricing, pilot/burn, lane_b/lane_c configs; `hermes/` for batch_runner configs |
+| `datagen/configs/`    | teachers roster, pricing, pilot/burn, lane_b/lane_c configs |
 | `datagen/toolsets/`   | Per-family tool allowlists + JSON schemas                |
 | `datagen/persona/`    | Olivia (`system.md` canonical, `SOUL.md` expanded); `user_sims/` personas |
 | `datagen/prompts/`    | Lane B extraction + lane C user-sim prompt templates (part of the hashed PromptSet) |
@@ -153,7 +153,7 @@ task you were asked to do, stop and say so instead of working around it.
 
 `just` recipes (implemented; names are contract — don't rename):
 
-- `just install`      — verify pinned hermes checkout (`$AVIARY_HERMES_DIR`), wire symlinks
+- `just install`      — verify pinned hermes checkout (`$AVIARY_HERMES_DIR`) + its batch_runner interface
 - `just pilot`        — calibration run across lanes enabled in `pilot.yaml`; writes a manifest
 - `just burn`         — full run; refuses without a recent healthy pilot manifest
 - `just gate <run>`   — verify → judge → scrub/dedupe → harmonize
@@ -177,12 +177,15 @@ that band, revise the template (difficulty), don't touch the verifier.
   as the test-fixture format.
 - hermes-agent is a **pinned external dependency we call** (tag in
   `teachers.yaml`) — never vendored, never forked, never patched from here.
-- Don't invent hermes config keys: `emit_batch_config` is restricted to keys
-  observed in the pinned checkout's `datagen-config-examples/`, and
-  `just install` cross-checks (`verify_config_keys`).
-- hermes wants configs in its own directories: `just install` symlinks from
-  this repo outward. The repo is the source of truth; never edit symlink
-  targets in place.
+- Don't invent the hermes interface: `batch_runner.py` takes CLI flags only (no
+  config file). `verify_hermes_interface` cross-checks every flag we pass
+  against the pinned checkout's `main()` signature, and our distribution/tool
+  names against its registries (`toolsets.py`, `toolset_distributions.py`).
+  Runs at `just install` and again before every batch.
+- hermes writes batch output to `<checkout>/data/<run_name>/` (hardcoded);
+  `run_hermes_batch` collects `trajectories.jsonl` into
+  `$AVIARY_DATA_DIR/<run_id>/hermes/` immediately — the run store stays the
+  single source of truth. Nothing is ever written into the checkout by hand.
 
 ## Things to never do
 

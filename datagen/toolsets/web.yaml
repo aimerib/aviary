@@ -1,11 +1,13 @@
-# web-family tool allowlist + schemas. Widening this list REQUIRES updating the
-# family's verifier fixtures in the same change (CLAUDE.md rule).
+# web-family tool allowlist + schemas, MIRRORING the pinned hermes checkout's real
+# tools (web toolset: web_search, web_extract; file toolset: write_file). Widening
+# this list REQUIRES updating the family's verifier fixtures in the same change
+# (CLAUDE.md rule).
 #
-# Result conventions the verifiers rely on:
-#   - web_search / web_fetch results carry source URLs verbatim in the result
+# Result conventions the verifiers rely on (hermes tools/registry.py):
+#   - every tool returns a JSON string; success = a dict WITHOUT an "error" key
+#     (write_file success is {"bytes_written": N, ...}).
+#   - web_search / web_extract results carry source URLs verbatim in the result
 #     text (any JSON shape; verifiers regex URLs out rather than parse fields).
-#   - write_file results are JSON with `ok: true` on success / `error` on failure
-#     (same convention as the files family).
 family: web
 tools:
   - type: function
@@ -19,13 +21,15 @@ tools:
         required: [query]
   - type: function
     function:
-      name: web_fetch
-      description: Fetch a URL and return its readable text content.
+      name: web_extract
+      description: Extract readable content from specific web pages.
       parameters:
         type: object
         properties:
-          url: {type: string}
-        required: [url]
+          urls:
+            type: array
+            items: {type: string}
+        required: [urls]
   - type: function
     function:
       name: write_file

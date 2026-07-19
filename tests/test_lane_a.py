@@ -5,7 +5,11 @@ from pathlib import Path
 
 import pytest
 
-from aviary.lanes.a_agentic.hermes_config import emit_batch_config, emit_batch_inputs
+from aviary.lanes.a_agentic.hermes_config import (
+    build_batch_command,
+    emit_batch_inputs,
+    verify_hermes_interface,
+)
 from aviary.lanes.a_agentic.ingest import IngestContext, IngestError, ingest_hermes_record
 from aviary.lanes.a_agentic.run import BurnGuardError, guard_burn
 from aviary.lanes.a_agentic.taskbank import expand_all, load_taskbank
@@ -35,17 +39,63 @@ def test_emit_inputs_repeats_rollouts(tmp_path):
     assert set(first) == {"prompt"}
 
 
-def test_emit_config_rejects_unknown_keys(tmp_path):
-    path = emit_batch_config(
-        toolsets=["file"],
-        wire_model="deepseek-v4-flash-20260610",
+def test_build_batch_command_flags_match_verified_set(tmp_path):
+    from aviary.lanes.a_agentic.hermes_config import PASSED_FLAGS
+
+    cmd = build_batch_command(
+        dataset_file=tmp_path / "inputs.jsonl",
+        run_name="r",
+        distribution="terminal_web",
+        wire_model="deepseek-v4-flash",
+        base_url="https://api.deepseek.com",
+        api_key="k",
         system_prompt="sys",
-        output_dir=tmp_path / "out",
         num_workers=2,
         batch_size=4,
-        out_path=tmp_path / "cfg.yaml",
+        max_turns=10,
     )
-    assert path.exists()
+    assert cmd[:2] == ["python", "batch_runner.py"]
+    emitted = {arg[2:].split("=", 1)[0] for arg in cmd[2:]}
+    assert emitted == PASSED_FLAGS  # every emitted flag is verified, none forgotten
+
+
+def _fake_hermes(tmp_path, main_args, distributions, toolsets):
+    (tmp_path / "batch_runner.py").write_text(
+        f"def main({', '.join(f'{a}=None' for a in main_args)}):\n    pass\n"
+    )
+    (tmp_path / "toolset_distributions.py").write_text(f"DISTRIBUTIONS = {distributions!r}\n")
+    (tmp_path / "toolsets.py").write_text(f"TOOLSETS = {toolsets!r}\n")
+    return tmp_path
+
+
+_MAIN_ARGS = [
+    "dataset_file", "batch_size", "run_name", "distribution", "model", "base_url",
+    "api_key", "num_workers", "max_turns", "ephemeral_system_prompt", "resume",
+]
+_DISTS = {"terminal_web": {"toolsets": {"terminal": 100, "file": 100, "web": 80}}}
+_TOOLSETS = {
+    "terminal": {"tools": ["terminal"], "includes": ["file"]},
+    "file": {"tools": ["read_file", "write_file"], "includes": []},
+    "web": {"tools": ["web_search", "web_extract"], "includes": []},
+}
+
+
+def test_verify_hermes_interface(tmp_path):
+    hd = _fake_hermes(tmp_path, _MAIN_ARGS, _DISTS, _TOOLSETS)
+    # file is 100% (directly and via terminal's includes); web is only 80%.
+    available = verify_hermes_interface(hd, "terminal_web", ["write_file", "read_file"])
+    assert "write_file" in available and "web_search" not in available
+
+    with pytest.raises(ValueError, match="not guaranteed"):
+        verify_hermes_interface(hd, "terminal_web", ["web_search"])  # 80% != always
+    with pytest.raises(ValueError, match="unknown hermes distribution"):
+        verify_hermes_interface(hd, "nope", [])
+
+
+def test_verify_hermes_interface_rejects_invented_flags(tmp_path):
+    hd = _fake_hermes(tmp_path, ["dataset_file", "run_name"], _DISTS, _TOOLSETS)
+    with pytest.raises(ValueError, match="does not accept"):
+        verify_hermes_interface(hd)
 
 
 HERMES_RECORD = {

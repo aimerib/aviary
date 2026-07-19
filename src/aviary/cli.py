@@ -57,7 +57,11 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _install() -> int:
-    from aviary.lanes.a_agentic.hermes_config import verify_config_keys, verify_hermes_pin
+    """Verify the pinned hermes checkout and its batch_runner interface. Nothing is
+    written into the checkout: batch_runner takes everything via CLI flags, so
+    there are no configs to place (datagen/toolsets/ are aviary's own schema
+    mirrors for ingest/render, not files hermes reads)."""
+    from aviary.lanes.a_agentic.hermes_config import verify_hermes_interface, verify_hermes_pin
     from aviary.paths import REPO_ROOT, hermes_dir
     from aviary.teacher.roster import Roster
 
@@ -65,26 +69,11 @@ def _install() -> int:
     hd = hermes_dir()
     try:
         head = verify_hermes_pin(hd, roster.hermes_pin)
+        verify_hermes_interface(hd)
     except ValueError as e:
         print(str(e), file=sys.stderr)
         return 1
-    verify_config_keys(hd)
-
-    # repo is source of truth; hermes reads via symlinks, never edit targets in place
-    links = {
-        hd / "aviary-toolsets": REPO_ROOT / "datagen" / "toolsets",
-        hd / "aviary-persona": REPO_ROOT / "datagen" / "persona",
-        hd / "aviary-configs": REPO_ROOT / "datagen" / "configs" / "hermes",
-    }
-    for link, target in links.items():
-        if link.is_symlink():
-            link.unlink()
-        elif link.exists():
-            print(f"refusing to replace non-symlink {link}", file=sys.stderr)
-            return 1
-        link.symlink_to(target)
-        print(f"linked {link} -> {target}")
-    print(f"hermes {head} ok")
+    print(f"hermes {head} ok (batch_runner interface verified)")
     return 0
 
 
