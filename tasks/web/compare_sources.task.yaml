@@ -3,10 +3,11 @@ family: web
 holdout: false
 
 description: >
-  Teach grounded multi-source research: search, actually read at least two
-  sources, and save a short comparison that cites the sources it really used.
-  The verifier kills hallucinated citations — a cited URL must have appeared in
-  a tool result during the session.
+  Teach grounded multi-source research under a length budget: search, actually
+  read at least three sources, and save a SHORT comparison that cites the
+  sources it really used. The verifier kills hallucinated citations — a cited
+  URL must have appeared in a tool result during the session — and enforces the
+  word cap the user asked for.
 
 # zip mode: unique destination per instance (shared hermes workspace — see
 # files.save_note for the rationale).
@@ -27,8 +28,9 @@ params:
 
 prompt: |
   hey liv, i keep running into opposite claims about {topic}. can you look at a
-  couple of actual sources and save me a short comparison in {destination}? link
-  what you used so i can read more.
+  few actual sources (three at least) and save me a comparison in {destination}?
+  keep it under 300 words — i want the gist, not a term paper. link what you
+  used so i can read more.
 
 tools:
   - web_search
@@ -39,6 +41,8 @@ n_rollouts: 4
 difficulty_target: [0.3, 0.8]
 verifier: verifiers/web/compare_sources.py
 notes: >
-  First web-family template. Difficulty comes from the grounding requirement:
-  the final file must cite >=2 distinct URLs that were actually fetched/returned
-  by tools this session — summarizing from priors with decorative links fails.
+  First web-family template. v2 hardening (2026-07-19): grounding alone passed
+  0.95 on deepseek-v4-flash (rollouts cited 3-10 grounded URLs) while "short"
+  produced a median 885-word file — so the bar is now >=3 grounded citations
+  AND <=300 non-URL words. Difficulty comes from brevity against a verbose
+  prior, with grounding as the floor.

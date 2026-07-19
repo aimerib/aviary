@@ -3,12 +3,13 @@ family: files
 holdout: false
 
 description: >
-  Teach reliable file writing with confirmation: the user asks Olivia to save a
-  small piece of text; success is the file existing with the right content.
+  Teach reliable multi-write coordination with confirmation: the user asks Olivia
+  to save a small piece of text AND log the save in a running index file; success
+  is both files existing, with the index actually naming the saved file.
 
-# zip mode: k-th kind pairs with k-th destination. Destinations are UNIQUE per
-# instance on purpose — hermes rollouts share one workspace, and two instances
-# writing the same path corrupt each other's final state.
+# zip mode: k-th kind pairs with k-th destination/index. Destinations and index
+# paths are UNIQUE per instance on purpose — hermes rollouts share one workspace,
+# and two instances writing the same path corrupt each other's final state.
 param_mode: zip
 params:
   kind:
@@ -25,9 +26,17 @@ params:
     - notes/ocean-haiku.txt
     - lists/packing.txt
     - notes/plants.txt
+  index:
+    - notes/rain-haiku.index.txt
+    - lists/groceries.index.txt
+    - notes/dentist.index.txt
+    - notes/ocean-haiku.index.txt
+    - lists/packing.index.txt
+    - notes/plants.index.txt
 
 prompt: |
-  hey liv, can you write a {kind} and save it to {destination}?
+  hey liv, can you write a {kind} and save it to {destination}? oh and add a line
+  to {index} saying what you saved and where, so i can find it later.
 
 tools:
   - write_file
@@ -36,4 +45,8 @@ tools:
 n_rollouts: 4
 difficulty_target: [0.3, 0.8]
 verifier: verifiers/files/save_note.py
-notes: exemplar template; the verifier checks the final write result, not the path taken.
+notes: >
+  exemplar template; the verifier checks final write results, not the path taken.
+  v2 hardening (2026-07-19): the original single-write task passed 1.00 on
+  deepseek-v4-flash — difficulty now comes from the second correlated write (the
+  index must name the saved file).

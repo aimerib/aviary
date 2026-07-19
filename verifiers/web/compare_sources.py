@@ -1,10 +1,12 @@
 """Verifier for web.compare_sources: outcome gate on the FINAL saved artifact.
 
 Passes iff the requested destination ends in a successful write whose content
-cites >=2 distinct grounded sources — URLs that actually appeared in a tool
-result this session — and the final assistant turn confirms without pending
-tool calls. Path taken is irrelevant: dead links, failed fetches, and re-searches
-along the way are fine (recovered-failure trajectories are prime data).
+cites >=3 distinct grounded sources — URLs that actually appeared in a tool
+result this session — inside the word budget the user asked for (<=300 words,
+URL tokens excluded so citations never eat the budget), and the final assistant
+turn confirms without pending tool calls. Path taken is irrelevant: dead links,
+failed fetches, and re-searches along the way are fine (recovered-failure
+trajectories are prime data).
 
 Scope: this gates that the artifact reached the RIGHT path and is grounded in
 sources the session really retrieved. Whether the comparison is faithful to
@@ -78,16 +80,21 @@ def verify(rec: ConversationRecord) -> VerifierResult:
     # Fail closed without a destination param (same hole save_note closes).
     wrote_target = bool(destination) and target_ok
     cited = _urls(target_content) if destination else set()
-    # >=2 distinct cited URLs that the session actually retrieved. Extra ungrounded
+    # >=3 distinct cited URLs that the session actually retrieved. Extra ungrounded
     # links don't fail here (judge territory); too few grounded ones do.
     grounded_citations = cited & grounded
+    # The word budget the prompt asks for ("under 300 words"). URL tokens are
+    # excluded so citing more sources never costs budget — brevity pressure lands
+    # on the prose, which is the point (v2: median unbounded output was 885 words).
+    words = [w for w in target_content.split() if not _URL.match(w)]
 
     last = rec.messages[-1]
     confirmed = last.role == "assistant" and not last.tool_calls and bool(last.content.strip())
 
     checks = {
         "wrote_requested_path": wrote_target,
-        "cited_two_grounded_sources": len(grounded_citations) >= 2,
+        "cited_three_grounded_sources": len(grounded_citations) >= 3,
+        "within_word_budget": bool(destination) and 0 < len(words) <= 300,
         "confirmed_to_user": confirmed,
     }
     return VerifierResult(
