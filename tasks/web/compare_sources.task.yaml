@@ -8,6 +8,9 @@ description: >
   The verifier kills hallucinated citations — a cited URL must have appeared in
   a tool result during the session.
 
+# zip mode: unique destination per instance (shared hermes workspace — see
+# files.save_note for the rationale).
+param_mode: zip
 params:
   topic:
     - whether standing desks actually improve focus
@@ -16,8 +19,11 @@ params:
     - if electric cars are actually cheaper to own than gas ones
     - whether learning an instrument helps adult brains
   destination:
-    - research/comparison.md
-    - notes/two-takes.md
+    - research/standing-desks.md
+    - research/sourdough.md
+    - research/cold-showers.md
+    - research/ev-costs.md
+    - research/instruments.md
 
 prompt: |
   hey liv, i keep running into opposite claims about {topic}. can you look at a

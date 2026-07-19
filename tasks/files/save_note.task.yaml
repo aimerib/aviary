@@ -6,14 +6,25 @@ description: >
   Teach reliable file writing with confirmation: the user asks Olivia to save a
   small piece of text; success is the file existing with the right content.
 
+# zip mode: k-th kind pairs with k-th destination. Destinations are UNIQUE per
+# instance on purpose — hermes rollouts share one workspace, and two instances
+# writing the same path corrupt each other's final state.
+param_mode: zip
 params:
   kind:
     - haiku about rain
     - grocery list with five items
     - one-line reminder about a dentist appointment
+    - haiku about the ocean
+    - packing list for a weekend hiking trip
+    - one-line reminder to water the plants
   destination:
-    - notes/note.txt
-    - lists/today.txt
+    - notes/rain-haiku.txt
+    - lists/groceries.txt
+    - notes/dentist.txt
+    - notes/ocean-haiku.txt
+    - lists/packing.txt
+    - notes/plants.txt
 
 prompt: |
   hey liv, can you write a {kind} and save it to {destination}?

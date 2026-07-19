@@ -23,9 +23,9 @@ burn_bands:
   b:  # fiction extraction — judges LOW by design (thought_quality floor, ~28% observed)
     verify: [0.40, 0.95]
     judge: [0.15, 0.50]
-  c:  # self-play RP — PROVISIONAL; set from the first AO3-seeded lane C pilot
-    verify: [0.35, 0.95]
-    judge: [0.35, 0.90]
+  c:  # self-play RP — calibrated on 2026-07-19-pilot-lanec-ao3 (verify 0.82, judge 0.93)
+    verify: [0.55, 0.95]
+    judge: [0.60, 0.98]
   # Lane D (personal; sorcha target only) — INERT for v2.2: lanes above never
   # include d. Provisional band until a real lane D pilot exists.
   d:
