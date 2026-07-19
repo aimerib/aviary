@@ -6,6 +6,7 @@ import hashlib
 import itertools
 import re
 from pathlib import Path
+from typing import Literal
 
 import yaml
 from pydantic import BaseModel, Field, model_validator
@@ -21,6 +22,10 @@ class TaskTemplate(BaseModel):
     holdout: bool = False
     description: str = ""
     params: dict[str, list] = Field(default_factory=dict)
+    # "product": cartesian expansion. "zip": parallel lists, k-th of each — the
+    # way to give every instance a UNIQUE file destination (hermes rollouts share
+    # one workspace, so instances writing the same path can collide).
+    param_mode: Literal["product", "zip"] = "product"
     prompt: str
     tools: list[str]
     n_rollouts: int = 4
@@ -36,6 +41,8 @@ class TaskTemplate(BaseModel):
             raise ValueError(f"{self.id}: prompt placeholders without params: {sorted(missing)}")
         if not self.id.startswith(f"{self.family}."):
             raise ValueError(f"{self.id}: id must be <family>.<short_name>")
+        if self.param_mode == "zip" and len({len(v) for v in self.params.values()}) > 1:
+            raise ValueError(f"{self.id}: zip param_mode requires equal-length param lists")
         return self
 
 
@@ -71,10 +78,16 @@ def expand(template: TaskTemplate) -> list[TaskInstance]:
         combos: list[dict[str, str]] = [{}]
     else:
         keys = sorted(template.params)
-        combos = [
-            dict(zip(keys, values, strict=True))
-            for values in itertools.product(*(template.params[k] for k in keys))
-        ]
+        if template.param_mode == "zip":
+            combos = [
+                dict(zip(keys, values, strict=True))
+                for values in zip(*(template.params[k] for k in keys), strict=True)
+            ]
+        else:
+            combos = [
+                dict(zip(keys, values, strict=True))
+                for values in itertools.product(*(template.params[k] for k in keys))
+            ]
     return [
         TaskInstance(
             template_id=template.id,
@@ -96,10 +109,13 @@ def expand_all(templates: list[TaskTemplate]) -> list[TaskInstance]:
 def rollout_order(instances: list[TaskInstance]) -> list[TaskInstance]:
     """The prompt_index contract, in ONE place.
 
-    One entry per rollout line: each instance repeats n_rollouts times (rejection
-    sampling). emit_batch_inputs writes prompts in exactly this order, and ingest
-    maps a trajectory's prompt_index i back to rollout_order(instances)[i]. Both
-    sides MUST consume this primitive — if the two expansions ever drift, every
-    lane-A record is silently mislabeled (wrong instance -> wrong family/holdout,
-    which can leak holdout across the split)."""
-    return [inst for inst in instances for _ in range(inst.n_rollouts)]
+    One entry per rollout line: each instance appears n_rollouts times (rejection
+    sampling), INTERLEAVED round-robin — hermes runs prompts concurrently in a
+    shared workspace, so same-instance rollouts (same file destinations) must not
+    run back-to-back. emit_batch_inputs writes prompts in exactly this order, and
+    ingest maps a trajectory's prompt_index i back to rollout_order(instances)[i].
+    Both sides MUST consume this primitive — if the two expansions ever drift,
+    every lane-A record is silently mislabeled (wrong instance -> wrong
+    family/holdout, which can leak holdout across the split)."""
+    rounds = max((inst.n_rollouts for inst in instances), default=0)
+    return [inst for r in range(rounds) for inst in instances if r < inst.n_rollouts]

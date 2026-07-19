@@ -7,6 +7,7 @@ whose keep rates sit inside the expected bands and whose config hash matches.
 from __future__ import annotations
 
 import logging
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -124,7 +125,9 @@ def run_hermes_batch(
     out_dir = store.hermes_out()
     inputs = out_dir / "inputs.jsonl"
     n = emit_batch_inputs(instances, inputs)
+    hermes_python = os.environ.get("AVIARY_HERMES_PYTHON", "python")
     cmd = build_batch_command(
+        python=hermes_python,
         dataset_file=inputs,
         run_name=run_name,
         distribution=distribution,

@@ -379,7 +379,6 @@ def _generate_lane_a(cfg, store, roster, prompts, run_id, target: Target) -> int
     from aviary.lanes.a_agentic.ingest import IngestContext
     from aviary.lanes.a_agentic.run import ingest_trajectories, run_hermes_batch
     from aviary.lanes.a_agentic.taskbank import expand_all, load_taskbank
-    from aviary.lanes.a_agentic.toolsets import load_toolset_schemas
     from aviary.paths import hermes_dir
 
     templates = load_taskbank(REPO_ROOT / "tasks")
@@ -415,7 +414,6 @@ def _generate_lane_a(cfg, store, roster, prompts, run_id, target: Target) -> int
         instances=instances,
         system_prompt=prompts[target.persona_system_key],
         persona_speaker=target.persona_speaker,
-        tools_schema_by_family=load_toolset_schemas(REPO_ROOT / "datagen" / "toolsets"),
         teacher_id=teacher.id,
         hermes_commit=roster.hermes_pin,
         prompt_set_hash=prompts.hash,

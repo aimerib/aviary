@@ -26,3 +26,10 @@
 - label: boilerplate_delve
   pattern: '\bdelve\b|\btapestry of\b|\bit''s important to note\b'
   action: flag
+- label: harness_hermes
+  # The datagen harness identity. Reasoning models muse about it in thoughts
+  # ("the system prompt says I'm Hermes Agent...") — poison for persona training
+  # since we re-attach the persona prompt at ingest. Observed in the 2026-07-19
+  # lane A smoke. Scoped to the agent name; bare "hermes" stays legal (fiction).
+  pattern: '\bhermes[-\s]?agent\b'
+  action: drop

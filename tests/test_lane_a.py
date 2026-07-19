@@ -98,24 +98,43 @@ def test_verify_hermes_interface_rejects_invented_flags(tmp_path):
         verify_hermes_interface(hd)
 
 
+# Mirrors the REAL pinned batch_runner output (verified 2026-07-19): structure
+# lives inside text values — <think>, <tool_call> (no ids), <tool_response>
+# (authoritative ids), and the harness system turn carrying the <tools> block.
 HERMES_RECORD = {
     "prompt_index": 0,
+    "completed": True,
+    "partial": False,
     "conversations": [
+        {
+            "from": "system",
+            "value": (
+                "You are a function calling AI model. ... <tools>\n"
+                '[{"name": "write_file", "description": "Write a file.", "parameters": '
+                '{"type": "object", "properties": {"path": {"type": "string"}, '
+                '"content": {"type": "string"}}, "required": ["path", "content"]}]'
+                "\n</tools> ..."
+            ),
+        },
         {"from": "human", "value": "hey liv, save something"},
         {
             "from": "gpt",
-            "value": "On it.",
-            "tool_calls": [
-                {
-                    "function": {
-                        "name": "write_file",
-                        "arguments": '{"path": "notes/note.txt", "content": "hi"}',
-                    }
-                }
-            ],
+            "value": (
+                "<think>\nSimple write. Do it.\n</think>\nOn it.\n"
+                '<tool_call>\n{"name": "write_file", "arguments": '
+                '{"path": "notes/note.txt", "content": "hi"}}\n</tool_call>'
+            ),
         },
-        {"from": "tool", "value": '{"ok": true}'},
-        {"from": "gpt", "value": "Saved."},
+        {
+            "from": "tool",
+            "value": (
+                "<tool_response>\n"
+                '{"tool_call_id": "call_00_abc", "name": "write_file", '
+                '"content": {"bytes_written": 2}}\n'
+                "</tool_response>"
+            ),
+        },
+        {"from": "gpt", "value": "<think>\nDone.\n</think>\nSaved."},
     ],
     "toolsets_used": ["file"],
     "tool_stats": {"file": {"count": 1, "success": 1}},
@@ -123,17 +142,14 @@ HERMES_RECORD = {
 
 
 def make_ctx() -> IngestContext:
-    from aviary.lanes.a_agentic.toolsets import load_toolset_schemas
-
     instances = expand_all(load_taskbank(REPO / "tasks"))
     return IngestContext(
         run_id="t",
         instances=instances,
         system_prompt="You are Olivia.",
         persona_speaker="Olivia",
-        tools_schema_by_family=load_toolset_schemas(REPO / "datagen" / "toolsets"),
         teacher_id="deepseek-v4-flash-20260610",
-        hermes_commit="v0.18.2",
+        hermes_commit="v2026.7.7.2",
         prompt_set_hash="h",
     )
 
@@ -143,65 +159,93 @@ def test_ingest_hermes_record():
     assert rec.provenance.lane == "a"
     assert rec.provenance.template_id == "files.save_note"
     assert rec.provenance.sibling_group
-    assert rec.messages[1].tool_calls[0].name == "write_file"
-    assert rec.messages[1].tool_calls[0].arguments["path"] == "notes/note.txt"
-    assert rec.messages[2].role == "tool"
-    assert rec.messages[2].tool_call_id == rec.messages[1].tool_calls[0].id
+    assert rec.messages[0].role == "user"  # harness system turn replaced, not kept
+    gpt = rec.messages[1]
+    assert gpt.thought == "Simple write. Do it."
+    assert gpt.content == "On it."  # think + tool_call blocks stripped from prose
+    assert gpt.tool_calls[0].name == "write_file"
+    assert gpt.tool_calls[0].arguments["path"] == "notes/note.txt"
+    assert gpt.tool_calls[0].id == "call_00_abc"  # authoritative id from the response
+    tool = rec.messages[2]
+    assert tool.role == "tool" and tool.tool_call_id == "call_00_abc"
+    assert tool.content == '{"bytes_written": 2}'  # payload only, verifier-parseable
     assert rec.system == "You are Olivia."
-    assert rec.tools_schema_json and "write_file" in rec.tools_schema_json
+    # tools schema extracted VERBATIM from the recorded harness turn
+    assert rec.tools_schema_json.startswith('[{"name": "write_file"')
 
 
 def test_ingest_siblings_share_group():
     a = ingest_hermes_record(HERMES_RECORD, make_ctx())
-    b = ingest_hermes_record({**HERMES_RECORD, "prompt_index": 1}, make_ctx())
-    other = ingest_hermes_record({**HERMES_RECORD, "prompt_index": 4}, make_ctx())
+    instances = expand_all(load_taskbank(REPO / "tasks"))
+    n = len(instances)  # interleaved order: indices 0 and n are rollouts of instance 0
+    b = ingest_hermes_record({**HERMES_RECORD, "prompt_index": n}, make_ctx())
+    other = ingest_hermes_record({**HERMES_RECORD, "prompt_index": 1}, make_ctx())
     assert a.provenance.record_id != b.provenance.record_id
-    assert a.provenance.sibling_group == b.provenance.sibling_group  # rollouts 0,1 of instance 0
+    assert a.provenance.sibling_group == b.provenance.sibling_group
     assert other.provenance.sibling_group != a.provenance.sibling_group
 
 
-def test_ingest_rejects_unknown_role():
+def test_ingest_rejects_unknown_role_and_partials():
     bad = {**HERMES_RECORD, "conversations": [{"from": "narrator", "value": "x"}]}
     with pytest.raises(IngestError):
         ingest_hermes_record(bad, make_ctx())
+    with pytest.raises(IngestError, match="incomplete"):
+        ingest_hermes_record({**HERMES_RECORD, "partial": True}, make_ctx())
+    with pytest.raises(IngestError, match="incomplete"):
+        ingest_hermes_record({**HERMES_RECORD, "completed": False}, make_ctx())
 
 
 def test_ingest_rejects_orphan_tool_result():
-    # A tool result with no preceding tool call must drop the record, not
-    # fabricate a call id.
+    # A tool result with no open call must drop the record, not fabricate a pairing.
     bad = {
         **HERMES_RECORD,
         "conversations": [
             {"from": "human", "value": "save it"},
-            {"from": "tool", "value": '{"ok": true}'},
+            {
+                "from": "tool",
+                "value": '<tool_response>\n{"tool_call_id": "x", "name": "write_file", '
+                '"content": {}}\n</tool_response>',
+            },
         ],
     }
-    with pytest.raises(IngestError, match="no preceding tool call"):
+    with pytest.raises(IngestError, match="no open call"):
         ingest_hermes_record(bad, make_ctx())
 
 
-def test_ingest_matches_tool_result_by_explicit_id():
-    # Out-of-order results pair by id, not arrival order.
+def test_ingest_pairs_parallel_calls_in_one_tool_turn():
+    # Real batch output answers parallel calls with SEVERAL <tool_response> blocks
+    # in one tool turn; ids come from the responses, matched by name in order.
     record = {
         **HERMES_RECORD,
         "conversations": [
             {"from": "human", "value": "do both"},
             {
                 "from": "gpt",
-                "value": "On it.",
-                "tool_calls": [
-                    {"id": "call_a", "function": {"name": "write_file", "arguments": "{}"}},
-                    {"id": "call_b", "function": {"name": "write_file", "arguments": "{}"}},
-                ],
+                "value": (
+                    '<tool_call>\n{"name": "write_file", "arguments": {"path": "a"}}\n'
+                    "</tool_call>\n"
+                    '<tool_call>\n{"name": "read_file", "arguments": {"path": "b"}}\n'
+                    "</tool_call>"
+                ),
             },
-            {"from": "tool", "tool_call_id": "call_b", "value": '{"ok": true}'},
-            {"from": "tool", "tool_call_id": "call_a", "value": '{"ok": true}'},
+            {
+                "from": "tool",
+                "value": (
+                    "<tool_response>\n"
+                    '{"tool_call_id": "call_w", "name": "write_file", "content": {"bytes_written": 1}}\n'
+                    "</tool_response>\n<tool_response>\n"
+                    '{"tool_call_id": "call_r", "name": "read_file", "content": "text"}\n'
+                    "</tool_response>"
+                ),
+            },
             {"from": "gpt", "value": "Done."},
         ],
     }
     rec = ingest_hermes_record(record, make_ctx())
-    assert rec.messages[2].tool_call_id == "call_b"
-    assert rec.messages[3].tool_call_id == "call_a"
+    calls = {tc.name: tc.id for tc in rec.messages[1].tool_calls}
+    assert calls == {"write_file": "call_w", "read_file": "call_r"}
+    assert [m.tool_call_id for m in rec.messages if m.role == "tool"] == ["call_w", "call_r"]
+    assert rec.messages[3].content == "text"  # string payloads pass through
 
 
 def _pilot_manifest(**overrides) -> RunManifest:
@@ -273,3 +317,39 @@ def test_burn_guard_missing_band_rejected(tmp_path):
     m.save(tmp_path / "2026-07-15-pilot.manifest.yaml")
     with pytest.raises(BurnGuardError, match="no burn_bands entry"):
         guard_burn(tmp_path, "hash1", _BANDS, ["a", "b", "c"], 14, "2026-07-16")
+
+
+def test_zip_param_mode_and_interleaved_rollout_order():
+    from aviary.lanes.a_agentic.taskbank import TaskTemplate, expand, rollout_order
+
+    t = TaskTemplate(
+        id="files.t",
+        family="files",
+        prompt="write {kind} to {destination}",
+        param_mode="zip",
+        params={"kind": ["a", "b"], "destination": ["x.txt", "y.txt"]},
+        tools=["write_file"],
+        n_rollouts=2,
+        verifier="v.py",
+    )
+    insts = expand(t)
+    assert [(i.params["kind"], i.params["destination"]) for i in insts] == [
+        ("a", "x.txt"),
+        ("b", "y.txt"),
+    ]  # zipped, not cartesian
+    order = rollout_order(insts)
+    # Interleaved round-robin: same-instance rollouts never adjacent (shared
+    # hermes workspace -> same-destination rollouts must not run back-to-back).
+    keys = [i.instance_key() for i in order]
+    assert keys[0] != keys[1] and keys == [keys[0], keys[1]] * 2
+
+    with pytest.raises(ValueError, match="equal-length"):
+        TaskTemplate(
+            id="files.bad",
+            family="files",
+            prompt="{kind} {destination}",
+            param_mode="zip",
+            params={"kind": ["a"], "destination": ["x", "y"]},
+            tools=["write_file"],
+            verifier="v.py",
+        )

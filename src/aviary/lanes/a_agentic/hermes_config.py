@@ -46,6 +46,7 @@ def emit_batch_inputs(instances: list[TaskInstance], out_path: Path) -> int:
 
 def build_batch_command(
     *,
+    python: str = "python",
     dataset_file: Path,
     run_name: str,
     distribution: str,
@@ -60,7 +61,7 @@ def build_batch_command(
     """The batch_runner argv (run with cwd=<hermes checkout>). Contains the API
     key — never log the returned command."""
     return [
-        "python",
+        python,
         "batch_runner.py",
         f"--dataset_file={dataset_file}",
         f"--batch_size={batch_size}",
