@@ -13,6 +13,7 @@ those sources is semantic judgement and belongs to the judge stage.
 
 import json
 import re
+from pathlib import PurePosixPath
 
 from aviary.schema.records import ConversationRecord
 from aviary.schema.results import VerifierResult
@@ -28,13 +29,26 @@ def _urls(text: str) -> set[str]:
     return {u.rstrip(".,;:!?").rstrip("/") for u in _URL.findall(text)}
 
 
+def _is_destination(path: str, destination: str) -> bool:
+    """Outcome-equivalent path identity: teachers legitimately write the requested
+    relative destination as an absolute path anchored at their workspace cwd
+    (observed: hermes rollouts). Match on whole trailing components so
+    `x/research/a.md` matches destination `research/a.md` but `x/no-research/a.md`
+    does not."""
+    d = PurePosixPath(destination).parts
+    p = PurePosixPath(path).parts
+    return bool(d) and len(p) >= len(d) and p[-len(d) :] == d
+
+
 def verify(rec: ConversationRecord) -> VerifierResult:
     params = rec.provenance.source.detail.get("params", {})
     destination = params.get("destination")
 
-    # Final state per path = last write_file result + the content it carried.
-    final_write_ok: dict[str, bool] = {}
-    final_write_content: dict[str, str] = {}
+    # Final state of the requested file = the LAST write to any path that resolves
+    # to the destination (a failed write followed by a successful retry passes —
+    # recovered-failure trajectories are prime data).
+    target_ok = False
+    target_content = ""
     calls: dict[str, tuple[str, str]] = {}  # call id -> (path, content)
     grounded: set[str] = set()  # every URL any tool result surfaced this session
     for m in rec.messages:
@@ -49,6 +63,8 @@ def verify(rec: ConversationRecord) -> VerifierResult:
             grounded |= _urls(m.content)
             if m.tool_call_id in calls:
                 path, content = calls[m.tool_call_id]
+                if not (destination and _is_destination(path, destination)):
+                    continue
                 # Hermes result convention: tools return JSON; success = a parsed
                 # dict WITHOUT an "error" key (write success is {"bytes_written": N}).
                 # Unparseable results fail closed.
@@ -56,12 +72,12 @@ def verify(rec: ConversationRecord) -> VerifierResult:
                     result = json.loads(m.content)
                 except json.JSONDecodeError:
                     result = None
-                final_write_ok[path] = isinstance(result, dict) and not result.get("error")
-                final_write_content[path] = content
+                target_ok = isinstance(result, dict) and not result.get("error")
+                target_content = content
 
     # Fail closed without a destination param (same hole save_note closes).
-    wrote_target = bool(destination) and final_write_ok.get(destination, False)
-    cited = _urls(final_write_content.get(destination, "")) if destination else set()
+    wrote_target = bool(destination) and target_ok
+    cited = _urls(target_content) if destination else set()
     # >=2 distinct cited URLs that the session actually retrieved. Extra ungrounded
     # links don't fail here (judge territory); too few grounded ones do.
     grounded_citations = cited & grounded
