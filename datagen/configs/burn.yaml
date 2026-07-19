@@ -17,9 +17,11 @@ lane_c:
 # pilot never measured. Lanes differ by design — don't blend them into one band.
 #   verify = structural-verifier pass rate; judge = rubric pass rate among verified.
 burn_bands:
-  a:  # agentic/Olivia — PROVISIONAL, lane A not yet piloted; tighten after first A pilot
+  a:  # agentic/Olivia — calibrated on 2026-07-19-pilot-lanea2 (verify 0.70, judge
+      # 0.97 on the v2-hardened bank); verify span stays wide until the four new
+      # families get banded by a full-bank pilot.
     verify: [0.30, 0.85]
-    judge: [0.50, 0.95]
+    judge: [0.50, 0.98]
   b:  # fiction extraction — judges LOW by design (thought_quality floor, ~28% observed)
     verify: [0.40, 0.95]
     judge: [0.15, 0.50]
