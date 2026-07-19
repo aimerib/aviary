@@ -423,8 +423,14 @@ def cmd_gate(run_id: str) -> None:
         "a": quality,
         "c": quality,  # Olivia simple-chats; character-RP records use c_character
         "b": Rubric.load(REPO_ROOT / "gates" / "judge" / "laneb.rubric.yaml"),
-        "c_character": Rubric.load(REPO_ROOT / "gates" / "judge" / "character_rp.rubric.yaml"),
     }
+    # Gating an older run means restoring its generation-time gates/ tree (frozen-
+    # inputs rule), which may predate later-added rubrics. Load those only if
+    # present; a record that actually routes to a missing rubric fails loudly
+    # (KeyError names it) instead of blocking runs that never needed it.
+    character_rp = REPO_ROOT / "gates" / "judge" / "character_rp.rubric.yaml"
+    if character_rp.exists():
+        rubrics["c_character"] = Rubric.load(character_rp)
     patterns = load_patterns(
         REPO_ROOT / "gates" / "scrub" / "denylist.yaml",
         REPO_ROOT / "gates" / "scrub" / "pii_patterns.yaml",
