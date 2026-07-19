@@ -69,3 +69,23 @@ def test_cli_parses(capsys):
 
     with pytest.raises(SystemExit):
         main([])  # no subcommand
+
+
+def test_hash_tree_ignores_interpreter_artifacts(tmp_path):
+    # Bytecode caches land INSIDE hashed trees when verifier plugins import; their
+    # bytes are mtime-dependent, so hashing them makes gate_inputs_hash
+    # unreproducible (bit run 2026-07-18-pilot-ao3scale). Only real inputs count.
+    from aviary.hashing import hash_tree
+
+    root = tmp_path / "verifiers"
+    (root / "files").mkdir(parents=True)
+    (root / "files" / "check.py").write_text("def verify(): ...\n")
+    before = hash_tree(root)
+
+    (root / "files" / "__pycache__").mkdir()
+    (root / "files" / "__pycache__" / "check.cpython-313.pyc").write_bytes(b"\x00cache")
+    (root / "files" / ".DS_Store").write_bytes(b"finder junk")
+    assert hash_tree(root) == before
+
+    (root / "files" / "check.py").write_text("def verify(): return 1\n")
+    assert hash_tree(root) != before  # real input changes still change the hash

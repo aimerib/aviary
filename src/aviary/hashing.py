@@ -26,7 +26,10 @@ def hash_tree(*roots: Path) -> str:
         if not root.exists():
             continue
         for path in sorted(p for p in root.rglob("*") if p.is_file()):
-            if path.name == ".DS_Store":
+            # Interpreter/OS artifacts, not inputs: verifier plugin imports drop
+            # mtime-dependent .pyc files INTO the hashed trees, which made
+            # gate_inputs_hash unreproducible (caught by run 2026-07-18-pilot-ao3scale).
+            if path.name == ".DS_Store" or path.suffix == ".pyc" or "__pycache__" in path.parts:
                 continue
             h.update(str(path.relative_to(root.parent)).encode())
             h.update(b"\0")
