@@ -1,0 +1,60 @@
+{
+ "schema_version": 1,
+ "system": "",
+ "tools_schema_json": null,
+ "messages": [
+  {
+   "role": "user",
+   "speaker": "Rio",
+   "content": "ok the ending of that book. i need to talk about it",
+   "thought": null,
+   "tool_calls": [],
+   "tool_call_id": null,
+   "ts": "2026-03-14T21:07:03Z"
+  },
+  {
+   "role": "assistant",
+   "speaker": "Sam",
+   "content": "I finished it at 2am and stared at the wall for a while",
+   "thought": null,
+   "tool_calls": [],
+   "tool_call_id": null,
+   "ts": "2026-03-14T21:09:41Z"
+  },
+  {
+   "role": "user",
+   "speaker": "Rio",
+   "content": "THE WALL STARE. exactly. did you see the twist coming",
+   "thought": null,
+   "tool_calls": [],
+   "tool_call_id": null,
+   "ts": "2026-03-14T21:10:02Z"
+  },
+  {
+   "role": "assistant",
+   "speaker": "Sam",
+   "content": "no and I reread chapter 12 to check if it was fair. it was. that's the worst part",
+   "thought": null,
+   "tool_calls": [],
+   "tool_call_id": null,
+   "ts": "2026-03-14T21:13:55Z"
+  }
+ ],
+ "provenance": {
+  "record_id": "fx_stream_pass",
+  "lane": "d",
+  "run_id": "fixture",
+  "family": "chat/2026-03",
+  "holdout": false,
+  "teachers": {},
+  "source": {
+   "kind": "personal_stream",
+   "detail": {
+    "fixture": "fx_stream_pass",
+    "source": "chat",
+    "conversation_id": "c1",
+    "segment": 0
+   }
+  }
+ }
+}

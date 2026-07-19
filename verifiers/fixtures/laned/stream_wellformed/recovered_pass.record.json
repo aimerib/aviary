@@ -1,0 +1,60 @@
+{
+ "schema_version": 1,
+ "system": "",
+ "tools_schema_json": null,
+ "messages": [
+  {
+   "role": "user",
+   "speaker": "Rio",
+   "content": "heading into the exam. wish me luck",
+   "thought": null,
+   "tool_calls": [],
+   "tool_call_id": null,
+   "ts": "2026-04-02T09:00:00Z"
+  },
+  {
+   "role": "assistant",
+   "speaker": "Sam",
+   "content": "luck. you don't need it but take it anyway",
+   "thought": null,
+   "tool_calls": [],
+   "tool_call_id": null,
+   "ts": "2026-04-02T09:01:12Z"
+  },
+  {
+   "role": "user",
+   "speaker": "Rio",
+   "content": "out. that was brutal but I think question 3 saved me",
+   "thought": null,
+   "tool_calls": [],
+   "tool_call_id": null,
+   "ts": "2026-04-02T12:59:00Z"
+  },
+  {
+   "role": "assistant",
+   "speaker": "Sam",
+   "content": "knew the practice run would pay off. details at dinner?",
+   "thought": null,
+   "tool_calls": [],
+   "tool_call_id": null,
+   "ts": "2026-04-02T13:02:44Z"
+  }
+ ],
+ "provenance": {
+  "record_id": "fx_stream_recovered",
+  "lane": "d",
+  "run_id": "fixture",
+  "family": "chat/2026-04",
+  "holdout": false,
+  "teachers": {},
+  "source": {
+   "kind": "personal_stream",
+   "detail": {
+    "fixture": "fx_stream_recovered",
+    "source": "chat",
+    "conversation_id": "c1",
+    "segment": 0
+   }
+  }
+ }
+}
