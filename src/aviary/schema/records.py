@@ -16,7 +16,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 Role = Literal["system", "user", "assistant", "tool"]
-Lane = Literal["a", "b", "c"]
+Lane = Literal["a", "b", "c", "d"]
 
 SCHEMA_VERSION = 1
 
@@ -38,6 +38,11 @@ class Message(BaseModel):
     thought: str | None = None
     tool_calls: tuple[ToolCall, ...] = ()
     tool_call_id: str | None = None
+    # Wall-clock time of the source message, ISO-8601 UTC ("2026-03-14T21:07:03Z").
+    # Preserved by lane D adapters from personal streams; None everywhere else.
+    # The current serializer (contract v2) ignores it entirely — time-gap
+    # conditioning is a contract v3 proposal (docs/lane_d_timing.md).
+    ts: str | None = None
 
     @model_validator(mode="after")
     def _check_shape(self) -> Message:
@@ -53,7 +58,7 @@ class Message(BaseModel):
 
 
 class SourceRef(BaseModel):
-    kind: Literal["task_instance", "book_scene", "selfplay_seed"]
+    kind: Literal["task_instance", "book_scene", "selfplay_seed", "personal_stream"]
     detail: dict[str, Any] = Field(default_factory=dict)
 
 

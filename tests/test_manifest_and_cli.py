@@ -38,7 +38,7 @@ def test_manifest_rejects_undated_teacher():
 
 def test_tracked_roster_config_is_valid():
     roster = Roster.load(REPO / "datagen" / "configs" / "teachers.yaml")
-    assert roster.hermes_pin == "v0.18.2"
+    assert roster.hermes_pin == "v2026.7.7.2"  # release v0.18.2; upstream tags by date
     assert not any(t.provider == "anthropic" for t in roster.teachers)
     # every assignment resolves, and every generator has a cross-vendor judge
     for lane_key, roles in roster.assignments.items():
@@ -89,3 +89,39 @@ def test_hash_tree_ignores_interpreter_artifacts(tmp_path):
 
     (root / "files" / "check.py").write_text("def verify(): return 1\n")
     assert hash_tree(root) != before  # real input changes still change the hash
+
+
+def test_schema_lane_d_additive():
+    # Lane D additions are strictly additive: old records (no ts) parse unchanged,
+    # ts survives a round-trip, and neither dedupe keys nor record ids see it.
+    from aviary.gates.dedupe import exact_key
+    from aviary.schema.records import (
+        ConversationRecord,
+        Message,
+        Provenance,
+        SourceRef,
+        make_record_id,
+    )
+
+    def rec(ts):
+        return ConversationRecord(
+            system="s",
+            messages=[
+                Message(role="user", content="hi", ts=ts),
+                Message(role="assistant", content="hey"),
+            ],
+            provenance=Provenance(
+                record_id="r1",
+                lane="d",
+                run_id="t",
+                family="chat/2026-03",
+                source=SourceRef(kind="personal_stream", detail={"source": "chat"}),
+            ),
+        )
+
+    with_ts, without_ts = rec("2026-03-14T21:07:03Z"), rec(None)
+    round_tripped = ConversationRecord.model_validate_json(with_ts.model_dump_json())
+    assert round_tripped.messages[0].ts == "2026-03-14T21:07:03Z"
+    assert exact_key(with_ts) == exact_key(without_ts)  # dedupe never sees ts
+    src = SourceRef(kind="personal_stream", detail={"source": "chat"})
+    assert make_record_id("d", "t", src) == make_record_id("d", "t", src)
