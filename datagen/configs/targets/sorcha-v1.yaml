@@ -1,7 +1,7 @@
 # Sorcha — private single-user companion. Same base as flash, disjoint persona.
 # DISABLED/non-default: nothing selects this target unless AVIARY_TARGET=sorcha-v1.
-# Persona content is CO-AUTHORED with the owner (see datagen/persona/sorcha/) —
-# placeholders until that session happens. Lanes a/c join after Sorcha-persona
+# Persona content CO-AUTHORED with the owner 2026-07-19 (see datagen/persona/
+# sorcha/); laned.rubric.yaml still placeholder. Lanes a/c join after Sorcha-persona
 # datagen runs exist (post-v2.2 spend); lane D ships nowhere (manifest records it).
 name: sorcha-v1
 base_model: Qwen3.5-35B-A3B
@@ -12,6 +12,7 @@ lanes: [b, d]
 quality_rubric: datagen/persona/sorcha/quality.rubric.yaml
 character_rubric: gates/judge/character_rp.rubric.yaml
 harmonize_prompt: datagen/persona/sorcha/paraphrase_prompt.md
-harmonize: {}    # no harmonization until the co-authored voice exists
+harmonize: {}    # permanent (2026-07-19 session): lane B is contract-protected,
+                 # lane D is the owner's real rhythm — never paraphrased into Sorcha
 lane_rubrics:
   d: datagen/persona/sorcha/laned.rubric.yaml
