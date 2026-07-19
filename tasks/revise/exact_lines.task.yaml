@@ -34,9 +34,9 @@ params:
 
 prompt: |
   hey liv, draft a {kind} and save it to {destination}. then go back over the
-  file and make sure it's exactly {n_lines} lines — one item per line, no
-  numbering, no bullets, no blank lines. i'm piping it into a script so the
-  format actually matters.
+  file and make sure it's exactly {n_lines} lines — one item per line,
+  alphabetical order, no numbering, no bullets, no blank lines. i'm piping it
+  into a script that binary-searches, so the format actually matters.
 
 tools:
   - write_file
@@ -47,6 +47,7 @@ difficulty_target: [0.3, 0.8]
 verifier: verifiers/revise/exact_lines.py
 notes: >
   The verifier checks the FINAL file only (outcome-gate rule): exact line count,
-  every line non-empty, no leading numbering/bullet markers. Difficulty comes
-  from stacking three constraints the drafting prior violates by default
-  (teachers love numbered lists).
+  every line non-empty, no leading numbering/bullet markers, case-insensitive
+  alphabetical order. v2 (2026-07-19): explicit constraints alone passed 1.00 —
+  alphabetical order added because models draft thematically, so an honest pass
+  usually requires an actual revision pass over the file.

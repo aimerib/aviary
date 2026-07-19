@@ -1,11 +1,12 @@
 """Verifier for vault.linked_note: outcome gate on the FINAL vault state.
 
 Passes iff both files end in successful writes — the note at `destination`
-opening with a YAML frontmatter block ('---' fences) that mentions tags, and
-the hub at `hub` whose FINAL content contains a wikilink to the note's stem
+opening with a YAML frontmatter block ('---' fences) that mentions tags, the
+hub at `hub` whose FINAL content contains a wikilink to the note's stem
 ([[bird-logger]] and [[notes/bird-logger]] both count; [[bird-logger|alias]]
-too) — and the final assistant turn confirms. Path is irrelevant (outcome-gate
-rule): hub-first, note-first, or fix-it-after-a-read-back all pass.
+too), and (v2) the note's FINAL content backlinking the hub's stem — and the
+final assistant turn confirms. Path is irrelevant (outcome-gate rule):
+hub-first, note-first, or fix-it-after-a-read-back all pass.
 
 Whether the note's prose is any good is judge territory; this gates the vault
 conventions (frontmatter, non-orphaned note) being structurally respected.
@@ -67,11 +68,17 @@ def verify(rec: ConversationRecord) -> VerifierResult:
     frontmatter_tags = bool(fm) and "tags" in fm.group(0)
 
     wrote_hub = bool(hub) and hub_ok
-    # Wikilink to the note's stem: [[stem]], [[notes/stem]], [[stem|alias]] ...
-    linked = False
-    if destination:
-        stem = PurePosixPath(destination).stem
-        linked = bool(re.search(r"\[\[[^\]]*" + re.escape(stem) + r"(\|[^\]]*)?\]\]", hub_content))
+
+    def _wikilinks(container: str, target_path: str | None) -> bool:
+        # Wikilink to the target's stem: [[stem]], [[notes/stem]], [[stem|alias]].
+        if not target_path:
+            return False
+        stem = PurePosixPath(target_path).stem
+        return bool(re.search(r"\[\[[^\]]*" + re.escape(stem) + r"(\|[^\]]*)?\]\]", container))
+
+    linked = _wikilinks(hub_content, destination)
+    # v2: bidirectional — the note must link back to the hub ([[Projects]]).
+    backlinked = _wikilinks(note_content, hub)
 
     last = rec.messages[-1]
     confirmed = last.role == "assistant" and not last.tool_calls and bool(last.content.strip())
@@ -81,6 +88,7 @@ def verify(rec: ConversationRecord) -> VerifierResult:
         "note_has_frontmatter_tags": frontmatter_tags,
         "wrote_hub": wrote_hub,
         "hub_links_note": linked,
+        "note_backlinks_hub": backlinked,
         "confirmed_to_user": confirmed,
     }
     return VerifierResult(

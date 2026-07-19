@@ -22,7 +22,7 @@
           "name": "write_file",
           "arguments": {
             "path": "lists/alps.txt",
-            "content": "base layers\nfleece jacket\nwaterproof shell\nhiking boots\nwool socks\nsunscreen\nwater bottle\nheadlamp\n"
+            "content": "base layers\nfleece jacket\nheadlamp\nhiking boots\nsunscreen\nwater bottle\nwaterproof shell\nwool socks\n"
           }
         }
       ],

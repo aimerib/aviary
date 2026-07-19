@@ -39,9 +39,8 @@ params:
 
 prompt: |
   hey liv, if i borrow ${principal} at {rate_pct}% for {years} years, what does
-  that come to monthly? work it out properly in the terminal — don't eyeball it,
-  i need the actual number. save the monthly payment and a one-line explanation
-  to {destination}.
+  that come to monthly? i need the exact number, cents included — i'm comparing
+  offers. save the monthly payment and a one-line explanation to {destination}.
 
 tools:
   - terminal
@@ -54,5 +53,7 @@ verifier: verifiers/terminal/calc_note.py
 notes: >
   Standard amortization: M = P*r/(1-(1+r)^-n) with r = rate_pct/1200, n =
   years*12. The verifier computes this from params and accepts any number in
-  the final file within one cent. Mental math fails at 4+ significant figures;
-  a terminal one-liner nails it — exactly the discrimination we want.
+  the final file within one cent. v2 (2026-07-19): the prompt no longer says
+  "use the terminal" — with the hint, pass rate was 1.00 (teacher always
+  complied); without it the model must CHOOSE tool-over-priors, which is the
+  reflex being trained. Mental math fails at 4+ significant figures.

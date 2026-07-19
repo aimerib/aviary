@@ -1,10 +1,10 @@
 """Verifier for revise.exact_lines: outcome gate on the FINAL file shape.
 
 Passes iff the requested destination ends in a successful write whose content is
-exactly n_lines non-empty lines with no numbering or bullet markers, and the
-final assistant turn confirms. Path is irrelevant (outcome-gate rule): a sloppy
-first draft followed by a read-back and a corrective rewrite is prime data —
-only the final shape is gated.
+exactly n_lines non-empty lines in case-insensitive alphabetical order with no
+numbering or bullet markers, and the final assistant turn confirms. Path is
+irrelevant (outcome-gate rule): a sloppy first draft followed by a read-back and
+a corrective rewrite is prime data — only the final shape is gated.
 """
 
 import json
@@ -67,6 +67,8 @@ def verify(rec: ConversationRecord) -> VerifierResult:
     exact_count = n_lines is not None and len(lines) == n_lines
     no_blanks = bool(lines) and all(ln.strip() for ln in lines)
     plain_lines = bool(lines) and not any(_MARKER.match(ln) for ln in lines)
+    # Case-insensitive alphabetical, as a human would sort a list.
+    alphabetical = bool(lines) and lines == sorted(lines, key=str.lower)
 
     last = rec.messages[-1]
     confirmed = last.role == "assistant" and not last.tool_calls and bool(last.content.strip())
@@ -76,6 +78,7 @@ def verify(rec: ConversationRecord) -> VerifierResult:
         "exact_line_count": exact_count,
         "no_blank_lines": no_blanks,
         "no_list_markers": plain_lines,
+        "alphabetical_order": alphabetical,
         "confirmed_to_user": confirmed,
     }
     return VerifierResult(

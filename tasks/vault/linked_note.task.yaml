@@ -36,8 +36,9 @@ params:
 prompt: |
   hey liv, start me a little notes vault: make a hub note at {hub} for my
   projects, then write up {topic} in {destination} — proper note, with yaml
-  frontmatter up top including some tags. and link the new note from the hub
-  with a wikilink so it doesn't get lost, you know how i am.
+  frontmatter up top including some tags. link the new note from the hub with a
+  wikilink, and give the note a backlink to the hub too so i can get around
+  both ways. you know how i am about orphaned notes.
 
 tools:
   - write_file
@@ -49,7 +50,8 @@ difficulty_target: [0.3, 0.8]
 verifier: verifiers/vault/linked_note.py
 notes: >
   Outcome gate: note exists at destination opening with a frontmatter block
-  ('---' fences) that contains 'tags', and the hub's FINAL content contains a
-  wikilink to the note's stem ([[bird-logger]] or [[notes/bird-logger]] both
-  count). Coordination difficulty in the save_note-v2 spirit plus two format
-  conventions (frontmatter, wikilink) the teacher must know to apply together.
+  ('---' fences) that contains 'tags'; the hub's FINAL content wikilinks the
+  note's stem ([[bird-logger]] or [[notes/bird-logger]] both count); and (v2,
+  2026-07-19 — one-way linking passed 1.00) the note's FINAL content backlinks
+  the hub's stem ([[Projects]]). Bidirectional coordination across both files
+  is what usually forces a second pass.

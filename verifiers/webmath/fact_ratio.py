@@ -3,10 +3,12 @@
 Live-web quantities can't be recomputed by a pure verifier, so the gate is
 structural: the requested destination ends in a successful write whose content
 cites >=2 distinct grounded sources (URLs that actually appeared in a tool
-result this session), contains a numeric ratio figure, and stays inside the
-word budget (<=200 non-URL words). Whether the ratio is faithful to the cited
-numbers is semantic judgement and belongs to the judge stage. Path is
-irrelevant: dead links and re-searches along the way are fine.
+result this session), is INTERNALLY CONSISTENT (some stated number equals the
+division of two other stated numbers within 2% — raw quantities and ratio must
+actually agree), and stays inside the word budget (<=200 non-URL words).
+Whether the numbers are faithful to the cited sources is semantic judgement and
+belongs to the judge stage. Path is irrelevant: dead links and re-searches
+along the way are fine.
 """
 
 import json
@@ -31,6 +33,33 @@ def _is_destination(path: str, destination: str) -> bool:
     d = PurePosixPath(destination).parts
     p = PurePosixPath(path).parts
     return bool(d) and len(p) >= len(d) and p[-len(d) :] == d
+
+
+def _ratio_consistent(text: str) -> bool:
+    """Some stated number equals the division of two other stated numbers within
+    2% — i.e. the file carries the raw quantities AND a ratio that actually
+    follows from them. Napkin math and mismatched rounding fail; honest terminal
+    division passes. Units cancel, so '123.1 million' vs '123,100,000' both work
+    as long as numerator and denominator use the same convention."""
+    vals: list[float] = []
+    for tok in _NUMBER.findall(text):
+        try:
+            v = float(tok.replace(",", ""))
+        except ValueError:
+            continue
+        if v > 0:
+            vals.append(v)
+    for i, x in enumerate(vals):
+        for j, a in enumerate(vals):
+            if j == i:
+                continue
+            for k, b in enumerate(vals):
+                if k in (i, j) or a <= b:
+                    continue
+                r = a / b
+                if r > 1.0 and abs(x - r) <= 0.02 * r:
+                    return True
+    return False
 
 
 def verify(rec: ConversationRecord) -> VerifierResult:
@@ -66,7 +95,6 @@ def verify(rec: ConversationRecord) -> VerifierResult:
     cited = _urls(target_content) if destination else set()
     grounded_citations = cited & grounded
     words = [w for w in target_content.split() if not _URL.match(w)]
-    has_figure = bool(_NUMBER.search(target_content))
 
     last = rec.messages[-1]
     confirmed = last.role == "assistant" and not last.tool_calls and bool(last.content.strip())
@@ -74,7 +102,7 @@ def verify(rec: ConversationRecord) -> VerifierResult:
     checks = {
         "wrote_requested_path": wrote_target,
         "cited_two_grounded_sources": len(grounded_citations) >= 2,
-        "contains_ratio_figure": has_figure,
+        "ratio_internally_consistent": _ratio_consistent(target_content),
         "within_word_budget": bool(destination) and 0 < len(words) <= 200,
         "confirmed_to_user": confirmed,
     }

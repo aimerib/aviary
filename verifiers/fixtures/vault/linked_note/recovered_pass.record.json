@@ -22,7 +22,7 @@
           "name": "write_file",
           "arguments": {
             "path": "vault-birds/notes/bird-logger.md",
-            "content": "---\ntags: [birds, hardware, ideas]\ncreated: 2026-07-19\n---\n\n# Bird logger\n\nCheap USB mic + a Pi, record dawn chorus, run BirdNET locally, log species\ncounts to a CSV. Bonus: correlate with weather.\n"
+            "content": "---\ntags: [birds, hardware, ideas]\ncreated: 2026-07-19\n---\n\n# Bird logger\n\nCheap USB mic + a Pi, record dawn chorus, run BirdNET locally, log species\ncounts to a CSV. Bonus: correlate with weather.\n\nBack to [[Projects]].\n"
           }
         },
         {
