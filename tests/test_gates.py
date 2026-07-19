@@ -181,6 +181,26 @@ def test_harmonize_preserves_protected_and_drops_on_violation():
     assert outcome2.record.gate_state.drop_reason == "span_violation"
 
 
+def test_harmonize_retries_restore_failure_then_recovers():
+    rec = banter("h1r", "Saved 42 items to /tmp/list.txt for you.")
+
+    def flaky(req: ChatRequest) -> str:
+        # First sample (temp 0.4) mangles the placeholders; the bumped-temperature
+        # retry echoes them back intact. Restore failure must re-sample, not drop.
+        if req.temperature == 0.4:
+            return "I rewrote everything and lost your precious placeholders."
+        return req.messages[0]["content"].replace("Saved", "Stashed")
+
+    client = FakeTeacherClient(script=flaky)
+    outcome = harmonize_record(rec, client, make_prompts(), "deepseek-v4-flash-20260610", "Olivia")
+    assert not outcome.dropped
+    texts = [m.content for m in outcome.record.messages if m.role == "assistant"]
+    assert any("/tmp/list.txt" in t and "42" in t and "Stashed" in t for t in texts)
+    # Deterministic ladder: retry at 0.5 only for the two turns whose placeholders
+    # got eaten; the third turn has no protected spans, so 0.4 restores fine.
+    assert [r.temperature for r in client.requests] == [0.4, 0.5, 0.4, 0.5, 0.4]
+
+
 def test_lane_b_records_skip_harmonize():
     rec = banter("h2", "text").model_copy(
         update={"provenance": banter("h2", "text").provenance.model_copy(update={"lane": "b"})}

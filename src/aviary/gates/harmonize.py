@@ -47,20 +47,33 @@ class HarmonizeOutcome:
     rewritten_messages: int = 0
 
 
+# Restore-failure retry ladder: a mangled-placeholder reply is a sampling accident,
+# not a verdict, so re-sample before dropping. Each attempt uses a different
+# temperature — that changes the response-cache key, so the retry is a genuinely
+# fresh sample (the mangled reply is itself cached) while the ladder stays
+# deterministic and replayable. The boundary never bends: a record that fails
+# every attempt still drops (2026-07-19-pilot-lanea: 9/43 dropped single-shot).
+_RETRY_TEMPS = (0.4, 0.5, 0.6)
+
+
 def _paraphrase(
     text: str, client: TeacherClient, prompts: PromptSet, model: str, lane: str
 ) -> str | None:
     spans = extract_protected_spans(text)
     masked, mapping = mask_spans(text, spans)
-    req = ChatRequest(
-        model=model,
-        system=prompts["harmonize_prompt"],
-        messages=[{"role": "user", "content": masked}],
-        temperature=0.4,
-        max_tokens=2048,
-    )
-    reply = client.complete(req, lane).text.strip()
-    return restore_spans(reply, mapping)
+    for temperature in _RETRY_TEMPS:
+        req = ChatRequest(
+            model=model,
+            system=prompts["harmonize_prompt"],
+            messages=[{"role": "user", "content": masked}],
+            temperature=temperature,
+            max_tokens=2048,
+        )
+        reply = client.complete(req, lane).text.strip()
+        restored = restore_spans(reply, mapping)
+        if restored is not None:
+            return restored
+    return None
 
 
 def harmonize_record(
