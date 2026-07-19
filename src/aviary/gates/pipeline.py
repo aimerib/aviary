@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from aviary.gates import dedupe as dedupe_mod
-from aviary.gates.harmonize import harmonize_record, is_olivia_voiced
+from aviary.gates.harmonize import harmonize_record, is_persona_voiced
 from aviary.gates.judge import Rubric, judge_record
 from aviary.gates.scrub import ScrubPattern, scan_record
 from aviary.gates.verify import run_verifier, verifier_id
@@ -98,12 +98,14 @@ def _generator_id(rec: ConversationRecord) -> str:
     return next(iter(rec.provenance.teachers.values()))
 
 
-def _rubric_for(rec: ConversationRecord, rubrics: dict[str, Rubric]) -> Rubric:
-    """Pick the rubric by VOICE, not just lane. Lane C is mixed: Olivia simple-chats
-    use the Olivia quality rubric, but character-RP records must be judged on
-    character fidelity — scoring them on olivia_voice is meaningless (Olivia is
-    transparent in roleplay). Same voice signal the harmonizer keys off."""
-    if rec.provenance.lane == "c" and not is_olivia_voiced(rec):
+def _rubric_for(
+    rec: ConversationRecord, rubrics: dict[str, Rubric], persona_speaker: str
+) -> Rubric:
+    """Pick the rubric by VOICE, not just lane. Lane C is mixed: persona simple-chats
+    use the persona quality rubric, but character-RP records must be judged on
+    character fidelity — scoring them on the persona-voice axis is meaningless (the
+    persona is transparent in roleplay). Same voice signal the harmonizer keys off."""
+    if rec.provenance.lane == "c" and not is_persona_voiced(rec, persona_speaker):
         return rubrics["c_character"]
     return rubrics[rec.provenance.lane]
 
@@ -116,8 +118,11 @@ def run_gates(
     roster: Roster,
     client: TeacherClient,
     prompts: PromptSet,
+    *,
+    persona_speaker: str,  # the target's voice; no default — persona is never implicit
     dedupe_threshold: float = 0.8,
     judge_workers: int = 1,
+    harmonize_policy: dict[str, tuple[str, ...]] | None = None,
 ) -> GateStats:
     records: list[ConversationRecord] = []
     for path in store.raw_files():
@@ -176,7 +181,7 @@ def run_gates(
     from aviary.teacher.pool import TeacherPool
 
     def _judge(rec: ConversationRecord):
-        rubric = _rubric_for(rec, rubric_by_lane)
+        rubric = _rubric_for(rec, rubric_by_lane, persona_speaker)
         judge_model = roster.judge_for(_generator_id(rec)).id
         return judge_record(rec, rubric, client, judge_model, prompts)
 
@@ -228,7 +233,9 @@ def run_gates(
     harmonizer_model = roster.assigned("harmonizer", "primary").id
     for rec in unique:
         try:
-            outcome = harmonize_record(rec, client, prompts, harmonizer_model)
+            outcome = harmonize_record(
+                rec, client, prompts, harmonizer_model, persona_speaker, harmonize_policy
+            )
         except Exception as e:
             # A transient LLM error in harmonize drops one record, not the run.
             log.warning("harmonize errored for %s: %s", rec.provenance.record_id, e)

@@ -6,7 +6,7 @@ TENSE second-person dialogue attribution that scripts a user line ('you say,
 "..."'). Outcome-only over the final transcript.
 
 Note the deliberate narrowness of YOU_SAY: it requires present tense AND a trailing
-quote, so Olivia recalling something the user really said ('You said "the deadline
+quote, so the assistant recalling something the user really said ('You said "the deadline
 was fake"') is NOT impersonation and passes. Broadening to past tense or dropping
 the quote would reject those legitimate keepers (see recovered_pass fixture).
 """

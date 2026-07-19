@@ -30,6 +30,7 @@ from aviary.schema.manifest import (
     Teachers,
 )
 from aviary.schema.records import ConversationRecord
+from aviary.targets import Target
 from aviary.teacher.cache import ResponseCache
 from aviary.teacher.client import HttpTeacherClient
 from aviary.teacher.cost import CostLedger
@@ -42,15 +43,20 @@ log = logging.getLogger(__name__)
 # run is reproducible regardless of when it executes; override per run in the config.
 DEFAULT_SEED = 20260716
 
-PROMPT_FILES = {
-    "olivia_system": REPO_ROOT / "datagen" / "persona" / "system.md",
-    "laneb_profiles": REPO_ROOT / "datagen" / "prompts" / "laneb_profiles.md",
-    "laneb_scenes": REPO_ROOT / "datagen" / "prompts" / "laneb_scenes.md",
-    "laneb_dialogue": REPO_ROOT / "datagen" / "prompts" / "laneb_dialogue.md",
-    "lanec_user_sim": REPO_ROOT / "datagen" / "prompts" / "lanec_user_sim.md",
-    "judge_prompt": REPO_ROOT / "gates" / "judge" / "judge_prompt.md",
-    "harmonize_prompt": REPO_ROOT / "gates" / "harmonize" / "paraphrase_prompt.md",
-}
+def prompt_files(target: Target) -> dict[str, Path]:
+    """The frozen PromptSet's contents for a build target. Persona-owned prompts
+    (system + paraphrase) resolve through the target; the key for the persona
+    system is constructed from the persona name, so the default target's keys —
+    and therefore its PromptSet hash — are byte-identical to the pre-target era."""
+    return {
+        target.persona_system_key: target.persona_dir / "system.md",
+        "laneb_profiles": REPO_ROOT / "datagen" / "prompts" / "laneb_profiles.md",
+        "laneb_scenes": REPO_ROOT / "datagen" / "prompts" / "laneb_scenes.md",
+        "laneb_dialogue": REPO_ROOT / "datagen" / "prompts" / "laneb_dialogue.md",
+        "lanec_user_sim": REPO_ROOT / "datagen" / "prompts" / "lanec_user_sim.md",
+        "judge_prompt": REPO_ROOT / "gates" / "judge" / "judge_prompt.md",
+        "harmonize_prompt": REPO_ROOT / target.harmonize_prompt,
+    }
 
 
 class LaneCRunConfig(BaseModel):
@@ -99,8 +105,8 @@ class RunConfig(BaseModel):
         return cls.model_validate(yaml.safe_load(path.read_text()))
 
 
-def load_prompt_set() -> PromptSet:
-    return PromptSet.load(PROMPT_FILES)
+def load_prompt_set(target: Target) -> PromptSet:
+    return PromptSet.load(prompt_files(target))
 
 
 def datagen_config_hash() -> str:
@@ -202,8 +208,9 @@ def find_manifest(run_id: str) -> RunManifest:
 def cmd_generate(kind: str) -> str:
     """pilot/burn: run every enabled lane's generation, write the manifest."""
     cfg = RunConfig.load(configs_dir() / f"{kind}.yaml")
+    target = Target.resolve()
     roster = Roster.load(configs_dir() / "teachers.yaml")
-    prompts = load_prompt_set()
+    prompts = load_prompt_set(target)
     # Optional label distinguishes same-day runs of the same kind — e.g. A/B teacher
     # experiments (AVIARY_RUN_LABEL=glm -> 2026-07-17-pilot-glm). Sanitized to keep
     # run_id a safe path/filename segment.
@@ -245,6 +252,8 @@ def cmd_generate(kind: str) -> str:
             task_bank_commit=_git_commit(),
             datagen_config_hash=datagen_config_hash(),
             gate_inputs_hash=gate_inputs_hash(),
+            target=target.name,
+            base_model=target.base_model,
         ),
         teachers=Teachers(
             roster=[
@@ -275,10 +284,10 @@ def cmd_generate(kind: str) -> str:
             )
 
         if "c" in cfg.lanes:
-            rollouts += _generate_lane_c(cfg, store, roster, client, prompts)
+            rollouts += _generate_lane_c(cfg, store, roster, client, prompts, target)
 
         if "a" in cfg.lanes:
-            rollouts += _generate_lane_a(cfg, store, roster, prompts, run_id)
+            rollouts += _generate_lane_a(cfg, store, roster, prompts, run_id, target)
     except Exception:
         # Leave a durable failure marker instead of a manifest that looks complete.
         manifest.status = "failed"
@@ -296,14 +305,16 @@ def cmd_generate(kind: str) -> str:
     return run_id
 
 
-def _generate_lane_c(cfg, store, roster, client, prompts) -> int:
+def _generate_lane_c(cfg, store, roster, client, prompts, target: Target) -> int:
     from aviary.lanes.c_selfplay.driver import LaneCConfig, run_selfplay
     from aviary.lanes.c_selfplay.seeds import load_inline_seeds, seeds_from_lane_b
     from aviary.lanes.c_selfplay.usersim import load_personas
     from aviary.teacher.pool import TeacherPool
 
     raw = yaml.safe_load((configs_dir() / "lane_c.yaml").read_text()) or {}
-    seeds = load_inline_seeds(configs_dir() / "lane_c.yaml", prompts["olivia_system"])
+    seeds = load_inline_seeds(
+        configs_dir() / "lane_c.yaml", prompts[target.persona_system_key], target.persona_speaker
+    )
     # RP characters seed from a DESIGNATED lane B run (an RP-appropriate corpus, e.g.
     # AO3), not necessarily this run's lane B. Published-fiction characters are
     # off-distribution for RP, so lane C never seeds from the prose corpus. Falls back
@@ -356,7 +367,7 @@ def _generate_lane_c(cfg, store, roster, client, prompts) -> int:
     return write_jsonl(store.raw("c"), records)
 
 
-def _generate_lane_a(cfg, store, roster, prompts, run_id) -> int:
+def _generate_lane_a(cfg, store, roster, prompts, run_id, target: Target) -> int:
     from aviary.lanes.a_agentic.ingest import IngestContext
     from aviary.lanes.a_agentic.run import ingest_trajectories, run_hermes_batch
     from aviary.lanes.a_agentic.taskbank import expand_all, load_taskbank
@@ -383,7 +394,7 @@ def _generate_lane_a(cfg, store, roster, prompts, run_id) -> int:
         wire_model=teacher.wire_model,
         base_url=teacher.base_url,
         api_key=api_key,
-        system_prompt=prompts["olivia_system"],
+        system_prompt=prompts[target.persona_system_key],
         store=store,
         num_workers=cfg.lane_a_num_workers,
         batch_size=cfg.lane_a_batch_size,
@@ -394,7 +405,8 @@ def _generate_lane_a(cfg, store, roster, prompts, run_id) -> int:
     ctx = IngestContext(
         run_id=run_id,
         instances=instances,
-        system_prompt=prompts["olivia_system"],
+        system_prompt=prompts[target.persona_system_key],
+        persona_speaker=target.persona_speaker,
         tools_schema_by_family=load_toolset_schemas(REPO_ROOT / "datagen" / "toolsets"),
         teacher_id=teacher.id,
         hermes_commit=roster.hermes_pin,
@@ -412,23 +424,26 @@ def cmd_gate(run_id: str) -> None:
     manifest = find_manifest(run_id)
     _assert_frozen_inputs(manifest)
     cfg = RunConfig.load(configs_dir() / f"{manifest.kind}.yaml")
+    target = Target.resolve()
     roster = Roster.load(configs_dir() / "teachers.yaml")
-    prompts = load_prompt_set()
+    prompts = load_prompt_set(target)
     prompts.assert_hash(manifest.prompt_set_hash)
     store = RunStore(run_id)
     client, ledger = make_clients(roster, run_id)
 
-    quality = Rubric.load(REPO_ROOT / "gates" / "judge" / "quality.rubric.yaml")
+    quality = Rubric.load(REPO_ROOT / target.quality_rubric)
     rubrics = {
         "a": quality,
-        "c": quality,  # Olivia simple-chats; character-RP records use c_character
+        "c": quality,  # persona simple-chats; character-RP records use c_character
         "b": Rubric.load(REPO_ROOT / "gates" / "judge" / "laneb.rubric.yaml"),
     }
+    for lane, rubric_path in target.lane_rubrics.items():
+        rubrics[lane] = Rubric.load(REPO_ROOT / rubric_path)
     # Gating an older run means restoring its generation-time gates/ tree (frozen-
     # inputs rule), which may predate later-added rubrics. Load those only if
     # present; a record that actually routes to a missing rubric fails loudly
     # (KeyError names it) instead of blocking runs that never needed it.
-    character_rp = REPO_ROOT / "gates" / "judge" / "character_rp.rubric.yaml"
+    character_rp = REPO_ROOT / target.character_rubric
     if character_rp.exists():
         rubrics["c_character"] = Rubric.load(character_rp)
     patterns = load_patterns(
@@ -444,6 +459,8 @@ def cmd_gate(run_id: str) -> None:
         roster,
         client,
         prompts,
+        persona_speaker=target.persona_speaker,
+        harmonize_policy={k: tuple(v) for k, v in target.harmonize.items()},
         dedupe_threshold=cfg.dedupe_threshold,
         # Judge fan-out capped by the tightest judge provider so any per-record
         # routing stays within limits.

@@ -1,0 +1,14 @@
+# Swift Parrot v2.2 — the flash build. THE DEFAULT TARGET: must reproduce the
+# pre-target pipeline byte-for-byte (goldens + frozen PromptSet hash are the proof).
+name: flash-v2_2
+base_model: Qwen3.5-35B-A3B
+persona: olivia
+persona_speaker: Olivia
+judge_voice_axis: olivia_voice
+lanes: [a, b, c]
+quality_rubric: datagen/persona/olivia/quality.rubric.yaml
+character_rubric: gates/judge/character_rp.rubric.yaml
+harmonize_prompt: datagen/persona/olivia/paraphrase_prompt.md
+harmonize:
+  a: [assistant]
+  c: [assistant]   # voice-gated per record: only where every speaker IS the persona

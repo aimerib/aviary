@@ -1,7 +1,8 @@
-# Lane C CHARACTER-RP rubric: for self-play records where the character side plays a
-# fiction character (NOT Olivia). Judges character fidelity, never olivia_voice —
-# Olivia must be transparent in roleplay. Selected per-record by voice (see
-# gates/pipeline: non-Olivia lane-C records route here instead of quality.rubric).
+# Lane C CHARACTER-RP rubric: for self-play records where the character side plays
+# a fiction character (NOT the build target's persona). Judges character fidelity,
+# never the persona-voice axis — the persona must be transparent in roleplay.
+# Selected per-record by voice (see gates/pipeline: non-persona-voiced lane-C
+# records route here instead of the target's quality rubric).
 name: character_rp
 threshold: 3.5
 axes:

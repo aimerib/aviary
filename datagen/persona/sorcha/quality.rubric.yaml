@@ -1,0 +1,12 @@
+# TODO(co-authoring session): Sorcha quality rubric — axes and anchors are decided
+# with the owner. Minimal valid placeholder so target resolution loads; the
+# sorcha_voice axis gets real anchors when the persona exists.
+name: sorcha_quality
+threshold: 3.5
+axes:
+  sorcha_voice:
+    weight: 1.0
+    description: "TODO: defined in the persona co-authoring session."
+  coherence:
+    weight: 1.0
+    description: Turns follow from context; no contradictions or non sequiturs.

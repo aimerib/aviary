@@ -3,7 +3,7 @@
 The raw batch record (source-of-truth rule) is ShareGPT-shaped with metadata:
 {prompt_index, conversations: [{from, value, tool_calls?}, ...], toolsets_used,
 tool_stats}. hermes does NOT persist the ephemeral system prompt, so the frozen
-Olivia system prompt is re-attached here from the run's PromptSet.
+persona system prompt is re-attached here from the run's PromptSet.
 """
 
 from __future__ import annotations
@@ -41,6 +41,7 @@ class IngestContext:
     run_id: str
     instances: list[TaskInstance]  # in emit_batch_inputs order, one entry PER ROLLOUT LINE
     system_prompt: str
+    persona_speaker: str  # the build target's voice; stamped on assistant turns
     tools_schema_by_family: dict[str, str]  # family -> canonical <tools> JSON
     teacher_id: str
     hermes_commit: str
@@ -82,7 +83,9 @@ def ingest_hermes_record(raw: dict, ctx: IngestContext) -> ConversationRecord:
             calls = _parse_tool_calls(turn.get("tool_calls") or [], i)
             pending_call_ids.extend(tc.id for tc in calls)
             messages.append(
-                Message(role="assistant", speaker="Olivia", content=value, tool_calls=calls)
+                Message(
+                    role="assistant", speaker=ctx.persona_speaker, content=value, tool_calls=calls
+                )
             )
         elif role == "tool":
             # Prefer explicit id pairing; fall back to FIFO only when the tool

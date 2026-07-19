@@ -1,5 +1,5 @@
-# Lane B rubric: fidelity of extracted scenes. No Olivia axis — lane B characters
-# are the entropy source and must NOT sound like Olivia.
+# Lane B rubric: fidelity of extracted scenes. No persona-voice axis — lane B
+# characters are the entropy source and must NOT sound like the assistant persona.
 name: laneb
 threshold: 3.5
 axes:

@@ -1,0 +1,12 @@
+# TODO(co-authoring session): lane D (personal-stream) rubric under the sorcha
+# target. Placeholder axes keep the gate runnable on synthetic fixtures; real
+# axes/anchors are co-authored with the owner.
+name: sorcha_lane_d
+threshold: 3.0
+axes:
+  coherence:
+    weight: 1.0
+    description: "TODO: co-authored. Conversation reads as a coherent exchange."
+  naturalness:
+    weight: 1.0
+    description: "TODO: co-authored. Reads like real people talking."

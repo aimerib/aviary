@@ -130,6 +130,7 @@ def make_ctx() -> IngestContext:
         run_id="t",
         instances=instances,
         system_prompt="You are Olivia.",
+        persona_speaker="Olivia",
         tools_schema_by_family=load_toolset_schemas(REPO / "datagen" / "toolsets"),
         teacher_id="deepseek-v4-flash-20260610",
         hermes_commit="v0.18.2",

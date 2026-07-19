@@ -1,5 +1,10 @@
 # aviary — recipe names are part of the workflow contract (see CLAUDE.md).
 # Bodies delegate 1:1 to the aviary CLI (src/aviary/cli.py).
+#
+# Build-target selection: every recipe honors $AVIARY_TARGET
+# (datagen/configs/targets/<name>.yaml; default flash-v2_2 — the v2.2 pipeline
+# runs unchanged unless you explicitly select another target, e.g.
+# `AVIARY_TARGET=sorcha-v1 just pilot`).
 
 set dotenv-load := true
 

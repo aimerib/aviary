@@ -4,8 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from aviary.orchestrate import PROMPT_FILES, RunConfig, load_prompt_set
+from aviary.orchestrate import RunConfig, load_prompt_set, prompt_files
 from aviary.schema.manifest import RunManifest, Teachers
+from aviary.targets import Target
 from aviary.teacher.roster import Roster
 
 REPO = Path(__file__).resolve().parents[1]
@@ -58,9 +59,12 @@ def test_tracked_run_configs_load():
 
 
 def test_prompt_set_covers_all_stages():
-    for name, path in PROMPT_FILES.items():
+    target = Target.load("flash-v2_2")
+    files = prompt_files(target)
+    assert "olivia_system" in files  # constructed key == pre-target key (hash-stable)
+    for name, path in files.items():
         assert path.exists(), f"missing prompt file for {name}: {path}"
-    ps = load_prompt_set()
+    ps = load_prompt_set(target)
     assert len(ps.hash) == 64
 
 

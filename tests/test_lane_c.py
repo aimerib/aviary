@@ -155,7 +155,7 @@ def test_selfplay_max_turns_and_alternation():
 def test_inline_seeds_and_personas_load():
     seeds_yaml = REPO / "datagen" / "configs" / "lane_c.yaml"
     if seeds_yaml.exists():
-        seeds = load_inline_seeds(seeds_yaml, "You are Olivia.")
+        seeds = load_inline_seeds(seeds_yaml, "You are Olivia.", "Olivia")
         assert all(s.card.startswith("You are Olivia.") for s in seeds)
     personas = load_personas(REPO / "datagen" / "persona" / "user_sims")
     assert {"lazy_texter", "engaged_rper", "task_asker"} <= set(personas)

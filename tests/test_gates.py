@@ -48,7 +48,7 @@ def make_prompts() -> PromptSet:
     return PromptSet.load(
         {
             "judge_prompt": REPO / "gates" / "judge" / "judge_prompt.md",
-            "harmonize_prompt": REPO / "gates" / "harmonize" / "paraphrase_prompt.md",
+            "harmonize_prompt": REPO / "datagen" / "persona" / "olivia" / "paraphrase_prompt.md",
         }
     )
 
@@ -114,7 +114,7 @@ def test_dedupe_exact_and_near():
 
 
 def test_judge_scoring_and_threshold():
-    rubric = Rubric.load(REPO / "gates" / "judge" / "quality.rubric.yaml")
+    rubric = Rubric.load(REPO / "datagen" / "persona" / "olivia" / "quality.rubric.yaml")
 
     def script(req: ChatRequest) -> str:
         return json.dumps(
@@ -160,7 +160,7 @@ def test_harmonize_preserves_protected_and_drops_on_violation():
         return req.messages[0]["content"].replace("Saved", "Stashed")
 
     outcome = harmonize_record(
-        rec, FakeTeacherClient(script=echo), make_prompts(), "deepseek-v4-flash-20260610"
+        rec, FakeTeacherClient(script=echo), make_prompts(), "deepseek-v4-flash-20260610", "Olivia"
     )
     assert not outcome.dropped
     texts = [m.content for m in outcome.record.messages if m.role == "assistant"]
@@ -175,6 +175,7 @@ def test_harmonize_preserves_protected_and_drops_on_violation():
         FakeTeacherClient(script=eats_placeholders),
         make_prompts(),
         "deepseek-v4-flash-20260610",
+        "Olivia",
     )
     assert outcome2.dropped
     assert outcome2.record.gate_state.drop_reason == "span_violation"
@@ -185,7 +186,7 @@ def test_lane_b_records_skip_harmonize():
         update={"provenance": banter("h2", "text").provenance.model_copy(update={"lane": "b"})}
     )
     client = FakeTeacherClient(script=lambda r: "SHOULD NOT BE CALLED")
-    outcome = harmonize_record(rec, client, make_prompts(), "deepseek-v4-flash-20260610")
+    outcome = harmonize_record(rec, client, make_prompts(), "deepseek-v4-flash-20260610", "Olivia")
     assert not outcome.dropped
     assert client.requests == []
 
@@ -209,8 +210,8 @@ def test_rubric_selection_is_voice_aware():
             ]
         }
     )
-    assert _rubric_for(olivia, rubrics).name == "quality"
-    assert _rubric_for(rp, rubrics).name == "character_rp"
+    assert _rubric_for(olivia, rubrics, "Olivia").name == "quality"
+    assert _rubric_for(rp, rubrics, "Olivia").name == "character_rp"
 
 
 def test_lane_c_character_rp_is_protected_from_olivia_voice():
@@ -227,13 +228,13 @@ def test_lane_c_character_rp_is_protected_from_olivia_voice():
         }
     )
     client = FakeTeacherClient(script=lambda r: "SHOULD NOT BE CALLED")
-    outcome = harmonize_record(rp, client, make_prompts(), "deepseek-v4-flash-20260610")
+    outcome = harmonize_record(rp, client, make_prompts(), "deepseek-v4-flash-20260610", "Olivia")
     assert not outcome.dropped
     assert client.requests == []  # RP character voice never sent to the paraphraser
 
     # ...but an Olivia-voiced lane-C record in the same lane still IS harmonized.
     called = FakeTeacherClient(script=lambda r: r.messages[0]["content"])
-    out2 = harmonize_record(base, called, make_prompts(), "deepseek-v4-flash-20260610")
+    out2 = harmonize_record(base, called, make_prompts(), "deepseek-v4-flash-20260610", "Olivia")
     assert not out2.dropped
     assert called.requests  # Olivia's voice is harmonizable
 
@@ -268,7 +269,7 @@ def test_gate_pipeline_end_to_end(tmp_path):
     patterns = load_patterns(
         REPO / "gates" / "scrub" / "denylist.yaml", REPO / "gates" / "scrub" / "pii_patterns.yaml"
     )
-    rubrics = {"c": Rubric.load(REPO / "gates" / "judge" / "quality.rubric.yaml")}
+    rubrics = {"c": Rubric.load(REPO / "datagen" / "persona" / "olivia" / "quality.rubric.yaml")}
     stats = run_gates(
         store,
         default_resolver({}),
@@ -277,6 +278,7 @@ def test_gate_pipeline_end_to_end(tmp_path):
         ROSTER,
         FakeTeacherClient(script=_good_judge),
         make_prompts(),
+        persona_speaker="Olivia",
         judge_workers=4,  # parallel judging must keep outcomes/order deterministic
     )
     assert stats.total == 4
@@ -310,7 +312,7 @@ def test_run_gates_isolates_stage_errors(tmp_path):
     patterns = load_patterns(
         REPO / "gates" / "scrub" / "denylist.yaml", REPO / "gates" / "scrub" / "pii_patterns.yaml"
     )
-    rubrics = {"c": Rubric.load(REPO / "gates" / "judge" / "quality.rubric.yaml")}
+    rubrics = {"c": Rubric.load(REPO / "datagen" / "persona" / "olivia" / "quality.rubric.yaml")}
     stats = run_gates(
         store,
         resolver,
@@ -319,6 +321,7 @@ def test_run_gates_isolates_stage_errors(tmp_path):
         ROSTER,
         FakeTeacherClient(script=_good_judge),
         make_prompts(),
+        persona_speaker="Olivia",
     )
     assert stats.total == 2
     reasons = {
