@@ -125,7 +125,7 @@ def run_hermes_batch(
     out_dir = store.hermes_out()
     inputs = out_dir / "inputs.jsonl"
     n = emit_batch_inputs(instances, inputs)
-    hermes_python = os.environ.get("AVIARY_HERMES_PYTHON", "python")
+    hermes_python = os.path.expanduser(os.environ.get("AVIARY_HERMES_PYTHON", "python"))
     cmd = build_batch_command(
         python=hermes_python,
         dataset_file=inputs,
