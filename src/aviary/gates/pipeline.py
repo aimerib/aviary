@@ -14,7 +14,7 @@ from pathlib import Path
 from aviary.gates import dedupe as dedupe_mod
 from aviary.gates.harmonize import harmonize_record, is_persona_voiced
 from aviary.gates.judge import Rubric, judge_record
-from aviary.gates.scrub import ScrubPattern, scan_record
+from aviary.gates.scrub import LaneScrubPolicy, ScrubPattern, scan_record
 from aviary.gates.verify import run_verifier, verifier_id
 from aviary.io.jsonl import read_jsonl, write_jsonl
 from aviary.io.store import RunStore
@@ -123,6 +123,7 @@ def run_gates(
     dedupe_threshold: float = 0.8,
     judge_workers: int = 1,
     harmonize_policy: dict[str, tuple[str, ...]] | None = None,
+    scrub_policies: dict[str, LaneScrubPolicy] | None = None,
 ) -> GateStats:
     records: list[ConversationRecord] = []
     for path in store.raw_files():
@@ -204,20 +205,36 @@ def run_gates(
         else:
             reject(rec, "judge")
 
-    # 3. scrub
+    # 3. scrub (per-lane policy: label exemptions + optional transform, e.g. lane D
+    # pseudonymization — the owner's identifiers are signal there, third parties
+    # get stable pseudonyms instead of drops)
     clean: list[ConversationRecord] = []
     for rec in judged:
-        hits = scan_record(rec, scrub_patterns)
-        flags = [h for h in hits if h.startswith("flag:")]
+        policy = (scrub_policies or {}).get(rec.provenance.lane)
+        patterns = (
+            [p for p in scrub_patterns if p.label not in policy.exempt_labels]
+            if policy
+            else scrub_patterns
+        )
+        hits = scan_record(rec, patterns)
+        if any(h.startswith("drop:") for h in hits):
+            rec = rec.model_copy(
+                update={"gate_state": rec.gate_state.model_copy(update={"scrub_flags": hits})}
+            )
+            reject(rec, "scrub")
+            continue
+        if policy and policy.transform:
+            transformed = policy.transform(rec)
+            if transformed is not rec:
+                hits = sorted({*hits, "flag:transformed"})
+                rec = transformed
         rec = rec.model_copy(
             update={"gate_state": rec.gate_state.model_copy(update={"scrub_flags": hits})}
         )
-        if any(h.startswith("drop:") for h in hits):
-            reject(rec, "scrub")
-        else:
-            if flags:
-                log.info("record %s flagged: %s", rec.provenance.record_id, flags)
-            clean.append(rec)
+        flags = [h for h in hits if h.startswith("flag:")]
+        if flags:
+            log.info("record %s flagged: %s", rec.provenance.record_id, flags)
+        clean.append(rec)
 
     # 4. dedupe (within run; corpus-wide pass happens again at render)
     dupes = dedupe_mod.find_duplicates(clean, threshold=dedupe_threshold)

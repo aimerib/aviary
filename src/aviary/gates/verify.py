@@ -24,6 +24,9 @@ class VerifierLoadError(RuntimeError):
 
 
 def verifier_id(path: Path, repo_root: Path) -> str:
+    if not path.is_relative_to(repo_root):
+        # Out-of-tree verifier (test stubs): the stem is the stable id.
+        return path.stem
     return str(path.relative_to(repo_root)).removeprefix("verifiers/").removesuffix(".py")
 
 
