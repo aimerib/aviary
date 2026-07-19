@@ -25,6 +25,10 @@ Three lanes, one spine. Every lane's adapter normalizes into ONE record schema
 - **Lane C (self-play)** — user-simulator ⇄ character multi-turn RP targeting
   SillyTavern dynamics: short/lazy/typo'd user turns (deterministic seeded typo
   injector), response-length control, impersonation avoidance.
+- **Lane D (personal)** — the owner's private streams (chat exports, journals)
+  normalized straight into records by `lanes/d_personal/` — no teacher calls;
+  human-origin records judged by the primary judge (cross-vendor is vacuous).
+  Sorcha builds only; run data ships NOWHERE (manifest records the exemption).
 - Magpie-style null-prompt extraction: deliberately out of scope.
 
 Volumes are a funnel by design; rejection is a feature. Verify-rejected rollouts
@@ -35,6 +39,19 @@ only** (only lane A emits multiple rollout siblings of one instance sharing a
 byte-identical prompt — `sibling_group`; lanes B/C leave it unset) and are
 emitted **with-thoughts only** (`ThoughtMode.WITH`), unlike the SFT path which
 emits both thought modes.
+
+## Build targets
+
+`datagen/configs/targets/<name>.yaml` binds everything persona- or model-specific:
+the persona attached at lane A ingest and generated-as in lanes A/C, the
+harmonizer's canonical voice + paraphrase prompt, the judge's voice rubric,
+per-lane harmonize policy, and which lanes a render may include. Selected via
+`$AVIARY_TARGET`; the default `flash-v2_2` (persona: Olivia) reproduces the
+pre-target pipeline byte-for-byte. `sorcha-v1` (persona: Sorcha, lanes b+d) is a
+private single-user companion trained from the same base — **Olivia does not
+exist in Sorcha's corpus** and renders are target-bounded to enforce it. Sorcha's
+persona content is CO-AUTHORED with the owner in a working session — the files in
+`datagen/persona/sorcha/` are placeholders until then; never invent it.
 
 ## Vocabulary
 
@@ -72,12 +89,13 @@ task you were asked to do, stop and say so instead of working around it.
 3. **Span-protection rule.** The harmonizer (`src/aviary/gates/harmonize.py`)
    may rewrite conversational spans only — structurally, that is
    `Message.content`/`Message.thought` on user/assistant turns, nothing else,
-   and per policy only **Olivia-voiced turns**: lane A (Olivia by construction),
-   and lane C **only where the character IS Olivia** (all assistant turns spoken
-   by `OLIVIA_SPEAKER`). Olivia is RP-transparent: lane B character voices **and
-   lane-C character-RP voices** (lane-B-seeded, "You play X and only X") are the
-   entropy source and are never paraphrased — Olivia's persona must never leak
-   into a roleplay character. Immutable: tool call arguments, tool results,
+   and per policy only **persona-voiced turns** of the build target: lane A (the
+   persona by construction), and lane C **only where the character IS the
+   persona** (all assistant turns spoken by the target's `persona_speaker`).
+   The persona is RP-transparent: lane B character voices **and lane-C
+   character-RP voices** (lane-B-seeded, "You play X and only X") are the
+   entropy source and are never paraphrased — the assistant persona must never
+   leak into a roleplay character. Immutable: tool call arguments, tool results,
    system prompts, tool schemas, and (via mask/restore placeholders) code,
    paths, quoted strings, identifiers, numbers inside prose. If restore isn't
    byte-perfect, drop the record — never bend the span boundary. (Scar tissue:
@@ -100,7 +118,9 @@ task you were asked to do, stop and say so instead of working around it.
    templates, selected at render time with a manifest-recorded seed.
 
 7. **Data-in-git rule.** No trajectories, session records, book texts, or
-   rendered corpora in git, ever. Run data lives under `$AVIARY_DATA_DIR/<run_id>/`
+   rendered corpora in git, ever. Lane D is stricter (radioactive): personal
+   data never appears in git, tests, fixtures, goldens, or docs — not even
+   single-message samples; every lane D test runs on synthetic data. Run data lives under `$AVIARY_DATA_DIR/<run_id>/`
    and ships to a private HF dataset repo referenced by its manifest. `runs/`
    holds manifests only. Exception: fixtures and goldens are small, curated,
    and tracked on purpose — they are the contract.
@@ -133,18 +153,17 @@ task you were asked to do, stop and say so instead of working around it.
 | --------------------- | -------------------------------------------------------- |
 | `src/aviary/`         | All engine code (installable package; `aviary` CLI)      |
 | `src/aviary/schema/`  | The unified record schema + manifest models              |
-| `src/aviary/lanes/`   | a_agentic (hermes), b_fiction (extraction), c_selfplay   |
+| `src/aviary/lanes/`   | a_agentic (hermes), b_fiction (extraction), c_selfplay, d_personal |
 | `src/aviary/gates/`   | verify/judge/scrub/dedupe/spans/harmonize + pipeline     |
 | `src/aviary/render/`  | THE serializer, split, DPO pairing, render orchestration |
 | `tasks/<family>/`     | Lane A task templates (YAML; schema: `tasks/TEMPLATE.task.yaml`) |
 | `verifiers/`          | Verifier plugins (pure functions) + `fixtures/`; laneb/, lanec/ structural verifiers |
-| `datagen/configs/`    | teachers roster, pricing, pilot/burn, lane_b/lane_c configs |
+| `datagen/configs/`    | teachers roster, pricing, pilot/burn, lane configs; `targets/` build targets |
 | `datagen/toolsets/`   | Per-family tool allowlists + JSON schemas                |
-| `datagen/persona/`    | Olivia (`system.md` canonical, `SOUL.md` expanded); `user_sims/` personas |
+| `datagen/persona/`    | per-persona dirs (`olivia/` canonical + voice rubric + paraphrase prompt; `sorcha/` placeholders); `user_sims/` |
 | `datagen/prompts/`    | Lane B extraction + lane C user-sim prompt templates (part of the hashed PromptSet) |
 | `gates/judge/`        | Rubric YAMLs + judge prompt                              |
 | `gates/scrub/`        | Denylist + PII patterns                                  |
-| `gates/harmonize/`    | Paraphrase prompt                                        |
 | `render/`             | `CONTRACT.md` (byte format, versioned) + `goldens/`      |
 | `runs/`               | Manifests only                                           |
 | `tests/`              | Pytest; offline only (socket-ban fixture), fixtures in `tests/fixtures/` |
@@ -198,6 +217,10 @@ that band, revise the template (difficulty), don't touch the verifier.
 - Never emit training-format text outside `src/aviary/render/serializer.py`.
 - Never let a train render proceed past a holdout violation.
 - Never use a Claude-class model as teacher or judge.
-- Never paraphrase a non-Olivia voice into Olivia's — lane B character dialogue
-  or lane-C character-RP turns. Olivia is present only in tasks (lane A) and
-  Olivia simple-chats (inline lane-C seeds); she is transparent in roleplay.
+- Never paraphrase a non-persona voice into the persona's — lane B character
+  dialogue or lane-C character-RP turns. The persona is present only in tasks
+  (lane A) and simple-chats (inline lane-C seeds); it is transparent in roleplay.
+- Never let personal (lane D) data into git, tests, fixtures, goldens, docs, or
+  HF — synthetic only, always; lane D run data ships nowhere.
+- Never author Sorcha persona content unilaterally — it is co-authored with the
+  owner, and nothing Olivia-voiced ever enters a sorcha render (target-bounded).

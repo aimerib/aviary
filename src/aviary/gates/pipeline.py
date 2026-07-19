@@ -183,7 +183,12 @@ def run_gates(
 
     def _judge(rec: ConversationRecord):
         rubric = _rubric_for(rec, rubric_by_lane, persona_speaker)
-        judge_model = roster.judge_for(_generator_id(rec)).id
+        if rec.provenance.teachers:
+            judge_model = roster.judge_for(_generator_id(rec)).id
+        else:
+            # Human-origin records (lane D personal streams) have no generating
+            # vendor, so every judge is cross-vendor by definition — use primary.
+            judge_model = roster.assigned("judge", "primary").id
         return judge_record(rec, rubric, client, judge_model, prompts)
 
     pool = TeacherPool(client, roster, max_workers=max(1, judge_workers))

@@ -45,8 +45,8 @@ def render_run(
 
     if include_lanes is not None:
         # Target record-set boundary: a render may only include the lanes its build
-        # target declares (e.g. lane D never enters a flash render; nothing
-        # Olivia-voiced enters a sorcha render). Exclusions are logged, never silent.
+        # target declares (e.g. lane D never enters a flash render; nothing voiced
+        # by another target's persona enters this one). Exclusions logged, never silent.
         before = len(kept) + len(extra_corpus or [])
         kept = [r for r in kept if r.provenance.lane in include_lanes]
         extra_corpus = [r for r in (extra_corpus or []) if r.provenance.lane in include_lanes]

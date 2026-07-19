@@ -71,7 +71,9 @@ def harmonize_record(
     persona_speaker: str,
     policy: dict[str, tuple[str, ...]] | None = None,
 ) -> HarmonizeOutcome:
-    roles = (policy or DEFAULT_POLICY).get(rec.provenance.lane, ())
+    # None -> defaults; an explicitly EMPTY policy ({}) means "harmonize nothing"
+    # (the sorcha target until its voice is co-authored) and must not fall back.
+    roles = (DEFAULT_POLICY if policy is None else policy).get(rec.provenance.lane, ())
     if not roles:
         return HarmonizeOutcome(record=rec)
     # Voice gate: never rewrite a non-persona voice (lane-C RP characters), even
