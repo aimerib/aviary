@@ -46,7 +46,10 @@ tools:
   - search_files
 
 n_rollouts: 4
-difficulty_target: [0.3, 0.8]
+# Teacher-ceiling band (2026-07-19 decision): deepseek-v4-flash is near-ceiling
+# on well-specified structural tasks (teacher handles bidirectional linking reliably) — measured 0.94-1.00
+# across two hardening rounds. GRPO difficulty re-derives from the STUDENT.
+difficulty_target: [0.5, 1.0]
 verifier: verifiers/vault/linked_note.py
 notes: >
   Outcome gate: note exists at destination opening with a frontmatter block

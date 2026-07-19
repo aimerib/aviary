@@ -1,8 +1,9 @@
-# Lane-B corpus book list. 39 works that yielded >=1 scene in run 2026-07-17-
-# pilot-corpus (from a 65-book sweep of the library, epub + DRM-free .kepub).
-# Dropped: ~25 non-fiction that slipped the sweep + Le Guin (real fiction, but
-# sparse-dialogue mythic style extracts poorly under min_turns=6 — a lane B bias).
-# Lane B rewards interiority-rich prose; judge keep-rate ~28% (thought_quality floor).
+# Lane-B burn corpus: 39 published works (the dcdbb78 sweep survivors) + 443 AO3
+# works that yielded >=1 record in runs 2026-07-18-pilot-ao3/-ao3scale (of 500
+# downloaded; the other 57 yielded nothing, same keep-what-yields rule as the
+# 65->39 book sweep). Holdout flags reconstructed from those runs' provenance
+# (46 AO3 works + 4 books). Assembled 2026-07-19 for the blessing pilot after
+# the temporary lane-C smoke config overwrote the working tree copy.
 
 books:
   - work_id: isaac_asimov_foundation
@@ -200,6 +201,1336 @@ books:
     author: "Leo Tolstoy"
     path: "/Volumes/AI/personal/library/Leo Tolstoy/War and Peace (662)/War and Peace - Leo Tolstoy.kepub"
     holdout: false
+  - work_id: ao3_10011_csi
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10011_csi.txt"
+    holdout: false
+  - work_id: ao3_10012_the_west_wing
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10012_the_west_wing.txt"
+    holdout: true
+  - work_id: ao3_10014_houston_knights
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10014_houston_knights.txt"
+    holdout: false
+  - work_id: ao3_10017_dcu
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10017_dcu.txt"
+    holdout: false
+  - work_id: ao3_10023_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10023_fic.txt"
+    holdout: false
+  - work_id: ao3_10026_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10026_stargate_atlantis.txt"
+    holdout: false
+  - work_id: ao3_10029_dead_poet_s_society_1989
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10029_dead_poet_s_society_1989.txt"
+    holdout: false
+  - work_id: ao3_10039_x_men_comics
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10039_x_men_comics.txt"
+    holdout: false
+  - work_id: ao3_10040_dcu
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10040_dcu.txt"
+    holdout: false
+  - work_id: ao3_10055_criminal_minds
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10055_criminal_minds.txt"
+    holdout: true
+  - work_id: ao3_10057_x_men_comics
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10057_x_men_comics.txt"
+    holdout: false
+  - work_id: ao3_10060_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10060_stargate_atlantis.txt"
+    holdout: false
+  - work_id: ao3_10063_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10063_harry_potter_rowling.txt"
+    holdout: false
+  - work_id: ao3_10065_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10065_stargate_atlantis.txt"
+    holdout: false
+  - work_id: ao3_10070_the_bartimaeus_trilogy_stroud
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10070_the_bartimaeus_trilogy_stroud.txt"
+    holdout: false
+  - work_id: ao3_10071_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10071_harry_potter_rowling.txt"
+    holdout: false
+  - work_id: ao3_10073_jag
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10073_jag.txt"
+    holdout: false
+  - work_id: ao3_10077_riptide_tv
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10077_riptide_tv.txt"
+    holdout: false
+  - work_id: ao3_10078_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10078_stargate_atlantis.txt"
+    holdout: false
+  - work_id: ao3_10084_heroes_fandom
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10084_heroes_fandom.txt"
+    holdout: false
+  - work_id: ao3_10089_star_trek_2009
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10089_star_trek_2009.txt"
+    holdout: false
+  - work_id: ao3_10093_babylon_5
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10093_babylon_5.txt"
+    holdout: false
+  - work_id: ao3_10096_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10096_harry_potter_rowling.txt"
+    holdout: false
+  - work_id: ao3_100_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_100_harry_potter_rowling.txt"
+    holdout: false
+  - work_id: ao3_10102_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10102_harry_potter_rowling.txt"
+    holdout: false
+  - work_id: ao3_10106_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10106_harry_potter_rowling.txt"
+    holdout: true
+  - work_id: ao3_10109_csi_las_vegas
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10109_csi_las_vegas.txt"
+    holdout: false
+  - work_id: ao3_10111_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10111_stargate_atlantis.txt"
+    holdout: false
+  - work_id: ao3_10115_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10115_stargate_atlantis.txt"
+    holdout: false
+  - work_id: ao3_10117_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10117_stargate_atlantis.txt"
+    holdout: false
+  - work_id: ao3_10118_babylon_5
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10118_babylon_5.txt"
+    holdout: false
+  - work_id: ao3_10120_x_men_evolution
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10120_x_men_evolution.txt"
+    holdout: false
+  - work_id: ao3_10122_harry_potter_fandom
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10122_harry_potter_fandom.txt"
+    holdout: false
+  - work_id: ao3_10123_harry_potter_fandom
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10123_harry_potter_fandom.txt"
+    holdout: false
+  - work_id: ao3_10125_harry_potter_fandom
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10125_harry_potter_fandom.txt"
+    holdout: false
+  - work_id: ao3_10129_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10129_stargate_atlantis.txt"
+    holdout: false
+  - work_id: ao3_10130_angel_the_series
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10130_angel_the_series.txt"
+    holdout: true
+  - work_id: ao3_10132_buffy_the_vampire_slayer
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10132_buffy_the_vampire_slayer.txt"
+    holdout: false
+  - work_id: ao3_10134_harry_potter_j_k_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10134_harry_potter_j_k_rowling.txt"
+    holdout: false
+  - work_id: ao3_10135_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10135_stargate_atlantis.txt"
+    holdout: false
+  - work_id: ao3_10138_big_wolf_on_campus
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10138_big_wolf_on_campus.txt"
+    holdout: false
+  - work_id: ao3_10144_buffy_the_vampire_slayer
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10144_buffy_the_vampire_slayer.txt"
+    holdout: false
+  - work_id: ao3_10145_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10145_stargate_atlantis.txt"
+    holdout: false
+  - work_id: ao3_10148_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10148_harry_potter_rowling.txt"
+    holdout: true
+  - work_id: ao3_10155_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_10155_harry_potter_rowling.txt"
+    holdout: false
+  - work_id: ao3_102_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_102_fic.txt"
+    holdout: false
+  - work_id: ao3_103_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_103_harry_potter_rowling.txt"
+    holdout: false
+  - work_id: ao3_112_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_112_harry_potter_rowling.txt"
+    holdout: false
+  - work_id: ao3_113_manic_street_preachers
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_113_manic_street_preachers.txt"
+    holdout: false
+  - work_id: ao3_119_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_119_harry_potter_rowling.txt"
+    holdout: true
+  - work_id: ao3_125_due_south
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_125_due_south.txt"
+    holdout: false
+  - work_id: ao3_127_manic_street_preachers
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_127_manic_street_preachers.txt"
+    holdout: false
+  - work_id: ao3_128_house_m_d
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_128_house_m_d.txt"
+    holdout: false
+  - work_id: ao3_129_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_129_fic.txt"
+    holdout: false
+  - work_id: ao3_17_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_17_harry_potter_rowling.txt"
+    holdout: false
+  - work_id: ao3_20003_stargate_sg_1
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20003_stargate_sg_1.txt"
+    holdout: false
+  - work_id: ao3_20004_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20004_fic.txt"
+    holdout: false
+  - work_id: ao3_20005_kingdom_hearts
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20005_kingdom_hearts.txt"
+    holdout: false
+  - work_id: ao3_20006_buffy_the_vampire_slayer
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20006_buffy_the_vampire_slayer.txt"
+    holdout: false
+  - work_id: ao3_20009_buffy_the_vampire_slayer
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20009_buffy_the_vampire_slayer.txt"
+    holdout: false
+  - work_id: ao3_20012_supernatural
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20012_supernatural.txt"
+    holdout: false
+  - work_id: ao3_20015_supernatural
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20015_supernatural.txt"
+    holdout: false
+  - work_id: ao3_20017_supernatural
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20017_supernatural.txt"
+    holdout: false
+  - work_id: ao3_20018_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20018_fic.txt"
+    holdout: true
+  - work_id: ao3_20020_the_sentinel
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20020_the_sentinel.txt"
+    holdout: false
+  - work_id: ao3_20023_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20023_fic.txt"
+    holdout: false
+  - work_id: ao3_20024_blake_s_7
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20024_blake_s_7.txt"
+    holdout: false
+  - work_id: ao3_20028_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20028_fic.txt"
+    holdout: false
+  - work_id: ao3_20029_the_sentinel
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20029_the_sentinel.txt"
+    holdout: false
+  - work_id: ao3_20033_pushing_daisies_tv_2007
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20033_pushing_daisies_tv_2007.txt"
+    holdout: false
+  - work_id: ao3_20035_blake_s_7
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20035_blake_s_7.txt"
+    holdout: false
+  - work_id: ao3_20037_due_south
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20037_due_south.txt"
+    holdout: true
+  - work_id: ao3_20038_one_piece
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20038_one_piece.txt"
+    holdout: false
+  - work_id: ao3_20040_the_sentinel
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20040_the_sentinel.txt"
+    holdout: false
+  - work_id: ao3_20041_grey_s_anatomy
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20041_grey_s_anatomy.txt"
+    holdout: false
+  - work_id: ao3_20042_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20042_harry_potter_rowling.txt"
+    holdout: false
+  - work_id: ao3_20044_grey_s_anatomy
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20044_grey_s_anatomy.txt"
+    holdout: false
+  - work_id: ao3_20046_lost_boys_1987
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20046_lost_boys_1987.txt"
+    holdout: false
+  - work_id: ao3_20047_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20047_harry_potter_rowling.txt"
+    holdout: false
+  - work_id: ao3_20048_one_piece
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20048_one_piece.txt"
+    holdout: false
+  - work_id: ao3_20051_supernatural
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20051_supernatural.txt"
+    holdout: false
+  - work_id: ao3_20052_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20052_fic.txt"
+    holdout: false
+  - work_id: ao3_20053_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20053_fic.txt"
+    holdout: true
+  - work_id: ao3_20055_lost_boys_1987
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20055_lost_boys_1987.txt"
+    holdout: false
+  - work_id: ao3_20059_highlander_the_raven
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20059_highlander_the_raven.txt"
+    holdout: false
+  - work_id: ao3_20060_lost_boys_1987
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20060_lost_boys_1987.txt"
+    holdout: false
+  - work_id: ao3_20061_one_piece
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20061_one_piece.txt"
+    holdout: false
+  - work_id: ao3_20062_the_day_after_tomorrow
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20062_the_day_after_tomorrow.txt"
+    holdout: false
+  - work_id: ao3_20064_battlestar_galactica_1978
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20064_battlestar_galactica_1978.txt"
+    holdout: false
+  - work_id: ao3_20065_tales_of_symphonia
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20065_tales_of_symphonia.txt"
+    holdout: true
+  - work_id: ao3_20072_house_m_d
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20072_house_m_d.txt"
+    holdout: false
+  - work_id: ao3_20075_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20075_fic.txt"
+    holdout: false
+  - work_id: ao3_20076_heroes_fandom
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20076_heroes_fandom.txt"
+    holdout: false
+  - work_id: ao3_20077_lie_to_me_tv
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20077_lie_to_me_tv.txt"
+    holdout: false
+  - work_id: ao3_20079_doctor_who
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20079_doctor_who.txt"
+    holdout: false
+  - work_id: ao3_20080_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20080_fic.txt"
+    holdout: false
+  - work_id: ao3_20081_tales_of_symphonia
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20081_tales_of_symphonia.txt"
+    holdout: true
+  - work_id: ao3_20085_supernatural
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20085_supernatural.txt"
+    holdout: false
+  - work_id: ao3_20087_tales_of_symphonia
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20087_tales_of_symphonia.txt"
+    holdout: false
+  - work_id: ao3_20088_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20088_fic.txt"
+    holdout: false
+  - work_id: ao3_20091_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20091_fic.txt"
+    holdout: false
+  - work_id: ao3_20098_mash_tv
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20098_mash_tv.txt"
+    holdout: false
+  - work_id: ao3_20100_spooks_mi_5
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20100_spooks_mi_5.txt"
+    holdout: false
+  - work_id: ao3_20104_doctor_who
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_20104_doctor_who.txt"
+    holdout: false
+  - work_id: ao3_22_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_22_stargate_atlantis.txt"
+    holdout: true
+  - work_id: ao3_24_farscape
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_24_farscape.txt"
+    holdout: false
+  - work_id: ao3_25_farscape
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_25_farscape.txt"
+    holdout: false
+  - work_id: ao3_26_farscape
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_26_farscape.txt"
+    holdout: false
+  - work_id: ao3_2_dead_poet_s_society_1989
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_2_dead_poet_s_society_1989.txt"
+    holdout: false
+  - work_id: ao3_30001_baby_sitters_club_martin
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30001_baby_sitters_club_martin.txt"
+    holdout: false
+  - work_id: ao3_30005_a_song_of_ice_and_fire_george_r_r_martin
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30005_a_song_of_ice_and_fire_george_r_r_martin.txt"
+    holdout: false
+  - work_id: ao3_30008_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30008_fic.txt"
+    holdout: true
+  - work_id: ao3_30011_the_silmarillion_and_other_histories_of_
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30011_the_silmarillion_and_other_histories_of_.txt"
+    holdout: true
+  - work_id: ao3_30019_temeraire_novik
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30019_temeraire_novik.txt"
+    holdout: false
+  - work_id: ao3_30020_i_spy_tv
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30020_i_spy_tv.txt"
+    holdout: false
+  - work_id: ao3_30022_gentleman_bastard_sequence_scott_lynch
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30022_gentleman_bastard_sequence_scott_lynch.txt"
+    holdout: false
+  - work_id: ao3_30028_a_song_of_ice_and_fire_george_r_r_martin
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30028_a_song_of_ice_and_fire_george_r_r_martin.txt"
+    holdout: false
+  - work_id: ao3_30031_doctrine_of_labyrinths_sarah_monette
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30031_doctrine_of_labyrinths_sarah_monette.txt"
+    holdout: false
+  - work_id: ao3_30043_spirited_away
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30043_spirited_away.txt"
+    holdout: false
+  - work_id: ao3_30044_real_ghostbusters
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30044_real_ghostbusters.txt"
+    holdout: false
+  - work_id: ao3_30045_a_song_of_ice_and_fire_george_r_r_martin
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30045_a_song_of_ice_and_fire_george_r_r_martin.txt"
+    holdout: false
+  - work_id: ao3_30047_ever_after_1998
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30047_ever_after_1998.txt"
+    holdout: false
+  - work_id: ao3_30048_real_ghostbusters
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30048_real_ghostbusters.txt"
+    holdout: false
+  - work_id: ao3_30050_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30050_fic.txt"
+    holdout: false
+  - work_id: ao3_30053_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30053_fic.txt"
+    holdout: false
+  - work_id: ao3_30055_terminator_the_sarah_connor_chronicles
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30055_terminator_the_sarah_connor_chronicles.txt"
+    holdout: false
+  - work_id: ao3_30058_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30058_fic.txt"
+    holdout: false
+  - work_id: ao3_30059_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30059_fic.txt"
+    holdout: true
+  - work_id: ao3_30061_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30061_fic.txt"
+    holdout: false
+  - work_id: ao3_30062_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30062_fic.txt"
+    holdout: false
+  - work_id: ao3_30066_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30066_fic.txt"
+    holdout: false
+  - work_id: ao3_30069_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30069_fic.txt"
+    holdout: false
+  - work_id: ao3_30070_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30070_fic.txt"
+    holdout: true
+  - work_id: ao3_30071_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30071_fic.txt"
+    holdout: false
+  - work_id: ao3_30072_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30072_fic.txt"
+    holdout: false
+  - work_id: ao3_30081_due_south
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30081_due_south.txt"
+    holdout: false
+  - work_id: ao3_30084_due_south
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30084_due_south.txt"
+    holdout: false
+  - work_id: ao3_30085_due_south
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30085_due_south.txt"
+    holdout: false
+  - work_id: ao3_30086_due_south
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30086_due_south.txt"
+    holdout: false
+  - work_id: ao3_30089_due_south
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30089_due_south.txt"
+    holdout: false
+  - work_id: ao3_30090_due_south
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30090_due_south.txt"
+    holdout: false
+  - work_id: ao3_30091_due_south
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30091_due_south.txt"
+    holdout: false
+  - work_id: ao3_30092_due_south
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30092_due_south.txt"
+    holdout: false
+  - work_id: ao3_30093_due_south
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30093_due_south.txt"
+    holdout: false
+  - work_id: ao3_30094_sons_of_anarchy
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30094_sons_of_anarchy.txt"
+    holdout: true
+  - work_id: ao3_30102_henry_iv_parts_1_2_shakespeare
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30102_henry_iv_parts_1_2_shakespeare.txt"
+    holdout: false
+  - work_id: ao3_30107_neverwhere_gaiman
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30107_neverwhere_gaiman.txt"
+    holdout: false
+  - work_id: ao3_30111_true_blood
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30111_true_blood.txt"
+    holdout: false
+  - work_id: ao3_30112_chuck_fandom
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30112_chuck_fandom.txt"
+    holdout: false
+  - work_id: ao3_30113_chuck_fandom
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30113_chuck_fandom.txt"
+    holdout: false
+  - work_id: ao3_30114_heroes_fandom
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30114_heroes_fandom.txt"
+    holdout: false
+  - work_id: ao3_30115_heroes_fandom
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30115_heroes_fandom.txt"
+    holdout: false
+  - work_id: ao3_30_the_dead_zone
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_30_the_dead_zone.txt"
+    holdout: false
+  - work_id: ao3_39_supernatural
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_39_supernatural.txt"
+    holdout: false
+  - work_id: ao3_40001_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40001_harry_potter_rowling.txt"
+    holdout: false
+  - work_id: ao3_40004_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40004_harry_potter_rowling.txt"
+    holdout: false
+  - work_id: ao3_40005_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40005_harry_potter_rowling.txt"
+    holdout: false
+  - work_id: ao3_40007_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40007_harry_potter_rowling.txt"
+    holdout: false
+  - work_id: ao3_40011_merlin_bbc
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40011_merlin_bbc.txt"
+    holdout: false
+  - work_id: ao3_40012_merlin_bbc
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40012_merlin_bbc.txt"
+    holdout: false
+  - work_id: ao3_40016_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40016_fic.txt"
+    holdout: false
+  - work_id: ao3_40017_harsh_realm
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40017_harsh_realm.txt"
+    holdout: true
+  - work_id: ao3_40020_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40020_fic.txt"
+    holdout: false
+  - work_id: ao3_40036_bleach
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40036_bleach.txt"
+    holdout: false
+  - work_id: ao3_40039_nobuta_wo_produce
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40039_nobuta_wo_produce.txt"
+    holdout: false
+  - work_id: ao3_40044_georgette_heyer_novels
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40044_georgette_heyer_novels.txt"
+    holdout: false
+  - work_id: ao3_40045_harsh_realm
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40045_harsh_realm.txt"
+    holdout: true
+  - work_id: ao3_40047_harsh_realm
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40047_harsh_realm.txt"
+    holdout: false
+  - work_id: ao3_40065_swordspoint_kushner
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40065_swordspoint_kushner.txt"
+    holdout: false
+  - work_id: ao3_40067_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40067_stargate_atlantis.txt"
+    holdout: false
+  - work_id: ao3_40075_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40075_fic.txt"
+    holdout: false
+  - work_id: ao3_40077_swordspoint_kushner
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40077_swordspoint_kushner.txt"
+    holdout: false
+  - work_id: ao3_40079_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40079_fic.txt"
+    holdout: false
+  - work_id: ao3_40083_swordspoint_kushner
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40083_swordspoint_kushner.txt"
+    holdout: false
+  - work_id: ao3_40084_pirates_of_the_caribbean_movies
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40084_pirates_of_the_caribbean_movies.txt"
+    holdout: true
+  - work_id: ao3_40099_yu_gi_oh_duel_monsters_anime_manga
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40099_yu_gi_oh_duel_monsters_anime_manga.txt"
+    holdout: false
+  - work_id: ao3_40101_yu_gi_oh_duel_monsters_anime_manga
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40101_yu_gi_oh_duel_monsters_anime_manga.txt"
+    holdout: false
+  - work_id: ao3_40111_yu_gi_oh_duel_monsters_anime_manga
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40111_yu_gi_oh_duel_monsters_anime_manga.txt"
+    holdout: false
+  - work_id: ao3_40119_ghostbusters_1984
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40119_ghostbusters_1984.txt"
+    holdout: false
+  - work_id: ao3_40120_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40120_fic.txt"
+    holdout: false
+  - work_id: ao3_40121_swordspoint_kushner
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40121_swordspoint_kushner.txt"
+    holdout: false
+  - work_id: ao3_40123_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40123_fic.txt"
+    holdout: false
+  - work_id: ao3_40124_swordspoint_kushner
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40124_swordspoint_kushner.txt"
+    holdout: false
+  - work_id: ao3_40126_eureka
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40126_eureka.txt"
+    holdout: false
+  - work_id: ao3_40127_cardcaptor_sakura
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40127_cardcaptor_sakura.txt"
+    holdout: false
+  - work_id: ao3_40130_hellsing
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40130_hellsing.txt"
+    holdout: false
+  - work_id: ao3_40136_real_ghostbusters
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40136_real_ghostbusters.txt"
+    holdout: false
+  - work_id: ao3_40140_i_want_to_go_home_korman
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40140_i_want_to_go_home_korman.txt"
+    holdout: false
+  - work_id: ao3_40144_eureka
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40144_eureka.txt"
+    holdout: false
+  - work_id: ao3_40146_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40146_fic.txt"
+    holdout: true
+  - work_id: ao3_40148_generation_kill
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40148_generation_kill.txt"
+    holdout: false
+  - work_id: ao3_40150_top_gear_uk
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40150_top_gear_uk.txt"
+    holdout: false
+  - work_id: ao3_40157_death_note_anime_manga
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40157_death_note_anime_manga.txt"
+    holdout: false
+  - work_id: ao3_40_supernatural
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_40_supernatural.txt"
+    holdout: false
+  - work_id: ao3_42_grey_s_anatomy
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_42_grey_s_anatomy.txt"
+    holdout: true
+  - work_id: ao3_44_smallville
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_44_smallville.txt"
+    holdout: false
+  - work_id: ao3_45_grey_s_anatomy
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_45_grey_s_anatomy.txt"
+    holdout: false
+  - work_id: ao3_47_csi_las_vegas
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_47_csi_las_vegas.txt"
+    holdout: false
+  - work_id: ao3_48_torchwood
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_48_torchwood.txt"
+    holdout: false
+  - work_id: ao3_50014_star_wars_original_trilogy
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50014_star_wars_original_trilogy.txt"
+    holdout: false
+  - work_id: ao3_50023_saiunkoku_monogatari
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50023_saiunkoku_monogatari.txt"
+    holdout: true
+  - work_id: ao3_50025_friday_night_lights
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50025_friday_night_lights.txt"
+    holdout: false
+  - work_id: ao3_50026_saiunkoku_monogatari
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50026_saiunkoku_monogatari.txt"
+    holdout: false
+  - work_id: ao3_50027_angel_the_series
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50027_angel_the_series.txt"
+    holdout: false
+  - work_id: ao3_50034_highlander_the_series
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50034_highlander_the_series.txt"
+    holdout: false
+  - work_id: ao3_50036_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50036_harry_potter_rowling.txt"
+    holdout: false
+  - work_id: ao3_50039_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50039_harry_potter_rowling.txt"
+    holdout: false
+  - work_id: ao3_50041_buffy_the_vampire_slayer
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50041_buffy_the_vampire_slayer.txt"
+    holdout: false
+  - work_id: ao3_50042_supernatural
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50042_supernatural.txt"
+    holdout: false
+  - work_id: ao3_50048_supernatural
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50048_supernatural.txt"
+    holdout: false
+  - work_id: ao3_50049_supernatural
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50049_supernatural.txt"
+    holdout: true
+  - work_id: ao3_50057_panic_at_the_disco
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50057_panic_at_the_disco.txt"
+    holdout: false
+  - work_id: ao3_50059_the_used
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50059_the_used.txt"
+    holdout: false
+  - work_id: ao3_50061_fall_out_boy
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50061_fall_out_boy.txt"
+    holdout: false
+  - work_id: ao3_50067_west_wing
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50067_west_wing.txt"
+    holdout: false
+  - work_id: ao3_50073_stargate_sg_1
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50073_stargate_sg_1.txt"
+    holdout: false
+  - work_id: ao3_50078_stargate_sg_1
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50078_stargate_sg_1.txt"
+    holdout: true
+  - work_id: ao3_50079_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50079_fic.txt"
+    holdout: false
+  - work_id: ao3_50086_stargate_sg_1
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50086_stargate_sg_1.txt"
+    holdout: false
+  - work_id: ao3_50087_stargate_sg_1
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50087_stargate_sg_1.txt"
+    holdout: false
+  - work_id: ao3_50089_veronica_mars_tv
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50089_veronica_mars_tv.txt"
+    holdout: false
+  - work_id: ao3_50091_stargate_sg_1
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50091_stargate_sg_1.txt"
+    holdout: false
+  - work_id: ao3_50092_stargate_sg_1
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50092_stargate_sg_1.txt"
+    holdout: false
+  - work_id: ao3_50097_highlander_the_series
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50097_highlander_the_series.txt"
+    holdout: false
+  - work_id: ao3_50099_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50099_stargate_atlantis.txt"
+    holdout: true
+  - work_id: ao3_50100_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50100_stargate_atlantis.txt"
+    holdout: false
+  - work_id: ao3_50101_highlander_the_series
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50101_highlander_the_series.txt"
+    holdout: false
+  - work_id: ao3_50108_highlander
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50108_highlander.txt"
+    holdout: false
+  - work_id: ao3_50115_the_professionals
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50115_the_professionals.txt"
+    holdout: false
+  - work_id: ao3_50120_veronica_mars_tv
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50120_veronica_mars_tv.txt"
+    holdout: false
+  - work_id: ao3_50122_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50122_stargate_atlantis.txt"
+    holdout: false
+  - work_id: ao3_50123_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50123_stargate_atlantis.txt"
+    holdout: false
+  - work_id: ao3_50127_star_trek_2009
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50127_star_trek_2009.txt"
+    holdout: false
+  - work_id: ao3_50131_doctor_who
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50131_doctor_who.txt"
+    holdout: true
+  - work_id: ao3_50133_total_drama_island
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50133_total_drama_island.txt"
+    holdout: false
+  - work_id: ao3_50135_katekyou_hitman_reborn
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50135_katekyou_hitman_reborn.txt"
+    holdout: false
+  - work_id: ao3_50136_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50136_stargate_atlantis.txt"
+    holdout: false
+  - work_id: ao3_50137_torchwood
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50137_torchwood.txt"
+    holdout: false
+  - work_id: ao3_50142_wish_manga
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50142_wish_manga.txt"
+    holdout: false
+  - work_id: ao3_50144_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50144_stargate_atlantis.txt"
+    holdout: false
+  - work_id: ao3_50146_farscape
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50146_farscape.txt"
+    holdout: false
+  - work_id: ao3_50147_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50147_fic.txt"
+    holdout: false
+  - work_id: ao3_50151_katekyou_hitman_reborn
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_50151_katekyou_hitman_reborn.txt"
+    holdout: false
+  - work_id: ao3_56_house_m_d
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_56_house_m_d.txt"
+    holdout: false
+  - work_id: ao3_59_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_59_stargate_atlantis.txt"
+    holdout: false
+  - work_id: ao3_5_yami_no_matsuei
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_5_yami_no_matsuei.txt"
+    holdout: false
+  - work_id: ao3_60001_d_n_angel
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60001_d_n_angel.txt"
+    holdout: false
+  - work_id: ao3_60002_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60002_fic.txt"
+    holdout: false
+  - work_id: ao3_60003_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60003_fic.txt"
+    holdout: false
+  - work_id: ao3_60006_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60006_fic.txt"
+    holdout: false
+  - work_id: ao3_60007_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60007_fic.txt"
+    holdout: false
+  - work_id: ao3_60009_fullmetal_alchemist
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60009_fullmetal_alchemist.txt"
+    holdout: true
+  - work_id: ao3_60021_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60021_fic.txt"
+    holdout: false
+  - work_id: ao3_60023_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60023_fic.txt"
+    holdout: false
+  - work_id: ao3_60025_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60025_fic.txt"
+    holdout: false
+  - work_id: ao3_60029_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60029_fic.txt"
+    holdout: false
+  - work_id: ao3_60032_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60032_fic.txt"
+    holdout: false
+  - work_id: ao3_60035_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60035_fic.txt"
+    holdout: false
+  - work_id: ao3_60036_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60036_fic.txt"
+    holdout: false
+  - work_id: ao3_60039_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60039_fic.txt"
+    holdout: true
+  - work_id: ao3_60041_interpol
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60041_interpol.txt"
+    holdout: false
+  - work_id: ao3_60049_interpol
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60049_interpol.txt"
+    holdout: false
+  - work_id: ao3_60051_white_collar
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60051_white_collar.txt"
+    holdout: false
+  - work_id: ao3_60052_gundam_wing
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60052_gundam_wing.txt"
+    holdout: false
+  - work_id: ao3_60053_wizards_of_waverly_place
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60053_wizards_of_waverly_place.txt"
+    holdout: false
+  - work_id: ao3_60081_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60081_fic.txt"
+    holdout: false
+  - work_id: ao3_60083_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60083_fic.txt"
+    holdout: false
+  - work_id: ao3_60084_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60084_fic.txt"
+    holdout: false
+  - work_id: ao3_60085_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60085_fic.txt"
+    holdout: false
+  - work_id: ao3_60088_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60088_stargate_atlantis.txt"
+    holdout: false
+  - work_id: ao3_60091_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60091_fic.txt"
+    holdout: false
+  - work_id: ao3_60093_supernatural
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60093_supernatural.txt"
+    holdout: false
+  - work_id: ao3_60094_star_trek_deep_space_nine
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60094_star_trek_deep_space_nine.txt"
+    holdout: true
+  - work_id: ao3_60096_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60096_fic.txt"
+    holdout: false
+  - work_id: ao3_60099_supernatural
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60099_supernatural.txt"
+    holdout: false
+  - work_id: ao3_60100_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60100_harry_potter_rowling.txt"
+    holdout: false
+  - work_id: ao3_60101_smallville
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60101_smallville.txt"
+    holdout: false
+  - work_id: ao3_60105_katekyou_hitman_reborn
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60105_katekyou_hitman_reborn.txt"
+    holdout: false
+  - work_id: ao3_60117_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60117_harry_potter_rowling.txt"
+    holdout: false
+  - work_id: ao3_60118_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60118_fic.txt"
+    holdout: false
+  - work_id: ao3_60119_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60119_fic.txt"
+    holdout: true
+  - work_id: ao3_60126_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60126_harry_potter_rowling.txt"
+    holdout: false
+  - work_id: ao3_60127_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60127_harry_potter_rowling.txt"
+    holdout: false
+  - work_id: ao3_60130_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60130_harry_potter_rowling.txt"
+    holdout: false
+  - work_id: ao3_60131_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60131_harry_potter_rowling.txt"
+    holdout: false
+  - work_id: ao3_60135_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60135_fic.txt"
+    holdout: false
+  - work_id: ao3_60141_rent_larson
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60141_rent_larson.txt"
+    holdout: false
+  - work_id: ao3_60144_prince_of_tennis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60144_prince_of_tennis.txt"
+    holdout: true
+  - work_id: ao3_60145_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60145_stargate_atlantis.txt"
+    holdout: false
+  - work_id: ao3_60154_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60154_fic.txt"
+    holdout: false
+  - work_id: ao3_60155_harry_potter_j_k_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60155_harry_potter_j_k_rowling.txt"
+    holdout: false
+  - work_id: ao3_60160_grey_s_anatomy
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60160_grey_s_anatomy.txt"
+    holdout: false
+  - work_id: ao3_60162_shin_megami_tensei_devil_summoner
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60162_shin_megami_tensei_devil_summoner.txt"
+    holdout: false
+  - work_id: ao3_60166_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60166_fic.txt"
+    holdout: false
+  - work_id: ao3_60175_shin_megami_tensei_devil_summoner
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_60175_shin_megami_tensei_devil_summoner.txt"
+    holdout: false
+  - work_id: ao3_61_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_61_stargate_atlantis.txt"
+    holdout: false
+  - work_id: ao3_63_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_63_stargate_atlantis.txt"
+    holdout: false
+  - work_id: ao3_64_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_64_stargate_atlantis.txt"
+    holdout: false
+  - work_id: ao3_65_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_65_stargate_atlantis.txt"
+    holdout: false
+  - work_id: ao3_68_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_68_stargate_atlantis.txt"
+    holdout: true
+  - work_id: ao3_69_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_69_stargate_atlantis.txt"
+    holdout: false
+  - work_id: ao3_70004_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70004_fic.txt"
+    holdout: false
+  - work_id: ao3_70007_power_rangers_rpm
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70007_power_rangers_rpm.txt"
+    holdout: false
+  - work_id: ao3_70013_power_rangers_rpm
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70013_power_rangers_rpm.txt"
+    holdout: false
+  - work_id: ao3_70014_power_rangers_rpm
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70014_power_rangers_rpm.txt"
+    holdout: false
+  - work_id: ao3_70017_power_rangers_rpm
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70017_power_rangers_rpm.txt"
+    holdout: false
+  - work_id: ao3_70018_power_rangers_rpm
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70018_power_rangers_rpm.txt"
+    holdout: true
+  - work_id: ao3_70021_power_rangers_spd
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70021_power_rangers_spd.txt"
+    holdout: false
+  - work_id: ao3_70023_power_rangers_spd
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70023_power_rangers_spd.txt"
+    holdout: false
+  - work_id: ao3_70024_power_rangers_spd
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70024_power_rangers_spd.txt"
+    holdout: false
+  - work_id: ao3_70026_power_rangers_spd
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70026_power_rangers_spd.txt"
+    holdout: false
+  - work_id: ao3_70028_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70028_harry_potter_rowling.txt"
+    holdout: false
+  - work_id: ao3_70030_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70030_fic.txt"
+    holdout: false
+  - work_id: ao3_70032_power_rangers
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70032_power_rangers.txt"
+    holdout: false
+  - work_id: ao3_70035_power_rangers_rpm
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70035_power_rangers_rpm.txt"
+    holdout: false
+  - work_id: ao3_70037_power_rangers_rpm
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70037_power_rangers_rpm.txt"
+    holdout: false
+  - work_id: ao3_70039_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70039_harry_potter_rowling.txt"
+    holdout: false
+  - work_id: ao3_70042_power_rangers
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70042_power_rangers.txt"
+    holdout: false
+  - work_id: ao3_70053_white_collar
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70053_white_collar.txt"
+    holdout: true
+  - work_id: ao3_70056_due_south
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70056_due_south.txt"
+    holdout: false
+  - work_id: ao3_70068_grey_s_anatomy
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70068_grey_s_anatomy.txt"
+    holdout: false
+  - work_id: ao3_70071_stargate_sg_1
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70071_stargate_sg_1.txt"
+    holdout: false
+  - work_id: ao3_70074_stargate_sg_1
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70074_stargate_sg_1.txt"
+    holdout: false
+  - work_id: ao3_70076_true_blood
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70076_true_blood.txt"
+    holdout: false
+  - work_id: ao3_70077_stargate_sg_1
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70077_stargate_sg_1.txt"
+    holdout: false
+  - work_id: ao3_70082_stargate_sg_1
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70082_stargate_sg_1.txt"
+    holdout: true
+  - work_id: ao3_70084_stargate_sg_1
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70084_stargate_sg_1.txt"
+    holdout: false
+  - work_id: ao3_70087_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70087_harry_potter_rowling.txt"
+    holdout: false
+  - work_id: ao3_70088_avatar_the_last_airbender
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70088_avatar_the_last_airbender.txt"
+    holdout: false
+  - work_id: ao3_70094_riptide_tv
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70094_riptide_tv.txt"
+    holdout: false
+  - work_id: ao3_70099_riptide_tv
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70099_riptide_tv.txt"
+    holdout: false
+  - work_id: ao3_70100_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70100_fic.txt"
+    holdout: false
+  - work_id: ao3_70102_stargate_sg_1
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70102_stargate_sg_1.txt"
+    holdout: false
+  - work_id: ao3_70103_anne_of_green_gables_l_m_montgomery
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70103_anne_of_green_gables_l_m_montgomery.txt"
+    holdout: false
+  - work_id: ao3_70108_stargate_sg_1
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70108_stargate_sg_1.txt"
+    holdout: false
+  - work_id: ao3_70110_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70110_harry_potter_rowling.txt"
+    holdout: false
+  - work_id: ao3_70124_harry_potter_j_k_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70124_harry_potter_j_k_rowling.txt"
+    holdout: true
+  - work_id: ao3_70133_due_south
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70133_due_south.txt"
+    holdout: false
+  - work_id: ao3_70134_due_south
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70134_due_south.txt"
+    holdout: false
+  - work_id: ao3_70136_stargate_sg_1
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70136_stargate_sg_1.txt"
+    holdout: false
+  - work_id: ao3_70141_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70141_harry_potter_rowling.txt"
+    holdout: false
+  - work_id: ao3_70142_lord_of_the_rings_2001_2002_2003
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70142_lord_of_the_rings_2001_2002_2003.txt"
+    holdout: false
+  - work_id: ao3_70145_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70145_harry_potter_rowling.txt"
+    holdout: false
+  - work_id: ao3_70150_lord_of_the_rings_2001_2002_2003
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70150_lord_of_the_rings_2001_2002_2003.txt"
+    holdout: true
+  - work_id: ao3_70152_stargate_sg_1
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70152_stargate_sg_1.txt"
+    holdout: false
+  - work_id: ao3_70153_harry_potter_rowling
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70153_harry_potter_rowling.txt"
+    holdout: false
+  - work_id: ao3_70155_lord_of_the_rings_2001_2002_2003
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70155_lord_of_the_rings_2001_2002_2003.txt"
+    holdout: false
+  - work_id: ao3_70165_lord_of_the_rings_2001_2002_2003
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70165_lord_of_the_rings_2001_2002_2003.txt"
+    holdout: false
+  - work_id: ao3_70_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_70_stargate_atlantis.txt"
+    holdout: false
+  - work_id: ao3_71_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_71_stargate_atlantis.txt"
+    holdout: false
+  - work_id: ao3_79_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_79_stargate_atlantis.txt"
+    holdout: false
+  - work_id: ao3_7_gravitation_anime
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_7_gravitation_anime.txt"
+    holdout: false
+  - work_id: ao3_80002_supernatural
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80002_supernatural.txt"
+    holdout: false
+  - work_id: ao3_80005_buffy_the_vampire_slayer
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80005_buffy_the_vampire_slayer.txt"
+    holdout: false
+  - work_id: ao3_80015_blood_ties
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80015_blood_ties.txt"
+    holdout: false
+  - work_id: ao3_80017_blood_ties
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80017_blood_ties.txt"
+    holdout: false
+  - work_id: ao3_80018_blood_ties
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80018_blood_ties.txt"
+    holdout: false
+  - work_id: ao3_80020_starsky_and_hutch_fandom
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80020_starsky_and_hutch_fandom.txt"
+    holdout: false
+  - work_id: ao3_80021_starsky_and_hutch_fandom
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80021_starsky_and_hutch_fandom.txt"
+    holdout: false
+  - work_id: ao3_80022_due_south
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80022_due_south.txt"
+    holdout: false
+  - work_id: ao3_80023_due_south
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80023_due_south.txt"
+    holdout: false
+  - work_id: ao3_80024_due_south
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80024_due_south.txt"
+    holdout: false
+  - work_id: ao3_80028_gerry_anderson_s_ufo
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80028_gerry_anderson_s_ufo.txt"
+    holdout: false
+  - work_id: ao3_80033_leverage
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80033_leverage.txt"
+    holdout: false
+  - work_id: ao3_80038_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80038_fic.txt"
+    holdout: false
+  - work_id: ao3_80039_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80039_fic.txt"
+    holdout: false
+  - work_id: ao3_80043_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80043_fic.txt"
+    holdout: false
+  - work_id: ao3_80044_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80044_fic.txt"
+    holdout: false
+  - work_id: ao3_80049_stargate_sg_1
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80049_stargate_sg_1.txt"
+    holdout: false
+  - work_id: ao3_80053_forever_knight
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80053_forever_knight.txt"
+    holdout: false
+  - work_id: ao3_80055_forever_knight
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80055_forever_knight.txt"
+    holdout: false
+  - work_id: ao3_80057_forever_knight
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80057_forever_knight.txt"
+    holdout: true
+  - work_id: ao3_80058_heroes_fandom
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80058_heroes_fandom.txt"
+    holdout: true
+  - work_id: ao3_80060_forever_knight
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80060_forever_knight.txt"
+    holdout: false
+  - work_id: ao3_80062_blood_ties
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80062_blood_ties.txt"
+    holdout: false
+  - work_id: ao3_80069_wei_kreuz
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80069_wei_kreuz.txt"
+    holdout: false
+  - work_id: ao3_80070_wei_kreuz
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80070_wei_kreuz.txt"
+    holdout: false
+  - work_id: ao3_80071_wei_kreuz
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80071_wei_kreuz.txt"
+    holdout: false
+  - work_id: ao3_80073_wei_kreuz
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80073_wei_kreuz.txt"
+    holdout: false
+  - work_id: ao3_80076_wei_kreuz
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80076_wei_kreuz.txt"
+    holdout: false
+  - work_id: ao3_80077_wei_kreuz
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80077_wei_kreuz.txt"
+    holdout: false
+  - work_id: ao3_80079_wei_kreuz
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80079_wei_kreuz.txt"
+    holdout: false
+  - work_id: ao3_80080_wei_kreuz
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80080_wei_kreuz.txt"
+    holdout: false
+  - work_id: ao3_80081_wei_kreuz
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80081_wei_kreuz.txt"
+    holdout: false
+  - work_id: ao3_80082_wei_kreuz
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80082_wei_kreuz.txt"
+    holdout: false
+  - work_id: ao3_80083_wei_kreuz
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80083_wei_kreuz.txt"
+    holdout: false
+  - work_id: ao3_80084_wei_kreuz
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80084_wei_kreuz.txt"
+    holdout: false
+  - work_id: ao3_80088_wei_kreuz
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80088_wei_kreuz.txt"
+    holdout: true
+  - work_id: ao3_80089_wei_kreuz
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80089_wei_kreuz.txt"
+    holdout: false
+  - work_id: ao3_80091_wei_kreuz
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80091_wei_kreuz.txt"
+    holdout: false
+  - work_id: ao3_80092_wei_kreuz
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80092_wei_kreuz.txt"
+    holdout: false
+  - work_id: ao3_80093_wei_kreuz
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80093_wei_kreuz.txt"
+    holdout: false
+  - work_id: ao3_80094_wei_kreuz
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80094_wei_kreuz.txt"
+    holdout: false
+  - work_id: ao3_80098_wild_adapter
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_80098_wild_adapter.txt"
+    holdout: false
+  - work_id: ao3_82_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_82_stargate_atlantis.txt"
+    holdout: false
+  - work_id: ao3_85_firefly
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_85_firefly.txt"
+    holdout: false
+  - work_id: ao3_86_firefly
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_86_firefly.txt"
+    holdout: false
+  - work_id: ao3_87_firefly
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_87_firefly.txt"
+    holdout: true
+  - work_id: ao3_88_firefly
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_88_firefly.txt"
+    holdout: false
+  - work_id: ao3_8_avatar_the_last_airbender
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_8_avatar_the_last_airbender.txt"
+    holdout: false
+  - work_id: ao3_90002_big_bang_theory
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90002_big_bang_theory.txt"
+    holdout: false
+  - work_id: ao3_90003_kung_fu_the_legend_continues
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90003_kung_fu_the_legend_continues.txt"
+    holdout: false
+  - work_id: ao3_90005_getbackers
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90005_getbackers.txt"
+    holdout: false
+  - work_id: ao3_90006_twilight_meyer
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90006_twilight_meyer.txt"
+    holdout: false
+  - work_id: ao3_90010_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90010_stargate_atlantis.txt"
+    holdout: false
+  - work_id: ao3_90011_buffy_the_vampire_slayer
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90011_buffy_the_vampire_slayer.txt"
+    holdout: false
+  - work_id: ao3_90013_hot_fuzz_2007
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90013_hot_fuzz_2007.txt"
+    holdout: false
+  - work_id: ao3_90014_buffy_the_vampire_slayer
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90014_buffy_the_vampire_slayer.txt"
+    holdout: false
+  - work_id: ao3_90016_star_trek_2009
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90016_star_trek_2009.txt"
+    holdout: false
+  - work_id: ao3_90019_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90019_fic.txt"
+    holdout: false
+  - work_id: ao3_90020_star_trek_enterprise
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90020_star_trek_enterprise.txt"
+    holdout: true
+  - work_id: ao3_90022_star_trek_2009
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90022_star_trek_2009.txt"
+    holdout: false
+  - work_id: ao3_90023_star_trek_2009
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90023_star_trek_2009.txt"
+    holdout: false
+  - work_id: ao3_90025_star_trek_2009
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90025_star_trek_2009.txt"
+    holdout: false
+  - work_id: ao3_90028_star_trek_2009
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90028_star_trek_2009.txt"
+    holdout: false
+  - work_id: ao3_90030_star_trek_2009
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90030_star_trek_2009.txt"
+    holdout: false
+  - work_id: ao3_90042_the_mentalist
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90042_the_mentalist.txt"
+    holdout: false
+  - work_id: ao3_90047_yu_gi_oh
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90047_yu_gi_oh.txt"
+    holdout: true
+  - work_id: ao3_90049_yu_gi_oh
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90049_yu_gi_oh.txt"
+    holdout: false
+  - work_id: ao3_90050_yu_gi_oh
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90050_yu_gi_oh.txt"
+    holdout: false
+  - work_id: ao3_90051_yu_gi_oh
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90051_yu_gi_oh.txt"
+    holdout: false
+  - work_id: ao3_90057_buffy_the_vampire_slayer
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90057_buffy_the_vampire_slayer.txt"
+    holdout: false
+  - work_id: ao3_90064_star_trek_2009
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90064_star_trek_2009.txt"
+    holdout: false
+  - work_id: ao3_90065_ncis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90065_ncis.txt"
+    holdout: false
+  - work_id: ao3_90068_castle
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90068_castle.txt"
+    holdout: false
+  - work_id: ao3_90074_stargate_sg_1
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90074_stargate_sg_1.txt"
+    holdout: false
+  - work_id: ao3_90080_true_blood
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90080_true_blood.txt"
+    holdout: false
+  - work_id: ao3_90082_smallville
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90082_smallville.txt"
+    holdout: false
+  - work_id: ao3_90086_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90086_stargate_atlantis.txt"
+    holdout: false
+  - work_id: ao3_90087_a_team
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90087_a_team.txt"
+    holdout: false
+  - work_id: ao3_90090_a_team
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90090_a_team.txt"
+    holdout: false
+  - work_id: ao3_90091_a_team
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90091_a_team.txt"
+    holdout: true
+  - work_id: ao3_90092_a_team
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90092_a_team.txt"
+    holdout: false
+  - work_id: ao3_90095_stargate_atlantis
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90095_stargate_atlantis.txt"
+    holdout: false
+  - work_id: ao3_90098_merlin_bbc
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90098_merlin_bbc.txt"
+    holdout: false
+  - work_id: ao3_90102_oz_fandom
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90102_oz_fandom.txt"
+    holdout: false
+  - work_id: ao3_90105_final_fantasy_viii
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90105_final_fantasy_viii.txt"
+    holdout: false
+  - work_id: ao3_90109_star_ocean_the_last_hope
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90109_star_ocean_the_last_hope.txt"
+    holdout: true
+  - work_id: ao3_90110_star_ocean_the_last_hope
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90110_star_ocean_the_last_hope.txt"
+    holdout: false
+  - work_id: ao3_90114_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90114_fic.txt"
+    holdout: false
+  - work_id: ao3_90123_the_sentinel
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90123_the_sentinel.txt"
+    holdout: false
+  - work_id: ao3_90129_fic
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90129_fic.txt"
+    holdout: false
+  - work_id: ao3_90_firefly
+    path: "/Users/aimeri/projects/otwarchive-downloader/output/lane_b_txt/ao3_90_firefly.txt"
+    holdout: false
+
 profile_sample_chars: 60000
 chunk_target_chars: 16000
 min_turns: 6

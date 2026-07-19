@@ -1,16 +1,17 @@
-# ~200-rollout calibration run. Lane A joins `lanes` once AVIARY_HERMES_DIR is set
-# and the task bank has templates.
+# Burn-shaped blessing pilot: same lanes as burn.yaml so the manifest this run
+# writes can authorize the burn (per-lane bands + matching datagen_config_hash).
+# Lane A regenerates the full 6-family bank; lanes B/C replay mostly from the
+# response cache (same books/seeds as the calibration runs).
 kind: pilot
-# Narrowed to lane B for the first spend-capped fiction smoke (2026-07-17).
-# Restore [b, c] (and add `a` once AVIARY_HERMES_DIR is set) after the smoke.
-lanes: [b]
+lanes: [a, b, c]
 eval_param_fraction: 0.15
 split_seed: 20260716
 dpo_min_margin: 1.0
 dedupe_threshold: 0.8
 lane_a_num_workers: 4
-lane_a_batch_size: 20
+lane_a_batch_size: 11
+lane_a_max_turns: 12
 lane_c:
   conversations_per_seed: 1
-  personas: [lazy_texter, engaged_rper, task_asker]
+  personas: [lazy_texter, engaged_rper, nsfw_rper]
   rng_seed: 20260716

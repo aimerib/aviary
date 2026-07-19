@@ -180,8 +180,13 @@ task you were asked to do, stop and say so instead of working around it.
 - `just stats <run>`  — keep rates, pass rates per template, spend, difficulty-band violations
 - `just test` / `just lint`
 
-Task-design invariant: templates target a 30–80% teacher pass rate. Outside
-that band, revise the template (difficulty), don't touch the verifier.
+Task-design invariant: templates declare a `difficulty_target` band (default
+30–80% teacher pass rate). Outside the band, revise the template (difficulty),
+never the verifier. Amendment (2026-07-19, owner-approved): a well-specified
+structural task where the teacher is measurably near-ceiling after honest
+hardening may declare `[0.5, 1.0]` with a rationale comment — GRPO difficulty
+re-derives from the STUDENT's pass rate, and task naturalness beats chasing
+teacher failure.
 
 ## Stack and conventions
 

@@ -43,7 +43,10 @@ tools:
   - read_file
 
 n_rollouts: 4
-difficulty_target: [0.3, 0.8]
+# Teacher-ceiling band (2026-07-19 decision): deepseek-v4-flash is near-ceiling
+# on well-specified structural tasks (teacher self-corrects reliably) — measured 0.94-1.00
+# across two hardening rounds. GRPO difficulty re-derives from the STUDENT.
+difficulty_target: [0.5, 1.0]
 verifier: verifiers/revise/exact_lines.py
 notes: >
   The verifier checks the FINAL file only (outcome-gate rule): exact line count,
