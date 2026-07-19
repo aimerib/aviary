@@ -154,7 +154,10 @@ def test_judge_scoring_and_threshold():
 
 
 def test_harmonize_preserves_protected_and_drops_on_violation():
-    rec = banter("h1", "Saved 42 items to /tmp/list.txt for you.")
+    rec = banter(
+        "h1",
+        "Saved 42 items to /tmp/list.txt for you, which took longer than it had any right to. Go check it before you blame me.",
+    )
 
     def echo(req: ChatRequest) -> str:
         return req.messages[0]["content"].replace("Saved", "Stashed")
@@ -182,7 +185,10 @@ def test_harmonize_preserves_protected_and_drops_on_violation():
 
 
 def test_harmonize_retries_restore_failure_then_recovers():
-    rec = banter("h1r", "Saved 42 items to /tmp/list.txt for you.")
+    rec = banter(
+        "h1r",
+        "Saved 42 items to /tmp/list.txt for you, which took longer than it had any right to. Go check it before you blame me.",
+    )
 
     def flaky(req: ChatRequest) -> str:
         # First sample (temp 0.4) mangles the placeholders; the bumped-temperature
@@ -197,8 +203,32 @@ def test_harmonize_retries_restore_failure_then_recovers():
     texts = [m.content for m in outcome.record.messages if m.role == "assistant"]
     assert any("/tmp/list.txt" in t and "42" in t and "Stashed" in t for t in texts)
     # Deterministic ladder: retry at 0.5 only for the two turns whose placeholders
-    # got eaten; the third turn has no protected spans, so 0.4 restores fine.
-    assert [r.temperature for r in client.requests] == [0.4, 0.5, 0.4, 0.5, 0.4]
+    # got eaten; the short third turn is skip-guarded (below _MIN_PROSE_CHARS) and
+    # never reaches the paraphraser at all.
+    assert [r.temperature for r in client.requests] == [0.4, 0.5, 0.4, 0.5]
+
+
+def test_harmonize_skips_placeholder_dense_turns():
+    # A turn that mostly quotes protected content (code fence + path) has no voice
+    # to harmonize — it must be kept verbatim without a paraphrase call, because
+    # placeholder-dense inputs are where restore failures come from.
+    quoted = "Done. Here is `lists/x.txt`:\n\n```\nalpha\nbeta\ngamma\n```\n"
+    rec = banter("h1s", quoted)
+
+    # Any turn that does reach the paraphraser gets identity-echoed and recorded.
+    calls = []
+
+    def echo(req: ChatRequest) -> str:
+        calls.append(req)
+        return req.messages[0]["content"]
+
+    outcome = harmonize_record(
+        rec, FakeTeacherClient(script=echo), make_prompts(), "deepseek-v4-flash-20260610", "Olivia"
+    )
+    assert not outcome.dropped
+    texts = [m.content for m in outcome.record.messages if m.role == "assistant"]
+    assert any(t == quoted for t in texts)  # kept byte-verbatim, never sent out
+    assert all(quoted not in c.messages[0]["content"] for c in calls)
 
 
 def test_lane_b_records_skip_harmonize():

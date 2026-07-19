@@ -55,12 +55,24 @@ class HarmonizeOutcome:
 # every attempt still drops (2026-07-19-pilot-lanea: 9/43 dropped single-shot).
 _RETRY_TEMPS = (0.4, 0.5, 0.6)
 
+# Skip-guard: a turn that quotes file contents (code fences, paths, numbers) can
+# be nearly all protected spans — a thin shell of prose around many placeholders.
+# There is almost no voice in it to harmonize, and placeholder-dense inputs are
+# where paraphrasers mangle (lanea4: 14 span drops, all this shape). Skipping the
+# rewrite keeps the original bytes — always safe, never a boundary bend.
+_MIN_PROSE_CHARS = 60
+
 
 def _paraphrase(
     text: str, client: TeacherClient, prompts: PromptSet, model: str, lane: str
 ) -> str | None:
     spans = extract_protected_spans(text)
     masked, mapping = mask_spans(text, spans)
+    prose = masked
+    for placeholder in mapping:
+        prose = prose.replace(placeholder, "")
+    if len(prose.strip()) < _MIN_PROSE_CHARS:
+        return text
     for temperature in _RETRY_TEMPS:
         req = ChatRequest(
             model=model,
