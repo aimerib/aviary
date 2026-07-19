@@ -14,7 +14,9 @@
 # (Anthropic ToS risk). Judge policy is cross-vendor: a record is judged by a
 # different vendor than the one that generated it.
 
-hermes_pin: v0.18.2
+# hermes release v0.18.2 — upstream tags releases by date; verify_hermes_pin
+# compares against `git describe --tags`, so the pin is the date tag.
+hermes_pin: v2026.7.7.2
 
 teachers:
   - id: deepseek-v4-flash-20260717   # pin date; wire name is rolling
