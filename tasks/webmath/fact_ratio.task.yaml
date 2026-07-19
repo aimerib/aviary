@@ -1,0 +1,52 @@
+id: webmath.fact_ratio
+family: webmath
+holdout: false
+
+description: >
+  Teach the full agentic chain: research real quantities from live sources,
+  compute their ratio properly (terminal, not vibes), and save a short grounded
+  answer. Longest tool chain in the bank — search, extract, terminal, write —
+  with the same brevity discipline compare_sources v2 trains.
+
+# zip mode: unique destination per instance (shared hermes workspace).
+param_mode: zip
+params:
+  bigger:
+    - the population of Japan
+    - the land area of Brazil
+    - the mass of Jupiter
+    - the length of the Amazon river
+    - the GDP of Germany
+  smaller:
+    - the population of Australia
+    - the land area of France
+    - the mass of Earth
+    - the length of the Rhine
+    - the GDP of Portugal
+  destination:
+    - research/japan-vs-australia.md
+    - research/brazil-vs-france.md
+    - research/jupiter-vs-earth.md
+    - research/amazon-vs-rhine.md
+    - research/germany-vs-portugal.md
+
+prompt: |
+  hey liv, quick one: how many times bigger is {bigger} than {smaller}, actually?
+  find current numbers from real sources, do the division properly in the
+  terminal so it's not napkin math, and save me a short answer in {destination}
+  — under 200 words, with links to the sources you used.
+
+tools:
+  - web_search
+  - web_extract
+  - terminal
+  - write_file
+
+n_rollouts: 4
+difficulty_target: [0.3, 0.8]
+verifier: verifiers/webmath/fact_ratio.py
+notes: >
+  Live-web quantities can't be recomputed by a pure verifier, so the outcome
+  gate is structural: >=2 grounded citations (URLs that appeared in tool results
+  this session), a numeric ratio figure present, and <=200 non-URL words.
+  Whether the ratio is faithful to the cited numbers is judge territory.

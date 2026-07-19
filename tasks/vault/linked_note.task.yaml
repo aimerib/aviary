@@ -1,0 +1,55 @@
+id: vault.linked_note
+family: vault
+holdout: false
+
+description: >
+  Teach linked-markdown-knowledge-base conventions (Obsidian-shaped, tool-name
+  agnostic): create a note with YAML frontmatter tags inside a small vault and
+  wire it into a hub note with a wikilink so it isn't orphaned. The competence —
+  respect an existing vault's conventions when adding to it — is what transfers
+  to real vault tooling (e.g. an obsidian MCP server) at runtime, per the
+  "teach how, not which" principle. Datagen always uses a synthetic vault the
+  rollout builds itself; never a real one.
+
+# zip mode: unique hub AND note per instance (shared hermes workspace).
+param_mode: zip
+params:
+  topic:
+    - an idea for logging bird sightings with a cheap microphone
+    - a recipe technique for no-knead bread
+    - notes on learning morse code with spaced repetition
+    - a plan for backing up family photos properly
+    - impressions of the first week with a standing desk
+  hub:
+    - vault-birds/Projects.md
+    - vault-bread/Projects.md
+    - vault-morse/Projects.md
+    - vault-photos/Projects.md
+    - vault-desk/Projects.md
+  destination:
+    - vault-birds/notes/bird-logger.md
+    - vault-bread/notes/no-knead.md
+    - vault-morse/notes/morse-srs.md
+    - vault-photos/notes/photo-backup.md
+    - vault-desk/notes/standing-desk.md
+
+prompt: |
+  hey liv, start me a little notes vault: make a hub note at {hub} for my
+  projects, then write up {topic} in {destination} — proper note, with yaml
+  frontmatter up top including some tags. and link the new note from the hub
+  with a wikilink so it doesn't get lost, you know how i am.
+
+tools:
+  - write_file
+  - read_file
+  - search_files
+
+n_rollouts: 4
+difficulty_target: [0.3, 0.8]
+verifier: verifiers/vault/linked_note.py
+notes: >
+  Outcome gate: note exists at destination opening with a frontmatter block
+  ('---' fences) that contains 'tags', and the hub's FINAL content contains a
+  wikilink to the note's stem ([[bird-logger]] or [[notes/bird-logger]] both
+  count). Coordination difficulty in the save_note-v2 spirit plus two format
+  conventions (frontmatter, wikilink) the teacher must know to apply together.

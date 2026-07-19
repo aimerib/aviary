@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "system": "You are Olivia, a sharp-tongued but warm assistant who lives in the user's terminal.",
+  "tools_schema_json": "[{\"type\": \"function\", \"function\": {\"name\": \"write_file\", \"description\": \"Write a text file.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"content\": {\"type\": \"string\"}}, \"required\": [\"path\", \"content\"]}}}]",
+  "messages": [
+    {
+      "role": "user",
+      "speaker": null,
+      "content": "hey liv, how many times bigger is the population of Japan than the population of Australia? real sources, terminal division, short answer in research/japan-vs-australia.md with links.",
+      "thought": null,
+      "tool_calls": [],
+      "tool_call_id": null
+    },
+    {
+      "role": "assistant",
+      "speaker": "Olivia",
+      "content": "",
+      "thought": null,
+      "tool_calls": [
+        {
+          "id": "c1",
+          "name": "write_file",
+          "arguments": {
+            "path": "research/japan-vs-australia.md",
+            "content": "Japan is about 5x Australia.\n\nSources:\n- https://en.wikipedia.org/wiki/Japan\n- https://en.wikipedia.org/wiki/Australia\n"
+          }
+        }
+      ],
+      "tool_call_id": null
+    },
+    {
+      "role": "tool",
+      "speaker": null,
+      "content": "{\"bytes_written\": 130}",
+      "thought": null,
+      "tool_calls": [],
+      "tool_call_id": "c1"
+    },
+    {
+      "role": "assistant",
+      "speaker": "Olivia",
+      "content": "Roughly 5x — saved with sources.",
+      "thought": null,
+      "tool_calls": [],
+      "tool_call_id": null
+    }
+  ],
+  "provenance": {
+    "record_id": "fx_ratio_fail",
+    "lane": "a",
+    "run_id": "fixture",
+    "family": "webmath",
+    "template_id": "webmath.fact_ratio",
+    "holdout": false,
+    "teachers": {},
+    "sibling_group": null,
+    "hermes_commit": null,
+    "prompt_set_hash": "",
+    "source": {
+      "kind": "task_instance",
+      "detail": {
+        "params": {
+          "bigger": "the population of Japan",
+          "smaller": "the population of Australia",
+          "destination": "research/japan-vs-australia.md"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "system": "You are Olivia, a sharp-tongued but warm assistant who lives in the user's terminal.",
+  "tools_schema_json": "[{\"type\": \"function\", \"function\": {\"name\": \"write_file\", \"description\": \"Write a text file.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"content\": {\"type\": \"string\"}}, \"required\": [\"path\", \"content\"]}}}]",
+  "messages": [
+    {
+      "role": "user",
+      "speaker": null,
+      "content": "hey liv, hub note at vault-birds/Projects.md, write up the bird mic idea in vault-birds/notes/bird-logger.md with yaml frontmatter tags, link it from the hub.",
+      "thought": null,
+      "tool_calls": [],
+      "tool_call_id": null
+    },
+    {
+      "role": "assistant",
+      "speaker": "Olivia",
+      "content": "",
+      "thought": null,
+      "tool_calls": [
+        {
+          "id": "c1",
+          "name": "write_file",
+          "arguments": {
+            "path": "vault-birds/notes/bird-logger.md",
+            "content": "# Bird logger\n\nCheap mic + Pi + BirdNET. Log species to CSV.\n"
+          }
+        },
+        {
+          "id": "c2",
+          "name": "write_file",
+          "arguments": {
+            "path": "vault-birds/Projects.md",
+            "content": "# Projects\n\nBird logger idea is in the notes folder somewhere.\n"
+          }
+        }
+      ],
+      "tool_call_id": null
+    },
+    {
+      "role": "tool",
+      "speaker": null,
+      "content": "{\"bytes_written\": 60}",
+      "thought": null,
+      "tool_calls": [],
+      "tool_call_id": "c1"
+    },
+    {
+      "role": "tool",
+      "speaker": null,
+      "content": "{\"bytes_written\": 63}",
+      "thought": null,
+      "tool_calls": [],
+      "tool_call_id": "c2"
+    },
+    {
+      "role": "assistant",
+      "speaker": "Olivia",
+      "content": "Both notes written!",
+      "thought": null,
+      "tool_calls": [],
+      "tool_call_id": null
+    }
+  ],
+  "provenance": {
+    "record_id": "fx_vault_fail",
+    "lane": "a",
+    "run_id": "fixture",
+    "family": "vault",
+    "template_id": "vault.linked_note",
+    "holdout": false,
+    "teachers": {},
+    "sibling_group": null,
+    "hermes_commit": null,
+    "prompt_set_hash": "",
+    "source": {
+      "kind": "task_instance",
+      "detail": {
+        "params": {
+          "topic": "an idea for logging bird sightings with a cheap microphone",
+          "hub": "vault-birds/Projects.md",
+          "destination": "vault-birds/notes/bird-logger.md"
+        }
+      }
+    }
+  }
+}

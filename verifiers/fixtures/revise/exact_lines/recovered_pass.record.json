@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "system": "You are Olivia, a sharp-tongued but warm assistant who lives in the user's terminal.",
+  "tools_schema_json": "[{\"type\": \"function\", \"function\": {\"name\": \"write_file\", \"description\": \"Write a text file.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"content\": {\"type\": \"string\"}}, \"required\": [\"path\", \"content\"]}}}]",
+  "messages": [
+    {
+      "role": "user",
+      "speaker": null,
+      "content": "hey liv, draft a packing list for a week in the alps, save to lists/alps.txt — exactly 8 lines, one per item, no numbering or bullets or blanks. it's going into a script.",
+      "thought": null,
+      "tool_calls": [],
+      "tool_call_id": null
+    },
+    {
+      "role": "assistant",
+      "speaker": "Olivia",
+      "content": "",
+      "thought": null,
+      "tool_calls": [
+        {
+          "id": "c1",
+          "name": "write_file",
+          "arguments": {
+            "path": "lists/alps.txt",
+            "content": "- base layers\n- fleece\n\n- boots"
+          }
+        }
+      ],
+      "tool_call_id": null
+    },
+    {
+      "role": "tool",
+      "speaker": null,
+      "content": "{\"bytes_written\": 34}",
+      "thought": null,
+      "tool_calls": [],
+      "tool_call_id": "c1"
+    },
+    {
+      "role": "assistant",
+      "speaker": "Olivia",
+      "content": "Wait, you said no bullets. Let me look at what I actually wrote.",
+      "thought": null,
+      "tool_calls": [
+        {
+          "id": "c2",
+          "name": "read_file",
+          "arguments": {
+            "path": "lists/alps.txt"
+          }
+        }
+      ],
+      "tool_call_id": null
+    },
+    {
+      "role": "tool",
+      "speaker": null,
+      "content": "{\"content\": \"- base layers\\n- fleece\\n\\n- boots\"}",
+      "thought": null,
+      "tool_calls": [],
+      "tool_call_id": "c2"
+    },
+    {
+      "role": "assistant",
+      "speaker": "Olivia",
+      "content": "",
+      "thought": null,
+      "tool_calls": [
+        {
+          "id": "c3",
+          "name": "write_file",
+          "arguments": {
+            "path": "lists/alps.txt",
+            "content": "base layers\nfleece jacket\nwaterproof shell\nhiking boots\nwool socks\nsunscreen\nwater bottle\nheadlamp"
+          }
+        }
+      ],
+      "tool_call_id": null
+    },
+    {
+      "role": "tool",
+      "speaker": null,
+      "content": "{\"bytes_written\": 99}",
+      "thought": null,
+      "tool_calls": [],
+      "tool_call_id": "c3"
+    },
+    {
+      "role": "assistant",
+      "speaker": "Olivia",
+      "content": "Fixed — exactly 8 plain lines in lists/alps.txt, script-safe.",
+      "thought": null,
+      "tool_calls": [],
+      "tool_call_id": null
+    }
+  ],
+  "provenance": {
+    "record_id": "fx_rev_rec",
+    "lane": "a",
+    "run_id": "fixture",
+    "family": "revise",
+    "template_id": "revise.exact_lines",
+    "holdout": false,
+    "teachers": {},
+    "sibling_group": null,
+    "hermes_commit": null,
+    "prompt_set_hash": "",
+    "source": {
+      "kind": "task_instance",
+      "detail": {
+        "params": {
+          "kind": "packing list for a week in the alps",
+          "n_lines": 8,
+          "destination": "lists/alps.txt"
+        }
+      }
+    }
+  }
+}

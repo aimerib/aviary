@@ -1,0 +1,48 @@
+# webmath-family tool allowlist + schemas, MIRRORING the pinned hermes checkout's
+# real tools (web toolset: web_search, web_extract; terminal toolset: terminal;
+# file toolset: write_file). Widening this list REQUIRES updating the family's
+# verifier fixtures in the same change (CLAUDE.md rule).
+#
+# Result conventions (see web.yaml): every tool returns a JSON string; success =
+# a dict WITHOUT an "error" key; web results carry source URLs verbatim.
+family: webmath
+tools:
+  - type: function
+    function:
+      name: web_search
+      description: Search the web; returns result titles, URLs, and snippets.
+      parameters:
+        type: object
+        properties:
+          query: {type: string}
+        required: [query]
+  - type: function
+    function:
+      name: web_extract
+      description: Extract readable content from specific web pages.
+      parameters:
+        type: object
+        properties:
+          urls:
+            type: array
+            items: {type: string}
+        required: [urls]
+  - type: function
+    function:
+      name: terminal
+      description: Execute a shell command in the rollout workspace.
+      parameters:
+        type: object
+        properties:
+          command: {type: string}
+        required: [command]
+  - type: function
+    function:
+      name: write_file
+      description: Write a text file, creating parent directories if needed.
+      parameters:
+        type: object
+        properties:
+          path: {type: string}
+          content: {type: string}
+        required: [path, content]

@@ -1,0 +1,52 @@
+id: revise.exact_lines
+family: revise
+holdout: true
+
+description: >
+  Teach read-modify-write self-correction: draft a list, then reshape the FILE
+  (not the chat reply) to exact structural constraints — exactly N lines, one
+  item per line, no numbering or bullets, no blanks. First drafts rarely satisfy
+  all constraints at once, so an honest pass usually requires reading back and
+  rewriting. HOLDOUT family: eval-only, never trained — the generalization probe
+  for shape-following on unseen task types.
+
+# zip mode: unique destination per instance (shared hermes workspace).
+param_mode: zip
+params:
+  kind:
+    - packing list for a week in the alps
+    - shopping list for a taco night for six people
+    - checklist for publishing a blog post
+    - list of warm-up exercises before a run
+    - list of things to check before buying a used car
+  n_lines:
+    - 8
+    - 6
+    - 7
+    - 9
+    - 5
+  destination:
+    - lists/alps.txt
+    - lists/taco-night.txt
+    - lists/blog-checklist.txt
+    - lists/warmups.txt
+    - lists/used-car.txt
+
+prompt: |
+  hey liv, draft a {kind} and save it to {destination}. then go back over the
+  file and make sure it's exactly {n_lines} lines — one item per line, no
+  numbering, no bullets, no blank lines. i'm piping it into a script so the
+  format actually matters.
+
+tools:
+  - write_file
+  - read_file
+
+n_rollouts: 4
+difficulty_target: [0.3, 0.8]
+verifier: verifiers/revise/exact_lines.py
+notes: >
+  The verifier checks the FINAL file only (outcome-gate rule): exact line count,
+  every line non-empty, no leading numbering/bullet markers. Difficulty comes
+  from stacking three constraints the drafting prior violates by default
+  (teachers love numbered lists).

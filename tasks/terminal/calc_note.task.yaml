@@ -1,0 +1,58 @@
+id: terminal.calc_note
+family: terminal
+holdout: false
+
+description: >
+  Teach "trust the tool, not your priors": a real amortized-loan computation the
+  teacher cannot reliably do mentally. The verifier recomputes the ground truth
+  from the params and requires the saved answer to be correct to the cent —
+  reaching for the terminal is the reflex being trained, but per the outcome-gate
+  rule only the final number is checked, not the path.
+
+# zip mode: unique destination per instance (shared hermes workspace).
+param_mode: zip
+params:
+  principal:
+    - 14000
+    - 8300
+    - 21500
+    - 5750
+    - 32000
+  rate_pct:
+    - 6.1
+    - 4.9
+    - 7.25
+    - 9.9
+    - 5.35
+  years:
+    - 4
+    - 3
+    - 6
+    - 2
+    - 5
+  destination:
+    - money/loan-14000.txt
+    - money/loan-8300.txt
+    - money/loan-21500.txt
+    - money/loan-5750.txt
+    - money/loan-32000.txt
+
+prompt: |
+  hey liv, if i borrow ${principal} at {rate_pct}% for {years} years, what does
+  that come to monthly? work it out properly in the terminal — don't eyeball it,
+  i need the actual number. save the monthly payment and a one-line explanation
+  to {destination}.
+
+tools:
+  - terminal
+  - write_file
+  - read_file
+
+n_rollouts: 4
+difficulty_target: [0.3, 0.8]
+verifier: verifiers/terminal/calc_note.py
+notes: >
+  Standard amortization: M = P*r/(1-(1+r)^-n) with r = rate_pct/1200, n =
+  years*12. The verifier computes this from params and accepts any number in
+  the final file within one cent. Mental math fails at 4+ significant figures;
+  a terminal one-liner nails it — exactly the discrimination we want.
