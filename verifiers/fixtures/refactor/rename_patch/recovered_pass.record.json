@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "system": "You are Olivia, a sharp-tongued but warm assistant who lives in the user's terminal.",
+  "tools_schema_json": "[{\"type\": \"function\", \"function\": {\"name\": \"write_file\", \"description\": \"Write a text file.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}, \"content\": {\"type\": \"string\"}}, \"required\": [\"path\", \"content\"]}}}]",
+  "messages": [
+    {
+      "role": "user",
+      "speaker": null,
+      "content": "hey liv, same as always — draft a short bio for refactor/marmot-bio.txt naming \"Team Marmot\", then patch it to \"Team Chamois\".",
+      "thought": null,
+      "tool_calls": [],
+      "tool_call_id": null
+    },
+    {
+      "role": "assistant",
+      "speaker": "Olivia",
+      "content": "",
+      "thought": null,
+      "tool_calls": [
+        {
+          "id": "c1",
+          "name": "write_file",
+          "arguments": {
+            "path": "refactor/marmot-bio.txt",
+            "content": "Team Marmot heads out every Saturday at dawn. Team Marmot welcomes new hikers of any pace.\n"
+          }
+        }
+      ],
+      "tool_call_id": null
+    },
+    {
+      "role": "tool",
+      "speaker": null,
+      "content": "{\"bytes_written\": 91}",
+      "thought": null,
+      "tool_calls": [],
+      "tool_call_id": "c1"
+    },
+    {
+      "role": "assistant",
+      "speaker": "Olivia",
+      "content": "",
+      "thought": null,
+      "tool_calls": [
+        {
+          "id": "c2",
+          "name": "patch",
+          "arguments": {
+            "mode": "replace",
+            "path": "refactor/marmot-bio.txt",
+            "old_string": "Team Marmot forever",
+            "new_string": "Team Chamois forever"
+          }
+        }
+      ],
+      "tool_call_id": null
+    },
+    {
+      "role": "tool",
+      "speaker": null,
+      "content": "{\"error\": \"old_string not found in file\"}",
+      "thought": null,
+      "tool_calls": [],
+      "tool_call_id": "c2"
+    },
+    {
+      "role": "assistant",
+      "speaker": "Olivia",
+      "content": "Wrong anchor text, let me look at what's actually there.",
+      "thought": null,
+      "tool_calls": [
+        {
+          "id": "c3",
+          "name": "patch",
+          "arguments": {
+            "mode": "replace",
+            "path": "refactor/marmot-bio.txt",
+            "old_string": "Team Marmot",
+            "new_string": "Team Chamois",
+            "replace_all": true
+          }
+        }
+      ],
+      "tool_call_id": null
+    },
+    {
+      "role": "tool",
+      "speaker": null,
+      "content": "{\"diff\": \"-Team Marmot\\n+Team Chamois\"}",
+      "thought": null,
+      "tool_calls": [],
+      "tool_call_id": "c3"
+    },
+    {
+      "role": "assistant",
+      "speaker": "Olivia",
+      "content": "There we go — renamed throughout.",
+      "thought": null,
+      "tool_calls": [],
+      "tool_call_id": null
+    }
+  ],
+  "provenance": {
+    "record_id": "fx_rp_rec",
+    "lane": "a",
+    "run_id": "fixture",
+    "family": "refactor",
+    "template_id": "refactor.rename_patch",
+    "holdout": false,
+    "teachers": {},
+    "sibling_group": null,
+    "hermes_commit": null,
+    "prompt_set_hash": "",
+    "source": {
+      "kind": "task_instance",
+      "detail": {
+        "params": {
+          "content_desc": "a short bio note for a hiking group newsletter",
+          "old_term": "Team Marmot",
+          "new_term": "Team Chamois",
+          "destination": "refactor/marmot-bio.txt"
+        }
+      }
+    }
+  }
+}

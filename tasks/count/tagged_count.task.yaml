@@ -1,0 +1,145 @@
+id: count.tagged_count
+family: count
+holdout: false
+
+description: >
+  Teach "trust search over eyeballing": save a short tagged list VERBATIM,
+  then count how many entries carry a given tag and report just that number.
+  The count is small enough a teacher could eyeball it wrong under sloppiness,
+  and reaching for search_files/terminal instead of manual tallying is the
+  reflex being trained — the same "tool over priors" competence as
+  terminal.calc_note, applied to text instead of math.
+
+# zip mode: unique destination/count_destination per instance (shared hermes
+# workspace). true_count is precomputed at authoring time from entries_block,
+# not derived by the verifier — the ground truth is fixed by construction.
+param_mode: zip
+params:
+  entries_block:
+    - |
+      1. Sundown Trail #finished
+      2. Marsh Loop
+      3. Ridge Walk #finished
+      4. Creekside Path
+      5. Summit Spur #finished
+    - |
+      1. Login flow crashes on retry [BLOCKED]
+      2. Typo in footer copy
+      3. Search results paginate wrong [BLOCKED]
+      4. Dark mode toggle flickers
+    - |
+      1. Rice (low)
+      2. Olive oil
+      3. Canned tomatoes (low)
+      4. Pasta
+      5. Coffee (low)
+      6. Honey
+    - |
+      1. Silent Spring
+      2. The Left Hand of Darkness [reread]
+      3. Sapiens
+      4. Dune [reread]
+      5. Braiding Sweetgrass
+    - |
+      1. Fern *dry*
+      2. Pothos
+      3. Cactus
+      4. Basil *dry*
+    - |
+      1. Vacuum living room (done)
+      2. Water plants
+      3. Take out recycling (done)
+      4. Wipe counters
+      5. Fold laundry (done)
+      6. Clean windows
+    - |
+      1. Track one
+      2. Track two [skip]
+      3. Track three
+      4. Track four [skip]
+      5. Track five [skip]
+    - |
+      1. Passport (packed)
+      2. Charger
+      3. Sunscreen (packed)
+      4. Umbrella
+    - |
+      1. Math problem set (submitted)
+      2. History essay
+      3. Chem lab report (submitted)
+      4. Reading response
+      5. Art project (submitted)
+      6. Group presentation
+    - |
+      1. Setup crew (confirmed)
+      2. Registration desk
+      3. Cleanup crew (confirmed)
+      4. Photography
+      5. Parking lot (confirmed)
+  tag:
+    - "#finished"
+    - "[BLOCKED]"
+    - "(low)"
+    - "[reread]"
+    - "*dry*"
+    - "(done)"
+    - "[skip]"
+    - "(packed)"
+    - "(submitted)"
+    - "(confirmed)"
+  true_count:
+    - 3
+    - 2
+    - 3
+    - 2
+    - 2
+    - 3
+    - 3
+    - 2
+    - 3
+    - 3
+  destination:
+    - lists/trail-log.txt
+    - lists/bug-log.txt
+    - lists/pantry-log.txt
+    - lists/reading-log.txt
+    - lists/plant-log.txt
+    - lists/chore-log.txt
+    - lists/playlist-log.txt
+    - lists/packing-log.txt
+    - lists/homework-log.txt
+    - lists/volunteer-log.txt
+  count_destination:
+    - lists/trail-count.txt
+    - lists/bug-count.txt
+    - lists/pantry-count.txt
+    - lists/reading-count.txt
+    - lists/plant-count.txt
+    - lists/chore-count.txt
+    - lists/playlist-count.txt
+    - lists/packing-count.txt
+    - lists/homework-count.txt
+    - lists/volunteer-count.txt
+
+prompt: |
+  hey liv, save this list to {destination} exactly as written:
+
+  {entries_block}
+
+  then count how many entries are tagged {tag} and save just that number
+  (nothing else) to {count_destination}. don't just eyeball it, actually count.
+
+tools:
+  - write_file
+  - read_file
+  - search_files
+  - terminal
+
+n_rollouts: 10
+difficulty_target: [0.3, 0.8]
+verifier: verifiers/count/tagged_count.py
+notes: >
+  Two-part outcome gate, both against precomputed ground truth: destination's
+  final content contains entries_block verbatim (whitespace-normalized), and
+  count_destination's final content contains true_count as a number. Path
+  irrelevant — miscounting then catching it on a re-read still passes.

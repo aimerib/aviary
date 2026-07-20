@@ -1,0 +1,82 @@
+id: refactor.rename_patch
+family: refactor
+holdout: false
+
+description: >
+  Teach precise textual substitution as a tracked edit rather than a full
+  rewrite: draft a short piece of text that names something by an old term,
+  then rename every occurrence to a new term using `patch` — exercised for the
+  first time in the bank. Outcome gate: the final content must contain zero
+  occurrences of the old term and at least one of the new term.
+
+# zip mode: unique destination per instance (shared hermes workspace).
+param_mode: zip
+params:
+  content_desc:
+    - a short bio note for a hiking group newsletter
+    - a short project README blurb
+    - a short internal memo about a tool rename
+    - a short changelog entry draft
+    - a short intro paragraph for a board game rulebook
+    - a short announcement about a mascot
+    - a short blurb for a podcast episode description
+    - a short internal FAQ entry
+    - a short club newsletter paragraph
+    - a short product tagline draft
+  old_term:
+    - Team Marmot
+    - Project Nightjar
+    - QuickNote
+    - DarkMode
+    - Sundered Isles
+    - Chip the Chipmunk
+    - The Long Signal
+    - Basecamp Plan
+    - Riverside Chess Club
+    - EverGreen Notebooks
+  new_term:
+    - Team Chamois
+    - Project Kingfisher
+    - SwiftNote
+    - NightMode
+    - Shattered Isles
+    - Nibbles the Chipmunk
+    - The Clear Signal
+    - Trailhead Plan
+    - Riverbend Chess Club
+    - EverGlade Notebooks
+  destination:
+    - refactor/marmot-bio.txt
+    - refactor/nightjar-readme.txt
+    - refactor/quicknote-memo.txt
+    - refactor/darkmode-changelog.txt
+    - refactor/sundered-isles.txt
+    - refactor/mascot-announcement.txt
+    - refactor/podcast-blurb.txt
+    - refactor/faq-entry.txt
+    - refactor/chess-club.txt
+    - refactor/tagline-draft.txt
+
+prompt: |
+  hey liv, draft {content_desc} and save it to {destination} — mention
+  "{old_term}" a few times naturally throughout, it's the name we've been
+  using. actually, hold on — we're renaming it to "{new_term}". use patch to
+  replace every occurrence of "{old_term}" with "{new_term}" in the file,
+  don't just rewrite the whole thing from scratch.
+
+tools:
+  - write_file
+  - read_file
+  - patch
+
+n_rollouts: 10
+difficulty_target: [0.3, 0.8]
+verifier: verifiers/refactor/rename_patch.py
+notes: >
+  Verifier reconstructs final content from write_file calls (full overwrite)
+  and patch calls in mode='replace' (applies old_string->new_string, honoring
+  replace_all) IN ORDER; mode='patch' (V4A diff) calls are not parsed and
+  leave tracked content unchanged — a safe, conservative miss, not a false
+  pass. Outcome gate: final content has zero occurrences of old_term and at
+  least one of new_term. Path irrelevant — a full rewrite that lands on the
+  same correct final state also passes.

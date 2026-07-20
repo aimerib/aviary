@@ -1,0 +1,81 @@
+id: audit.batch_consistency
+family: audit
+holdout: false
+
+description: >
+  Teach attention across a BATCH rather than one or two named files: save N
+  short notes under a shared naming pattern, every one of which must start
+  with an exact required first line. Every other family in the bank names 1-2
+  destinations explicitly; this one only gives a count and a pattern, so
+  losing track of even one file among N fails the outcome.
+
+# zip mode: unique prefix_dir per instance (shared hermes workspace). Expected
+# paths are derived deterministically as {prefix_dir}/note-1.txt .. note-N.txt.
+param_mode: zip
+params:
+  topic:
+    - houseplant care tips
+    - recipe ideas using canned beans
+    - beginner guitar chords
+    - weekend hiking trail options
+    - budget travel destinations
+    - productivity app comparisons
+    - easy sourdough discard recipes
+    - home workout routines without equipment
+    - gift ideas under twenty dollars
+    - board games for two players
+  count:
+    - 3
+    - 4
+    - 3
+    - 5
+    - 4
+    - 3
+    - 4
+    - 5
+    - 3
+    - 4
+  prefix_dir:
+    - audit/plants
+    - audit/beans
+    - audit/guitar
+    - audit/trails
+    - audit/travel
+    - audit/apps
+    - audit/discard
+    - audit/workouts
+    - audit/gifts
+    - audit/boardgames
+  required_line:
+    - "Status: draft"
+    - "Reviewed: not yet"
+    - "Owner: TBD"
+    - "Status: draft"
+    - "Reviewed: not yet"
+    - "Owner: TBD"
+    - "Status: draft"
+    - "Reviewed: not yet"
+    - "Owner: TBD"
+    - "Status: draft"
+
+prompt: |
+  hey liv, i need {count} short notes about {topic}, saved as
+  {prefix_dir}/note-1.txt through {prefix_dir}/note-{count}.txt. every single
+  one needs to start with the exact line "{required_line}" as its first line —
+  no exceptions, i've got a script that reads just that line. double check all
+  of them before you tell me you're done.
+
+tools:
+  - write_file
+  - read_file
+  - search_files
+
+n_rollouts: 10
+difficulty_target: [0.3, 0.8]
+verifier: verifiers/audit/batch_consistency.py
+notes: >
+  Outcome gate over the FULL set: all N deterministically-named files
+  (prefix_dir/note-{i}.txt, i in 1..count) exist with a successful final
+  write, and EVERY one's first line equals required_line exactly. One missed
+  file among N fails the whole record — path irrelevant, a first-draft miss
+  caught and fixed on a later write still passes.

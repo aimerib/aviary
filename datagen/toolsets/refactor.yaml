@@ -1,0 +1,44 @@
+# refactor-family tool allowlist + schemas, MIRRORING the pinned hermes checkout's
+# file toolset (write_file, read_file, patch). `patch` exercised for the first
+# time in the bank — replace mode only in practice (prompt shape), but the full
+# schema is exposed since the pinned tool doesn't let us restrict modes. Widening
+# this list REQUIRES updating the family's verifier fixtures in the same change
+# (CLAUDE.md rule).
+family: refactor
+tools:
+  - type: function
+    function:
+      name: write_file
+      description: Write a text file, creating parent directories if needed.
+      parameters:
+        type: object
+        properties:
+          path: {type: string}
+          content: {type: string}
+        required: [path, content]
+  - type: function
+    function:
+      name: read_file
+      description: Read a text file.
+      parameters:
+        type: object
+        properties:
+          path: {type: string}
+        required: [path]
+  - type: function
+    function:
+      name: patch
+      description: >
+        Targeted find-and-replace edits in files (mode='replace': path,
+        old_string, new_string, optional replace_all) or multi-file V4A
+        patches (mode='patch'). Returns a unified diff.
+      parameters:
+        type: object
+        properties:
+          mode: {type: string, enum: [replace, patch], default: replace}
+          path: {type: string}
+          old_string: {type: string}
+          new_string: {type: string}
+          replace_all: {type: boolean, default: false}
+          patch: {type: string}
+        required: [mode]
