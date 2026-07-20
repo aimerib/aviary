@@ -19,6 +19,12 @@ params:
     - haiku about the ocean
     - packing list for a weekend hiking trip
     - one-line reminder to water the plants
+    - haiku about the first snow
+    - list of five gift ideas for a coworker
+    - one-line reminder to renew the car registration
+    - short limerick about a stubborn cat
+    - packing list for a two-day work trip
+    - one-line reminder to call the vet back
   destination:
     - notes/rain-haiku.txt
     - lists/groceries.txt
@@ -26,6 +32,12 @@ params:
     - notes/ocean-haiku.txt
     - lists/packing.txt
     - notes/plants.txt
+    - notes/snow-haiku.txt
+    - lists/gift-ideas.txt
+    - notes/car-registration.txt
+    - notes/cat-limerick.txt
+    - lists/work-trip.txt
+    - notes/vet-callback.txt
   index:
     - notes/rain-haiku.index.txt
     - lists/groceries.index.txt
@@ -33,6 +45,12 @@ params:
     - notes/ocean-haiku.index.txt
     - lists/packing.index.txt
     - notes/plants.index.txt
+    - notes/snow-haiku.index.txt
+    - lists/gift-ideas.index.txt
+    - notes/car-registration.index.txt
+    - notes/cat-limerick.index.txt
+    - lists/work-trip.index.txt
+    - notes/vet-callback.index.txt
 
 prompt: |
   hey liv, can you write a {kind} and save it to {destination}? oh and add a line
@@ -42,11 +60,12 @@ tools:
   - write_file
   - read_file
 
-n_rollouts: 4
+n_rollouts: 10
 difficulty_target: [0.3, 0.8]
 verifier: verifiers/files/save_note.py
 notes: >
   exemplar template; the verifier checks final write results, not the path taken.
   v2 hardening (2026-07-19): the original single-write task passed 1.00 on
   deepseek-v4-flash — difficulty now comes from the second correlated write (the
-  index must name the saved file).
+  index must name the saved file). Scaled 2026-07-20 (6->12 instances, 4->10
+  rollouts) as part of lane A corpus-mix expansion — see burn.yaml comment.

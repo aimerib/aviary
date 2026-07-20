@@ -24,10 +24,10 @@ def test_taskbank_loads_and_expands():
     assert any(t.id == "files.save_note" for t in templates)
     instances = expand_all(templates)
     save_note = [i for i in instances if i.template_id == "files.save_note"]
-    assert len(save_note) == 6  # 3 kinds x 2 destinations
+    assert len(save_note) == 12  # zip mode: 12 kind/destination/index triples
     assert all("{" not in i.prompt for i in save_note)
     keys = {i.instance_key() for i in save_note}
-    assert len(keys) == 6
+    assert len(keys) == 12
 
 
 def test_emit_inputs_repeats_rollouts(tmp_path):
@@ -155,7 +155,13 @@ def make_ctx() -> IngestContext:
 
 
 def test_ingest_hermes_record():
-    rec = ingest_hermes_record(HERMES_RECORD, make_ctx())
+    ctx = make_ctx()
+    # HERMES_RECORD's synthetic trajectory is decoupled from any instance's real
+    # prompt text; point prompt_index at whichever instance is files.save_note
+    # rather than assuming load order puts it first (family dirs sort
+    # alphabetically, and other lane A families now sort earlier).
+    idx = next(i for i, inst in enumerate(ctx.instances) if inst.template_id == "files.save_note")
+    rec = ingest_hermes_record({**HERMES_RECORD, "prompt_index": idx}, ctx)
     assert rec.provenance.lane == "a"
     assert rec.provenance.template_id == "files.save_note"
     assert rec.provenance.sibling_group

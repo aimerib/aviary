@@ -17,11 +17,21 @@ params:
     - the mass of Jupiter
     - the length of the Amazon river
     - the GDP of Germany
+    - the population of Mexico
+    - the land area of Australia
+    - the mass of Saturn
+    - the length of the Nile
+    - the GDP of South Korea
   smaller:
     - the population of Australia
     - the land area of France
     - the mass of Earth
     - the length of the Rhine
+    - the GDP of Portugal
+    - the population of Portugal
+    - the land area of Germany
+    - the mass of Mars
+    - the length of the Thames
     - the GDP of Portugal
   destination:
     - research/japan-vs-australia.md
@@ -29,6 +39,11 @@ params:
     - research/jupiter-vs-earth.md
     - research/amazon-vs-rhine.md
     - research/germany-vs-portugal.md
+    - research/mexico-vs-portugal.md
+    - research/australia-vs-germany.md
+    - research/saturn-vs-mars.md
+    - research/nile-vs-thames.md
+    - research/southkorea-vs-portugal.md
 
 prompt: |
   hey liv, quick one: how many times bigger is {bigger} than {smaller}, actually?
@@ -43,7 +58,7 @@ tools:
   - terminal
   - write_file
 
-n_rollouts: 4
+n_rollouts: 10
 # Teacher-ceiling band (2026-07-19 decision): deepseek-v4-flash is near-ceiling
 # on well-specified structural tasks (teacher chains research+division reliably) — measured 0.94-1.00
 # across two hardening rounds. GRPO difficulty re-derives from the STUDENT.
@@ -56,4 +71,5 @@ notes: >
   passed 1.00) INTERNAL CONSISTENCY: some stated number must equal the division
   of two other numbers in the file within 2%. Napkin math and mismatched
   rounding fail; honest terminal division passes. Faithfulness to the cited
-  sources remains judge territory.
+  sources remains judge territory. Scaled 2026-07-20 (5->10 instances, 4->10
+  rollouts) for lane A corpus-mix expansion.

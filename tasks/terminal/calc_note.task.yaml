@@ -18,24 +18,44 @@ params:
     - 21500
     - 5750
     - 32000
+    - 11250
+    - 6400
+    - 27800
+    - 9900
+    - 41000
   rate_pct:
     - 6.1
     - 4.9
     - 7.25
     - 9.9
     - 5.35
+    - 8.15
+    - 5.9
+    - 6.75
+    - 10.4
+    - 4.45
   years:
     - 4
     - 3
     - 6
     - 2
     - 5
+    - 3
+    - 5
+    - 7
+    - 2
+    - 6
   destination:
     - money/loan-14000.txt
     - money/loan-8300.txt
     - money/loan-21500.txt
     - money/loan-5750.txt
     - money/loan-32000.txt
+    - money/loan-11250.txt
+    - money/loan-6400.txt
+    - money/loan-27800.txt
+    - money/loan-9900.txt
+    - money/loan-41000.txt
 
 prompt: |
   hey liv, if i borrow ${principal} at {rate_pct}% for {years} years, what does
@@ -47,7 +67,7 @@ tools:
   - write_file
   - read_file
 
-n_rollouts: 4
+n_rollouts: 10
 # Teacher-ceiling band (2026-07-19 decision): deepseek-v4-flash is near-ceiling
 # on well-specified structural tasks (teacher reaches for the terminal unprompted) — measured 0.94-1.00
 # across two hardening rounds. GRPO difficulty re-derives from the STUDENT.
@@ -59,4 +79,5 @@ notes: >
   the final file within one cent. v2 (2026-07-19): the prompt no longer says
   "use the terminal" — with the hint, pass rate was 1.00 (teacher always
   complied); without it the model must CHOOSE tool-over-priors, which is the
-  reflex being trained. Mental math fails at 4+ significant figures.
+  reflex being trained. Mental math fails at 4+ significant figures. Scaled
+  2026-07-20 (5->10 instances, 4->10 rollouts) for lane A corpus-mix expansion.

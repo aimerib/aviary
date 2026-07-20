@@ -19,12 +19,22 @@ params:
     - whether cold showers do anything for recovery
     - if electric cars are actually cheaper to own than gas ones
     - whether learning an instrument helps adult brains
+    - whether blue-light glasses actually help with sleep
+    - if intermittent fasting does anything beyond calorie restriction
+    - whether standing meetings are actually shorter
+    - if noise-cancelling headphones affect focus differently than earplugs
+    - whether cursive handwriting helps memory retention
   destination:
     - research/standing-desks.md
     - research/sourdough.md
     - research/cold-showers.md
     - research/ev-costs.md
     - research/instruments.md
+    - research/blue-light.md
+    - research/intermittent-fasting.md
+    - research/standing-meetings.md
+    - research/noise-cancelling.md
+    - research/cursive-memory.md
 
 prompt: |
   hey liv, i keep running into opposite claims about {topic}. can you look at a
@@ -37,7 +47,7 @@ tools:
   - web_extract
   - write_file
 
-n_rollouts: 4
+n_rollouts: 10
 difficulty_target: [0.3, 0.8]
 verifier: verifiers/web/compare_sources.py
 notes: >
@@ -45,4 +55,5 @@ notes: >
   0.95 on deepseek-v4-flash (rollouts cited 3-10 grounded URLs) while "short"
   produced a median 885-word file — so the bar is now >=3 grounded citations
   AND <=300 non-URL words. Difficulty comes from brevity against a verbose
-  prior, with grounding as the floor.
+  prior, with grounding as the floor. Scaled 2026-07-20 (5->10 instances,
+  4->10 rollouts) for lane A corpus-mix expansion.

@@ -19,18 +19,33 @@ params:
     - checklist for publishing a blog post
     - list of warm-up exercises before a run
     - list of things to check before buying a used car
+    - packing list for a beach weekend
+    - shopping list for a chili cook-off
+    - checklist for closing out a sprint
+    - list of cool-down stretches after a run
+    - list of things to check before renting an apartment
   n_lines:
     - 8
     - 6
     - 7
     - 9
     - 5
+    - 7
+    - 8
+    - 6
+    - 5
+    - 9
   destination:
     - lists/alps.txt
     - lists/taco-night.txt
     - lists/blog-checklist.txt
     - lists/warmups.txt
     - lists/used-car.txt
+    - lists/beach-weekend.txt
+    - lists/chili-cookoff.txt
+    - lists/sprint-close.txt
+    - lists/cooldown.txt
+    - lists/apartment-check.txt
 
 prompt: |
   hey liv, draft a {kind} and save it to {destination}. then go back over the
@@ -42,7 +57,7 @@ tools:
   - write_file
   - read_file
 
-n_rollouts: 4
+n_rollouts: 10
 # Teacher-ceiling band (2026-07-19 decision): deepseek-v4-flash is near-ceiling
 # on well-specified structural tasks (teacher self-corrects reliably) — measured 0.94-1.00
 # across two hardening rounds. GRPO difficulty re-derives from the STUDENT.
@@ -53,4 +68,5 @@ notes: >
   every line non-empty, no leading numbering/bullet markers, case-insensitive
   alphabetical order. v2 (2026-07-19): explicit constraints alone passed 1.00 —
   alphabetical order added because models draft thematically, so an honest pass
-  usually requires an actual revision pass over the file.
+  usually requires an actual revision pass over the file. Scaled 2026-07-20
+  (5->10 instances, 4->10 rollouts) as part of lane A corpus-mix expansion.

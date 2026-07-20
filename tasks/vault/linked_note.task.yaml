@@ -20,18 +20,33 @@ params:
     - notes on learning morse code with spaced repetition
     - a plan for backing up family photos properly
     - impressions of the first week with a standing desk
+    - a plan for composting in a small apartment
+    - notes on a beginner sourdough starter schedule
+    - an idea for a low-power home weather station
+    - impressions of switching to a mechanical keyboard
+    - a plan for learning conversational Portuguese in six months
   hub:
     - vault-birds/Projects.md
     - vault-bread/Projects.md
     - vault-morse/Projects.md
     - vault-photos/Projects.md
     - vault-desk/Projects.md
+    - vault-compost/Projects.md
+    - vault-sourdough/Projects.md
+    - vault-weather/Projects.md
+    - vault-keyboard/Projects.md
+    - vault-portuguese/Projects.md
   destination:
     - vault-birds/notes/bird-logger.md
     - vault-bread/notes/no-knead.md
     - vault-morse/notes/morse-srs.md
     - vault-photos/notes/photo-backup.md
     - vault-desk/notes/standing-desk.md
+    - vault-compost/notes/apartment-compost.md
+    - vault-sourdough/notes/starter-schedule.md
+    - vault-weather/notes/weather-station.md
+    - vault-keyboard/notes/mech-keyboard.md
+    - vault-portuguese/notes/learning-plan.md
 
 prompt: |
   hey liv, start me a little notes vault: make a hub note at {hub} for my
@@ -45,7 +60,7 @@ tools:
   - read_file
   - search_files
 
-n_rollouts: 4
+n_rollouts: 10
 # Teacher-ceiling band (2026-07-19 decision): deepseek-v4-flash is near-ceiling
 # on well-specified structural tasks (teacher handles bidirectional linking reliably) — measured 0.94-1.00
 # across two hardening rounds. GRPO difficulty re-derives from the STUDENT.
@@ -57,4 +72,5 @@ notes: >
   note's stem ([[bird-logger]] or [[notes/bird-logger]] both count); and (v2,
   2026-07-19 — one-way linking passed 1.00) the note's FINAL content backlinks
   the hub's stem ([[Projects]]). Bidirectional coordination across both files
-  is what usually forces a second pass.
+  is what usually forces a second pass. Scaled 2026-07-20 (5->10 instances,
+  4->10 rollouts) for lane A corpus-mix expansion.
