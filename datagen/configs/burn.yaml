@@ -23,8 +23,11 @@ burn_bands:
       # comments), so the lane verify band reflects the measured mix.
     verify: [0.55, 0.95]
     judge: [0.50, 0.98]
-  b:  # fiction extraction — judges LOW by design (thought_quality floor, ~28% observed)
-    verify: [0.40, 0.95]
+  b:  # fiction extraction — judges LOW by design (thought_quality floor, ~28-32%
+      # observed); verify is a structural JSON-parse gate with no difficulty dial,
+      # not task pass/fail — consistently ~0.999-1.00 every measurement to date
+      # (calibrated on 2026-07-19-pilot-blessing: verify 1.00, judge 0.32).
+    verify: [0.40, 1.0]
     judge: [0.15, 0.50]
   c:  # self-play RP — calibrated on 2026-07-19-pilot-lanec-ao3 (verify 0.82, judge 0.93)
     verify: [0.55, 0.95]
