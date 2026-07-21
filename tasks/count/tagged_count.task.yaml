@@ -136,7 +136,9 @@ tools:
   - terminal
 
 n_rollouts: 10
-difficulty_target: [0.3, 0.8]
+# Teacher-ceiling band (2026-07-20, same amendment as save_note/calc_note/etc):
+# deepseek-v4-flash measured 0.99 on this well-specified structural task.
+difficulty_target: [0.5, 1.0]
 verifier: verifiers/count/tagged_count.py
 notes: >
   Two-part outcome gate, both against precomputed ground truth: destination's
