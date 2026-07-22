@@ -330,6 +330,7 @@ def test_gate_pipeline_end_to_end(tmp_path):
         make_prompts(),
         persona_speaker="Olivia",
         judge_workers=4,  # parallel judging must keep outcomes/order deterministic
+        harmonize_workers=4,  # ...and so must parallel harmonize
     )
     assert stats.total == 4
     assert stats.kept == 1
@@ -340,6 +341,48 @@ def test_gate_pipeline_end_to_end(tmp_path):
     rejected = list(read_jsonl(store.gated_rejected(), ConversationRecord))
     reasons = {r.provenance.record_id: r.gate_state.drop_reason for r in rejected}
     assert reasons == {"g2": "dedupe", "g3": "scrub", "g4": "verify"}
+
+
+def test_run_gates_harmonize_parallel_preserves_order_and_processes_all(tmp_path):
+    # Harmonize fans out over records concurrently (harmonize_workers > 1). The
+    # outcome list must stay aligned to input order and every record must be
+    # processed exactly once — the regression risk when the serial loop became a
+    # TeacherPool. Distinct replies so none dedupe; all keepable so all harmonize.
+    from aviary.io.jsonl import write_jsonl
+
+    store = RunStore("harmonrun", root=tmp_path)
+    replies = [
+        "Your calendar is a crime and I have receipts.",
+        "The kettle has been judging me since Tuesday, frankly.",
+        "I reorganized the whole bookshelf by mood and chaos won handily.",
+        "Pigeons are just city seagulls with substantially worse public relations.",
+        "I named the bug in my code Gerald and now I cannot delete him.",
+    ]
+    records = [banter(f"h{i}", r) for i, r in enumerate(replies)]
+    write_jsonl(store.raw("c"), records)
+
+    patterns = load_patterns(
+        REPO / "gates" / "scrub" / "denylist.yaml", REPO / "gates" / "scrub" / "pii_patterns.yaml"
+    )
+    rubrics = {"c": Rubric.load(REPO / "datagen" / "persona" / "olivia" / "quality.rubric.yaml")}
+    stats = run_gates(
+        store,
+        default_resolver({}),
+        rubrics,
+        patterns,
+        ROSTER,
+        FakeTeacherClient(script=_good_judge),
+        make_prompts(),
+        persona_speaker="Olivia",
+        judge_workers=4,
+        harmonize_workers=8,  # more workers than records: all run concurrently
+    )
+    assert stats.total == len(records)
+    assert stats.kept == len(records)
+    kept = list(read_jsonl(store.gated_kept(), ConversationRecord))
+    # Order preserved despite concurrent execution, and every record harmonized once.
+    assert [r.provenance.record_id for r in kept] == [f"h{i}" for i in range(len(records))]
+    assert all(r.gate_state.harmonized for r in kept)
 
 
 def test_run_gates_isolates_stage_errors(tmp_path):

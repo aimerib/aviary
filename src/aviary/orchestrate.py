@@ -502,6 +502,8 @@ def cmd_gate(run_id: str) -> None:
         # Judge fan-out capped by the tightest judge provider so any per-record
         # routing stays within limits.
         judge_workers=_lane_workers(roster, "judge", ("primary", "secondary", "tertiary")),
+        # Harmonize fans out the same way, capped by the harmonizer's provider.
+        harmonize_workers=_lane_workers(roster, "harmonizer", ("primary",)),
     )
     manifest.counts.verified = stats.verified
     manifest.counts.judged = stats.judged

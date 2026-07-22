@@ -1,7 +1,8 @@
 # Burn-shaped blessing pilot: same lanes as burn.yaml so the manifest this run
 # writes can authorize the burn (per-lane bands + matching datagen_config_hash).
-# Lane A regenerates the full 6-family bank; lanes B/C replay mostly from the
-# response cache (same books/seeds as the calibration runs).
+# Lane A regenerates the full 9-family bank (6 scaled + audit/count/refactor,
+# 2026-07-20 corpus-mix expansion); lanes B/C replay mostly from the response
+# cache (same books/seeds as the calibration runs).
 kind: pilot
 lanes: [a, b, c]
 eval_param_fraction: 0.15

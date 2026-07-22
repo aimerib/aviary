@@ -122,6 +122,7 @@ def run_gates(
     persona_speaker: str,  # the target's voice; no default — persona is never implicit
     dedupe_threshold: float = 0.8,
     judge_workers: int = 1,
+    harmonize_workers: int = 1,
     harmonize_policy: dict[str, tuple[str, ...]] | None = None,
     scrub_policies: dict[str, LaneScrubPolicy] | None = None,
 ) -> GateStats:
@@ -251,16 +252,24 @@ def run_gates(
         else:
             unique.append(rec)
 
-    # 5. harmonize (span-protected; lane policy)
+    # 5. harmonize (span-protected; lane policy). Each record is an independent,
+    # deterministic-per-record unit of paraphrase work, so it fans out exactly like
+    # the judge stage above — the serial version never exercised the harmonizer's
+    # provider concurrency and bottlenecked the paid pipeline (~one call at a time).
     harmonizer_model = roster.assigned("harmonizer", "primary").id
-    for rec in unique:
-        try:
-            outcome = harmonize_record(
-                rec, client, prompts, harmonizer_model, persona_speaker, harmonize_policy
+    pool = TeacherPool(client, roster, max_workers=max(1, harmonize_workers))
+    outcomes = pool.run(
+        [
+            lambda r=rec: harmonize_record(
+                r, client, prompts, harmonizer_model, persona_speaker, harmonize_policy
             )
-        except Exception as e:
+            for rec in unique
+        ]
+    )
+    for rec, outcome in zip(unique, outcomes, strict=True):
+        if isinstance(outcome, Exception):
             # A transient LLM error in harmonize drops one record, not the run.
-            log.warning("harmonize errored for %s: %s", rec.provenance.record_id, e)
+            log.warning("harmonize errored for %s: %s", rec.provenance.record_id, outcome)
             reject(rec, "error")
             continue
         if outcome.dropped:
