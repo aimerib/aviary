@@ -7,7 +7,6 @@ whose keep rates sit inside the expected bands and whose config hash matches.
 from __future__ import annotations
 
 import logging
-import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -18,7 +17,9 @@ from aviary.io.store import RunStore
 from aviary.lanes.a_agentic.hermes_config import (
     build_batch_command,
     emit_batch_inputs,
+    hermes_python,
     verify_hermes_interface,
+    verify_hermes_python,
 )
 from aviary.lanes.a_agentic.ingest import IngestContext, IngestError, ingest_hermes_record
 from aviary.lanes.a_agentic.taskbank import TaskInstance
@@ -122,12 +123,16 @@ def run_hermes_batch(
     (hardcoded); we copy trajectories.jsonl out immediately so the run store stays
     the single source of truth."""
     verify_hermes_interface(hermes_dir, distribution=distribution, required_tools=required_tools)
+    # Before emitting anything: the batch runs in a subprocess under hermes's own
+    # interpreter, so an unusable one must fail HERE, not as a ModuleNotFoundError
+    # buried in subprocess output after the rest of the run has been paid for.
+    python = hermes_python()
+    verify_hermes_python(hermes_dir, python)
     out_dir = store.hermes_out()
     inputs = out_dir / "inputs.jsonl"
     n = emit_batch_inputs(instances, inputs)
-    hermes_python = os.path.expanduser(os.environ.get("AVIARY_HERMES_PYTHON", "python"))
     cmd = build_batch_command(
-        python=hermes_python,
+        python=python,
         dataset_file=inputs,
         run_name=run_name,
         distribution=distribution,

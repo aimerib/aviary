@@ -137,6 +137,73 @@ def _toolset_tools(toolsets: dict, name: str) -> set[str]:
     return tools
 
 
+def hermes_python() -> str:
+    """The interpreter hermes-agent runs under. Not aviary's venv: see
+    verify_hermes_python for why we check it rather than adopt hermes's deps."""
+    import os
+
+    return os.path.expanduser(os.environ.get("AVIARY_HERMES_PYTHON", "python"))
+
+
+def _toplevel_imports(path: Path) -> set[str]:
+    """Root module names imported at batch_runner.py's top level (stdlib included —
+    the interpreter check does not care which are third-party, only which fail)."""
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    mods: set[str] = set()
+    for node in tree.body:  # top level only: a guarded import is not a hard requirement
+        if isinstance(node, ast.Import):
+            mods |= {a.name.split(".")[0] for a in node.names}
+        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+            mods.add(node.module.split(".")[0])
+    return mods
+
+
+def verify_hermes_python(hermes_checkout: Path, python: str) -> None:
+    """Check `python` can actually import what batch_runner.py imports.
+
+    hermes is an external checkout we invoke as a subprocess, and it runs under its
+    OWN interpreter (AVIARY_HERMES_PYTHON) because aviary's venv deliberately carries
+    only pydantic/pyyaml/httpx. Nothing connected the two, so an unset or wrong
+    AVIARY_HERMES_PYTHON surfaced as ModuleNotFoundError *inside the subprocess*
+    ~40 minutes into a run, after lanes B and C had already been paid for.
+
+    Installing hermes's deps into aviary's venv would "fix" this by making us own its
+    environment — which the pin-don't-vendor rule exists to prevent, and which would
+    silently guess at versions the checkout may not want. Checking the interpreter
+    instead keeps the boundary and moves the failure to `just install`.
+    """
+    import subprocess
+
+    mods = sorted(_toplevel_imports(hermes_checkout / "batch_runner.py"))
+    if not mods:
+        return
+    probe = "import " + ", ".join(mods)
+    try:
+        # cwd=checkout, exactly as run_hermes_batch invokes it: batch_runner imports
+        # hermes's own sibling modules (run_agent, toolsets, model_tools) alongside
+        # third-party ones, and those only resolve from the checkout root.
+        proc = subprocess.run(
+            [python, "-c", probe],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=hermes_checkout,
+        )
+    except (OSError, subprocess.TimeoutExpired) as e:
+        raise ValueError(
+            f"hermes interpreter {python!r} is not runnable ({e}) — set "
+            "AVIARY_HERMES_PYTHON to the interpreter that has hermes-agent's deps"
+        ) from e
+    if proc.returncode != 0:
+        raise ValueError(
+            f"hermes interpreter {python!r} cannot import what batch_runner.py needs:\n"
+            f"{proc.stderr.strip().splitlines()[-1] if proc.stderr.strip() else '(no stderr)'}\n"
+            f"batch_runner imports: {mods}\n"
+            "Set AVIARY_HERMES_PYTHON to the interpreter hermes-agent runs under. Do NOT "
+            "install these into aviary's venv — hermes is pinned and called, never vendored."
+        )
+
+
 def verify_hermes_interface(
     hermes_checkout: Path,
     distribution: str | None = None,

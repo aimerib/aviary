@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 import pytest
@@ -9,6 +10,7 @@ from aviary.lanes.a_agentic.hermes_config import (
     build_batch_command,
     emit_batch_inputs,
     verify_hermes_interface,
+    verify_hermes_python,
 )
 from aviary.lanes.a_agentic.ingest import IngestContext, IngestError, ingest_hermes_record
 from aviary.lanes.a_agentic.run import BurnGuardError, guard_burn
@@ -420,3 +422,35 @@ def test_every_target_resolves_an_address():
 
     for name in ("flash-v2_2", "sorcha-v1"):
         assert Target.load(name).address
+
+
+def test_verify_hermes_python_rejects_an_interpreter_missing_batch_runner_deps(tmp_path):
+    # The 2026-07-23 failure: AVIARY_HERMES_PYTHON unset -> hermes ran under an
+    # interpreter without its deps and died *inside the subprocess*, 40 minutes in.
+    (tmp_path / "batch_runner.py").write_text(
+        "import json\nimport definitely_not_a_real_module\n\ndef main():\n    pass\n"
+    )
+    with pytest.raises(ValueError, match="cannot import"):
+        verify_hermes_python(tmp_path, sys.executable)
+
+
+def test_verify_hermes_python_accepts_an_interpreter_that_has_them(tmp_path):
+    (tmp_path / "batch_runner.py").write_text("import json, pathlib\n\ndef main():\n    pass\n")
+    verify_hermes_python(tmp_path, sys.executable)  # must not raise
+
+
+def test_verify_hermes_python_rejects_a_missing_interpreter(tmp_path):
+    (tmp_path / "batch_runner.py").write_text("import json\n")
+    with pytest.raises(ValueError, match="not runnable"):
+        verify_hermes_python(tmp_path, str(tmp_path / "no-such-python"))
+
+
+def test_verify_hermes_python_ignores_guarded_imports(tmp_path):
+    # Only top-level imports are hard requirements; one inside try/except or a
+    # function is the checkout's own business, not a reason to refuse to run.
+    (tmp_path / "batch_runner.py").write_text(
+        "import json\n"
+        "try:\n    import definitely_not_a_real_module\nexcept ImportError:\n    pass\n"
+        "def main():\n    import another_fake_module\n"
+    )
+    verify_hermes_python(tmp_path, sys.executable)  # must not raise

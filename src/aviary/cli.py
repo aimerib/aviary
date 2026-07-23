@@ -158,19 +158,28 @@ def _install() -> int:
     written into the checkout: batch_runner takes everything via CLI flags, so
     there are no configs to place (datagen/toolsets/ are aviary's own schema
     mirrors for ingest/render, not files hermes reads)."""
-    from aviary.lanes.a_agentic.hermes_config import verify_hermes_interface, verify_hermes_pin
+    from aviary.lanes.a_agentic.hermes_config import (
+        hermes_python,
+        verify_hermes_interface,
+        verify_hermes_pin,
+        verify_hermes_python,
+    )
     from aviary.paths import REPO_ROOT, hermes_dir
     from aviary.teacher.roster import Roster
 
     roster = Roster.load(REPO_ROOT / "datagen" / "configs" / "teachers.yaml")
     hd = hermes_dir()
+    python = hermes_python()
     try:
         head = verify_hermes_pin(hd, roster.hermes_pin)
         verify_hermes_interface(hd)
+        # The whole point of `just install`: catch a bad hermes interpreter now,
+        # not 40 minutes into a run once lanes B and C have been paid for.
+        verify_hermes_python(hd, python)
     except ValueError as e:
         print(str(e), file=sys.stderr)
         return 1
-    print(f"hermes {head} ok (batch_runner interface verified)")
+    print(f"hermes {head} ok (batch_runner interface verified; interpreter {python})")
     return 0
 
 
