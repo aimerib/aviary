@@ -30,3 +30,11 @@ lane_c:
   conversations_per_seed: 1
   personas: [owner, lazy_texter, engaged_rper, nsfw_rper]
   rng_seed: 20260716
+  # 527 companion seeds exist; a pilot samples them on an even stride so the
+  # event/person/topic/obsession mix survives. Each seed is a full multi-turn
+  # self-play conversation at two teacher calls per turn — uncapped, this is a burn.
+  max_companion_seeds: 40
+
+# Lane D generation is free but judging it is not: 1,227 records would be ~50
+# minutes of GLM at measured throughput before lanes A/B/C even start.
+lane_d_max_records: 150

@@ -64,6 +64,13 @@ class LaneCRunConfig(BaseModel):
     conversations_per_seed: int = 1
     personas: list[str] = Field(default_factory=lambda: ["lazy_texter"])
     rng_seed: int = DEFAULT_SEED
+    # Companion seeds are generated from the vault, so their count is a property of
+    # how much the owner has written — 527 today — not of the run's size. A pilot
+    # must sample them or it is a burn: every seed is a full multi-turn self-play
+    # conversation, two teacher calls per turn. 0 = all (burn).
+    # Sampled on an even stride so the sample keeps the event/person/topic/obsession
+    # mix rather than becoming whichever kind sorts first.
+    max_companion_seeds: int = 0
 
 
 class LaneBand(BaseModel):
@@ -95,6 +102,9 @@ class RunConfig(BaseModel):
     lane_a_distribution: str = "terminal_web"
     lane_a_max_turns: int = 10
     lane_c: LaneCRunConfig = Field(default_factory=LaneCRunConfig)
+    # Lane D generation is free (no teacher calls) but JUDGING it is not, and the
+    # export's size is fixed by history rather than by the run. 0 = all (burn).
+    lane_d_max_records: int = 0
     # Per-lane keep-rate bands the burn guard enforces against the blessing pilot.
     # Every lane the burn runs MUST have a band here and MUST have been measured by
     # the pilot, or the guard refuses (never burn an unpiloted lane — esp. lane A).
@@ -300,7 +310,7 @@ def cmd_generate(kind: str) -> str:
             rollouts += _generate_lane_a(cfg, store, roster, prompts, run_id, target)
 
         if "d" in cfg.lanes:
-            rollouts += _generate_lane_d(store, run_id)
+            rollouts += _generate_lane_d(store, run_id, cfg.lane_d_max_records)
             # Lane D ships nowhere: run data stays under $AVIARY_DATA_DIR only,
             # exempt from the ship-to-HF step. The manifest records the exemption.
             manifest.artifacts.ship_exempt_lanes = sorted(
@@ -323,7 +333,7 @@ def cmd_generate(kind: str) -> str:
     return run_id
 
 
-def _companion_seeds(target: Target, prompts: PromptSet) -> list:
+def _companion_seeds(target: Target, prompts: PromptSet, max_seeds: int = 0) -> list:
     """Vault-grounded companion seeds, when lane_d.yaml declares a vault.
 
     Off unless configured, so flash-v2_2 is unaffected: no vault, no seeds. The
@@ -348,6 +358,9 @@ def _companion_seeds(target: Target, prompts: PromptSet) -> list:
     LaneDConfig.load(lane_d)  # fail early on a malformed lane D config
     vault = Vault.load(VaultConfig.model_validate(vault_cfg))
     seeds = companion_seeds(vault, prompts[target.persona_system_key], target.persona_speaker)
+    if max_seeds and len(seeds) > max_seeds:
+        step = len(seeds) / max_seeds
+        seeds = [seeds[int(i * step)] for i in range(max_seeds)]
     log.info("lane C: %d companion seeds from vault %s", len(seeds), seed_mix(seeds))
     return seeds
 
@@ -369,7 +382,7 @@ def _generate_lane_c(cfg, store, roster, client, prompts, target: Target) -> int
     seed_run = raw.get("seed_from_run")
     seed_store = RunStore(seed_run) if seed_run else store
     seeds += seeds_from_lane_b(seed_store, max_seeds=raw.get("max_lane_b_seeds"))
-    seeds += _companion_seeds(target, prompts)
+    seeds += _companion_seeds(target, prompts, cfg.lane_c.max_companion_seeds)
     personas = load_personas(REPO_ROOT / "datagen" / "persona" / "user_sims")
     models = {
         "user_sim": roster.assigned("lane_c", "user_sim").id,
@@ -461,7 +474,7 @@ def _generate_lane_a(cfg, store, roster, prompts, run_id, target: Target) -> int
     return ingest_trajectories(trajectories, ctx, store)
 
 
-def _generate_lane_d(store: RunStore, run_id: str) -> int:
+def _generate_lane_d(store: RunStore, run_id: str, max_records: int = 0) -> int:
     """Pure normalization — no teacher calls. Sources are local paths in
     lane_d.yaml (never committed); output stays in the run store."""
     from aviary.lanes.d_personal.adapter import LaneDConfig, parse_all
@@ -471,6 +484,12 @@ def _generate_lane_d(store: RunStore, run_id: str) -> int:
         log.warning("lane D enabled but lane_d.yaml declares no sources; skipping")
         return 0
     records = list(parse_all(lane_cfg, run_id))
+    if max_records and len(records) > max_records:
+        # Even stride, not head: a pilot sample must span the whole history, or its
+        # measured keep rate describes one era and then authorizes a burn over six.
+        step = len(records) / max_records
+        records = [records[int(i * step)] for i in range(max_records)]
+        log.info("lane D: sampled %d records (cap)", len(records))
     return write_jsonl(store.raw("d"), records)
 
 
