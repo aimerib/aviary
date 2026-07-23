@@ -411,11 +411,22 @@ def _generate_lane_c(cfg, store, roster, client, prompts, target: Target) -> int
     seeds += seeds_from_lane_b(seed_store, max_seeds=max_b)
     seeds += _companion_seeds(target, prompts, cfg.lane_c.max_companion_seeds)
     personas = load_personas(REPO_ROOT / "datagen" / "persona" / "user_sims")
-    models = {
-        "user_sim": roster.assigned("lane_c", "user_sim").id,
-        "character": roster.assigned("lane_c", "character").id,
-    }
+    user_sim = roster.assigned("lane_c", "user_sim")
+    character_pool = roster.assigned_pool("lane_c", "character")
     lane_cfg = LaneCConfig(**raw.get("driver", {}))
+
+    def _character_for(seed_id: str) -> str:
+        """Which teacher plays the character in THIS conversation. Keyed by seed so
+        it is stable across reruns (cache) and so a seed's two conversations at
+        conversations_per_seed>1 can still differ by rng, not by model churn."""
+        return roster.rotate(character_pool, seed_id, avoid=user_sim.provider).id
+
+    if len(character_pool) > 1:
+        log.info(
+            "lane C: character side rotates across %s (user-sim %s)",
+            [r.id for r in character_pool],
+            user_sim.id,
+        )
 
     # Draw one seed per conversation up front, in a fixed order: each conversation is
     # then fully determined by its own seed, so running them concurrently below yields
@@ -440,7 +451,7 @@ def _generate_lane_c(cfg, store, roster, client, prompts, target: Target) -> int
             persona,
             lane_cfg,
             client,
-            models,
+            {"user_sim": user_sim.id, "character": _character_for(seed.seed_id)},
             prompts,
             run_id=store.run_id,
             prompt_set_hash=prompts.hash,

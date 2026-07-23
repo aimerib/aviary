@@ -31,7 +31,16 @@ class LaneCConfig:
     max_total_chars: int = 60_000
     degenerate_ngram: int = 4
     degenerate_overlap: float = 0.6
-    length_targets: tuple[str, ...] = ("brief (1-3 sentences)", "moderate (1-2 paragraphs)")
+    # Four registers, not two. Measured 2026-07-23: companion turns ran a median of
+    # 772 chars with p10=242 — she was reliably mid-length, which is its own kind of
+    # flat. A companion should sometimes answer in five words and sometimes not shut
+    # up. SillyTavern RP also expects short turns far more often than this allowed.
+    length_targets: tuple[str, ...] = (
+        "clipped — a line, sometimes just a few words, the way people actually text",
+        "brief (1-3 sentences)",
+        "moderate (1-2 paragraphs)",
+        "long and unhurried, but only because this moment earns it",
+    )
 
 
 @dataclass
@@ -176,6 +185,11 @@ def run_selfplay(
             "rng_seed": rng_seed,
             "stop_reason": stop_reason,
             "length_target": length_target,
+            # Which teacher spoke as the character. Recorded so voice metrics can be
+            # sliced BY MODEL: a blended dialect rate cannot distinguish "this teacher
+            # hams up the accent" from "her brief asks for it", and those need
+            # opposite fixes — one is a roster change, one is the owner's to make.
+            "character_model": models["character"],
         },
     )
     return ConversationRecord(

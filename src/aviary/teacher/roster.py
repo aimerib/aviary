@@ -60,6 +60,33 @@ class Roster(BaseModel):
     def assigned(self, lane_key: str, role: str) -> TeacherRoute:
         return self.route_for(self.assignments[lane_key][role])
 
+    def assigned_pool(self, lane_key: str, role: str) -> list[TeacherRoute]:
+        """Every teacher serving `role` on this lane: the role itself plus any
+        `<role>_*` variants, in declared order.
+
+        One entry is the ordinary case. Several means the lane ROTATES, which is
+        the roster's stated reason to exist — "no single idiolect dominates". Lane
+        A splits easy/hard and lane B splits by extraction role, but lane C's
+        character side was a single model, so every one of Sorcha's turns in the
+        corpus came from one model's habits. That is a variety ceiling no prompt
+        can raise.
+        """
+        roles = self.assignments.get(lane_key, {})
+        ids = [t for name, t in roles.items() if name == role or name.startswith(f"{role}_")]
+        if not ids:
+            raise KeyError(f"no {role!r} assignment for lane {lane_key!r}")
+        return [self.route_for(i) for i in ids]
+
+    def rotate(self, pool: list[TeacherRoute], key: str, *, avoid: str = "") -> TeacherRoute:
+        """Pick one of `pool` by hashing `key` — deterministic, so a rerun hits the
+        same cache entries. `avoid` excludes a provider: lane C must never put the
+        same vendor on both sides of a conversation, which would make the self-play
+        a model talking to itself.
+        """
+        eligible = [r for r in pool if r.provider != avoid] or pool
+        bucket = int(hashlib.sha256(f"rotate:{key}".encode()).hexdigest()[:8], 16)
+        return eligible[bucket % len(eligible)]
+
     def judge_candidates(self, generator_id: str) -> list[TeacherRoute]:
         """Every judge-role teacher from a different vendor than the generator,
         in declared order. Empty is a configuration error, not a fallback."""

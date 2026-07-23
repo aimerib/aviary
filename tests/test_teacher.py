@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import collections
 from pathlib import Path
 
 import pytest
@@ -313,3 +314,67 @@ def test_empty_responses_are_never_cached(tmp_path):
     cache.put(_req(), ChatResponse(text="real content", model="m"), route)
     hit = cache.get(_req(), route)
     assert hit is not None and hit.text == "real content"
+
+
+def _pool_roster():
+    return Roster.model_validate(
+        {
+            "teachers": [
+                {"id": "ds-20260717", "provider": "deepseek", "route": "direct", "wire_model": "ds",
+                 "base_url": "https://x", "api_key_env": "K"},
+                {"id": "glm-20260717", "provider": "zhipu", "route": "direct", "wire_model": "glm",
+                 "base_url": "https://y", "api_key_env": "K"},
+                {"id": "kimi-20260717", "provider": "moonshot", "route": "openrouter", "wire_model": "kimi",
+                 "base_url": "https://z", "api_key_env": "K"},
+            ],
+            "assignments": {
+                "lane_c": {
+                    "user_sim": "kimi-20260717",
+                    "character": "ds-20260717",
+                    "character_alt": "glm-20260717",
+                },
+                "judge": {"primary": "glm-20260717"},
+            },
+        }
+    )
+
+
+def test_assigned_pool_collects_role_and_variants():
+    r = _pool_roster()
+    assert [t.id for t in r.assigned_pool("lane_c", "character")] == [
+        "ds-20260717",
+        "glm-20260717",
+    ]
+    # user_sim has no variants: a single-entry pool is the ordinary case
+    assert [t.id for t in r.assigned_pool("lane_c", "user_sim")] == ["kimi-20260717"]
+
+
+def test_assigned_pool_raises_on_an_unassigned_role():
+    with pytest.raises(KeyError):
+        _pool_roster().assigned_pool("lane_c", "nonexistent")
+
+
+def test_rotate_is_deterministic_and_spreads_across_the_pool():
+    r = _pool_roster()
+    pool = r.assigned_pool("lane_c", "character")
+    keys = [f"companion-event-{i}" for i in range(400)]
+    picks = [r.rotate(pool, k).id for k in keys]
+    assert picks == [r.rotate(pool, k).id for k in keys], "must be reproducible"
+    counts = collections.Counter(picks)
+    assert set(counts) == {"ds-20260717", "glm-20260717"}
+    # Even-ish split: a hash that lands 90/10 would quietly defeat the whole point.
+    assert min(counts.values()) / len(keys) > 0.35
+
+
+def test_rotate_never_puts_the_user_sim_vendor_on_the_character_side():
+    # A vendor driving both halves is a model talking to itself, not self-play.
+    r = _pool_roster()
+    pool = r.assigned_pool("lane_c", "character") + [r.route_for("kimi-20260717")]
+    picks = {r.rotate(pool, f"seed{i}", avoid="moonshot").provider for i in range(200)}
+    assert "moonshot" not in picks
+
+
+def test_rotate_falls_back_rather_than_failing_when_avoid_excludes_everything():
+    r = _pool_roster()
+    only_kimi = [r.route_for("kimi-20260717")]
+    assert r.rotate(only_kimi, "seed", avoid="moonshot").id == "kimi-20260717"

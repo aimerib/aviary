@@ -80,6 +80,43 @@ def _short(text: str, limit: int) -> str:
     return text if len(text) <= limit else text[:limit].rsplit(" ", 1)[0] + "…"
 
 
+def _variant(options: tuple[str, ...], key: str) -> str:
+    """Pick one option by hashing `key`. Deterministic (reruns hit the same cache),
+    and spread evenly because the key is a per-seed id rather than a counter."""
+    bucket = int(hashlib.sha256(f"variant:{key}".encode()).hexdigest()[:8], 16)
+    return options[bucket % len(options)]
+
+
+# HOW a thing comes up, not what it is. Measured 2026-07-23: 200 of 527 seeds opened
+# with one identical framing sentence and 189 with another — 74% of the corpus on two
+# templates. The grounding underneath differed, and that turned out to be enough to
+# keep the transcripts from repeating verbatim (0.992 distinct 5-grams), so this is
+# not a repair of something broken. It widens the range of CONVERSATIONS she has had:
+# every one of those 200 was someone calmly raising a memory, and a companion should
+# also have been snapped at, bored, interrupted, and told something at 2am.
+EVENT_FRAMINGS: tuple[str, ...] = (
+    "It comes up sideways, mid-conversation — he is not briefing you, you were there.",
+    "Something today rhymed with it and he is still working out why it landed so hard.",
+    "He is telling it as a joke. It is funny. It is also not only funny, and you know that.",
+    "He is annoyed about it in retrospect, and a bit annoyed at himself for still caring.",
+    "He circles it without naming it directly. Let him get there; do not name it for him.",
+    "He mentions it in passing while doing something else, and does not expect a response.",
+    "He is misremembering a detail. You remember it differently. That is worth a gentle argument.",
+    "He brings it up because he wants to be talked out of a conclusion he has drawn from it.",
+)
+
+OBSESSION_FRAMINGS: tuple[str, ...] = (
+    "He explains it unprompted, at length, because it is live in his head right now.",
+    "He is three days in and starting to doubt the whole premise. Do not rescue him too fast.",
+    "He is trying to explain it simply and keeps failing, which is annoying him.",
+    "He assumes you already know the basics. You do not. Say so and make him back up.",
+    "He is excited and it is 2am and he is not going to bed. You are not his minder.",
+    "He wants to argue about it. Push back on something specific rather than agreeing.",
+    "He drifts off it halfway through into something adjacent he cares about more.",
+    "He is bored of it and will not admit that yet.",
+)
+
+
 def event_seeds(vault: Vault, persona_system: str, speaker: str, *, cap: int) -> list[Seed]:
     """One seed per dated timeline entry: the user brings up something that really
     happened, and she is expected to already know the shape of it."""
@@ -90,16 +127,16 @@ def event_seeds(vault: Vault, persona_system: str, speaker: str, *, cap: int) ->
         for i, (when, what) in enumerate(note.dated_events()):
             if len(out) >= cap:
                 return out
+            seed_id = f"companion-event-{note.family_key}-{i}"
             out.append(
                 _seed(
-                    seed_id=f"companion-event-{note.family_key}-{i}",
+                    seed_id=seed_id,
                     family=note.family_key,
                     persona_system=persona_system,
                     persona_speaker=speaker,
                     scenario=(
                         f"The user brings up something from {when} ({year}): {_short(what, 300)} "
-                        "It comes up the way real things come up — sideways, mid-conversation, "
-                        "not as an announcement. He is not briefing you; you were there for it."
+                        f"{_variant(EVENT_FRAMINGS, seed_id)}"
                     ),
                     user_goal="talk about it with someone who already knows the background",
                     grounding=(
@@ -177,15 +214,16 @@ def obsession_seeds(vault: Vault, persona_system: str, speaker: str, *, cap: int
     """
     out: list[Seed] = []
     for note in vault.notes[:cap]:
+        seed_id = f"companion-obsession-{note.family_key}"
         out.append(
             _seed(
-                seed_id=f"companion-obsession-{note.family_key}",
+                seed_id=seed_id,
                 family=note.family_key,
                 persona_system=persona_system,
                 persona_speaker=speaker,
                 scenario=(
-                    f'The user is deep in something he cares about: "{note.title}". He explains '
-                    "it unprompted, at length, because it is live in his head right now. You do "
+                    f'The user is deep in something he cares about: "{note.title}". '
+                    f"{_variant(OBSESSION_FRAMINGS, seed_id)} You do "
                     "not know this subject well — that is the point. Light up, interrupt with "
                     "real questions, connect it to things he has said before. Do not pretend to "
                     "be an expert and do not summarize it back at him."

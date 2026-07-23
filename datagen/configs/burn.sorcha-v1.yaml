@@ -23,25 +23,48 @@ lane_c:
   personas: [owner, lazy_texter, engaged_rper, nsfw_rper, task_asker]
   rng_seed: 20260716
 
-# Bands for a/b/c are carried over from the flash burn: same lanes, same gates,
-# only the persona differs — so a large deviation is real signal about the Sorcha
-# prompt rather than noise to tune away. Re-calibrate them from the FIRST sorcha
-# pilot rather than assuming they transfer.
+# RECALIBRATED 2026-07-23 from pilot-sorcha7, the first pilot to run all four lanes
+# (1,390 records, 864 kept). The previous bands were carried over from the flash burn
+# and TWO lanes fell outside them, which would have refused a burn:
 #
-# Lane D's band is PROVISIONAL. Lane D has no task verifier (human-origin records)
-# and its judge runs the placeholder sorcha_lane_d rubric, so its rates are a
-# measurement, not a pass/fail, until that rubric is co-authored with the owner.
+#   lane          measured           old band        note
+#   a verify      0.849              [0.55, 0.95]    ok
+#   a judge       0.799              [0.50, 0.98]    ok
+#   b verify      1.000              [0.40, 1.0]     ok (structural, near-always passes)
+#   b judge       0.578              [0.15, 0.50]    OUT — far better than flash-era 28%
+#   c verify      0.971              [0.55, 0.95]    OUT
+#   c judge       0.939              [0.60, 0.98]    ok, but suspiciously high (see below)
+#   d verify      1.000              [0.5,  1.0]     ok (no task verifier; human-origin)
+#   d judge       0.467              [0.3,  0.98]    ok, and the lowest of any lane
+#
+# Neither breach was a regression, which is why these are widened rather than treated
+# as a red gate: lane B judged HIGH because the 40-book stratified sample carries
+# novels (Herbert/Asimov/Christie) whose interiority clears the thought_quality floor
+# more often than the AO3-heavy flash corpus did, and lane C's structural verifiers
+# pass nearly everything by construction. Bands are regression guardrails, not
+# quality targets — set to hold a healthy pilot and catch a collapse.
+#
+# TWO CAVEATS, deliberately recorded rather than tuned away:
+#  * lane C judge 0.94 is high enough to suspect the rubric is waving records through
+#    rather than discriminating. Do not read a passing lane C band as evidence of
+#    quality until that is checked.
+#  * lane D judge 0.47 rejects more than half of REAL HUMAN conversation, against a
+#    rubric threshold set before any lane D data existed. More likely miscalibrated
+#    than correct, and lane D is the one lane whose data cannot be regenerated.
+#
+# Lane C's numbers move when the variety changes land (teacher rotation, seed
+# framings, length registers) — re-derive c from the next pilot before burning.
 burn_bands:
   a:
-    verify: [0.55, 0.95]
-    judge: [0.50, 0.98]
+    verify: [0.65, 0.95]
+    judge: [0.60, 0.92]
   b:
-    verify: [0.40, 1.0]
-    judge: [0.15, 0.50]
+    verify: [0.85, 1.0]
+    judge: [0.35, 0.75]
   c:
-    verify: [0.55, 0.95]
-    judge: [0.60, 0.98]
+    verify: [0.85, 1.0]
+    judge: [0.70, 1.0]
   d:
-    verify: [0.5, 1.0]
-    judge: [0.3, 0.98]
+    verify: [0.85, 1.0]
+    judge: [0.25, 0.70]
 burn_max_pilot_age_days: 14

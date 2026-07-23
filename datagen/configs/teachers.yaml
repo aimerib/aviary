@@ -80,7 +80,20 @@ assignments:
     # first sorcha pilot. Lane C generation and judging were queueing behind each
     # other on one quota. Kimi rides OpenRouter, a different bucket entirely.
     user_sim: kimi-k3-20260717
+    # The character side ROTATES (roster.assigned_pool collects character + character_*).
+    #
+    # Measured 2026-07-23 on pilot-sorcha7: with deepseek-pro as the only character
+    # teacher, 47% of Sorcha's companion turns contained "och" or "aye" and 21%
+    # OPENED with one — against a persona brief that says "Down rhythm, never
+    # caricature". Every one of her 496 turns came from one model, so its particular
+    # reading of "Irish folk to the bone" WAS her voice. Rotation is the structural
+    # fix; the corpus averages over two idiolects instead of memorising one.
+    #
+    # Kimi is deliberately NOT in this pool — it drives the user side, and one vendor
+    # playing both halves of a conversation is a model talking to itself. `rotate`
+    # enforces that independently via avoid=, this is just belt and braces.
     character: deepseek-v4-pro-20260717
+    character_alt: glm-5.2-20260717
   judge:
     # Order is no longer priority — judge_for load-balances across every eligible
     # cross-vendor judge, keyed so a sibling group always lands on one judge.

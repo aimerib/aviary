@@ -1,9 +1,16 @@
 from __future__ import annotations
 
+import collections
 import random
+import re
 from pathlib import Path
 
 from aviary.gates.verify import run_verifier
+from aviary.lanes.c_selfplay.companion_seeds import (
+    EVENT_FRAMINGS,
+    OBSESSION_FRAMINGS,
+    _variant,
+)
 from aviary.lanes.c_selfplay.driver import END_SENTINEL, LaneCConfig, run_selfplay
 from aviary.lanes.c_selfplay.seeds import Seed, load_inline_seeds
 from aviary.lanes.c_selfplay.usersim import UserSimPersona, inject_typos, load_personas
@@ -271,3 +278,34 @@ def test_every_reasoning_teacher_has_a_thinking_off_control():
         assert route.json_extra_body, (
             f"lane_c.{role} ({route.id}) has no json_extra_body, so reasoning_off is a no-op for it"
         )
+
+
+def test_seed_framings_are_spread_not_templated():
+    # The measured baseline: 200 of 527 seeds shared one framing sentence and 189
+    # shared another. Variety here is the whole point, so assert the spread rather
+    # than merely that the code path runs.
+    keys = [f"companion-event-{i}" for i in range(400)]
+    picks = collections.Counter(_variant(EVENT_FRAMINGS, k) for k in keys)
+    assert len(picks) == len(EVENT_FRAMINGS), "every framing must actually get used"
+    assert max(picks.values()) / len(keys) < 0.25, "no framing may dominate"
+
+
+def test_variant_is_deterministic():
+    assert _variant(EVENT_FRAMINGS, "abc") == _variant(EVENT_FRAMINGS, "abc")
+    assert _variant(OBSESSION_FRAMINGS, "abc") == _variant(OBSESSION_FRAMINGS, "abc")
+
+
+def test_framings_carry_no_persona_name():
+    # These strings reach the teacher. A persona name here would leak one target's
+    # companion into another's corpus — the exact failure `{persona}` exists to stop.
+    for text in EVENT_FRAMINGS + OBSESSION_FRAMINGS:
+        low = text.lower()
+        for name in ("olivia", "liv", "sorcha"):
+            assert not re.search(rf"\b{name}\b", low), f"{name!r} leaked into a framing"
+
+
+def test_length_targets_span_short_to_long():
+    cfg = LaneCConfig()
+    assert len(cfg.length_targets) >= 4, "two registers is not enough range"
+    joined = " ".join(cfg.length_targets).lower()
+    assert "clipped" in joined and "long" in joined
