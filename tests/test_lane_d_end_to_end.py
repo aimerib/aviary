@@ -75,7 +75,9 @@ def test_sorcha_target_synthetic_run_end_to_end(tmp_path):
                 _line("c1", "2026-03-14T21:10:02Z", FRIEND, "I lost a shoe. delighted is one word"),
                 _line("c1", "2026-03-14T21:12:19Z", OWNER, "the swamp keeps what it wants"),
                 _line("c2", "2026-05-02T10:00:00Z", FRIEND, "ok may plans. cabin or coast?"),
-                _line("c2", "2026-05-02T10:03:00Z", OWNER, "coast. the cabin has a raccoon regime now"),
+                _line(
+                    "c2", "2026-05-02T10:03:00Z", OWNER, "coast. the cabin has a raccoon regime now"
+                ),
             ]
         )
         + "\n"
@@ -120,7 +122,19 @@ def test_sorcha_target_synthetic_run_end_to_end(tmp_path):
             REPO / "gates" / "scrub" / "pii_patterns.yaml",
         ),
         _roster(),
-        FakeTeacherClient(script=lambda r: '{"scores": {"coherence": 5, "naturalness": 4}}'),
+        FakeTeacherClient(
+            script=lambda r: json.dumps(
+                {
+                    "scores": {
+                        "substance": 5,
+                        "relational_texture": 4,
+                        "coherence": 5,
+                        "no_impersonation": 5,
+                        "safe_to_train": 5,
+                    }
+                }
+            )
+        ),
         PromptSet({"judge_prompt": "judge {axes}", "harmonize_prompt": "unused"}),
         persona_speaker=target.persona_speaker,
         harmonize_policy={k: tuple(v) for k, v in target.harmonize.items()},

@@ -1,0 +1,86 @@
+manifest_version: 2
+run_id: 2026-07-19-pilot-blessing
+kind: pilot
+status: complete
+lanes:
+- a
+- b
+- c
+started: '2026-07-19T22:20:32Z'
+finished: '2026-07-20T10:17:09Z'
+provenance:
+  hermes_commit: v2026.7.7.2
+  task_bank_commit: c85ad2886b41860d5bc24404cf417a37a6443aae
+  datagen_config_hash: 79b0970a803b6965291ab9541e953da9be62e1a28caeabf8a5c51330e4e929db
+  gate_inputs_hash: 40a9226550625cdbf7eb15fc468af66f217f44e8445817ffc604bfe917477502
+  serializer_contract: v2
+  target: flash-v2_2
+  base_model: Qwen3.5-35B-A3B
+teachers:
+  roster:
+  - id: deepseek-v4-flash-20260717
+    provider: deepseek
+    route: direct
+  - id: deepseek-v4-pro-20260717
+    provider: deepseek
+    route: direct
+  - id: glm-5.2-20260717
+    provider: zhipu
+    route: direct
+  - id: kimi-k3-20260717
+    provider: moonshot
+    route: openrouter
+  assignments:
+    lane_a:
+      easy_mid: deepseek-v4-flash-20260717
+      hard: deepseek-v4-pro-20260717
+    lane_b:
+      profiles: deepseek-v4-flash-20260717
+      scenes: deepseek-v4-flash-20260717
+      dialogue: deepseek-v4-pro-20260717
+    lane_c:
+      user_sim: glm-5.2-20260717
+      character: deepseek-v4-pro-20260717
+    judge:
+      primary: glm-5.2-20260717
+      secondary: kimi-k3-20260717
+      tertiary: deepseek-v4-flash-20260717
+    harmonizer:
+      primary: deepseek-v4-flash-20260717
+counts:
+  instances: 0
+  rollouts: 4121
+  verified: 4061
+  judged: 1473
+  rendered_train: 0
+  rendered_eval: 0
+  rendered_dpo_pairs: 0
+  rendered_nsp: 0
+keep_rates:
+  verify: 0.9854
+  judge: 0.3627
+  by_lane:
+    a:
+      verify: 0.8655
+      judge: 0.9029
+    b:
+      verify: 0.9976
+      judge: 0.3247
+    c:
+      verify: 0.8177
+      judge: 0.9299
+spend_usd:
+  total: 34.8782
+  by_teacher:
+    deepseek-v4-flash-20260717: 3.1487000000000003
+    deepseek-v4-pro-20260717: 31.7295
+    glm-5.2-20260717: 0.0
+  by_lane:
+    b: 34.6315
+prompt_set_hash: d05ff1e5daf7a9b3d09fa5fffe00fd716ca3791a02a9cc63192bc51fbd3b07c0
+artifacts:
+  hf_dataset: ''
+  ship_exempt_lanes: []
+  eval_families_held_out: []
+  eval_param_seed: null
+notes: ''

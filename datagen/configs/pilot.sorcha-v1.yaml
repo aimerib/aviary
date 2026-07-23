@@ -23,6 +23,10 @@ lane_a_num_workers: 4
 lane_a_batch_size: 11
 lane_a_max_turns: 12
 lane_c:
+  # `owner` is the companion side: a deliberately thin persona whose real style
+  # arrives per-seed from the vault voice guide. The RP personas stay in the mix
+  # because this model has to be a general SillyTavern character too, not only
+  # Sorcha — same weights, two jobs.
   conversations_per_seed: 1
-  personas: [lazy_texter, engaged_rper, nsfw_rper]
+  personas: [owner, lazy_texter, engaged_rper, nsfw_rper]
   rng_seed: 20260716

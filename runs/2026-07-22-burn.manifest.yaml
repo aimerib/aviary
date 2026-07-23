@@ -1,0 +1,120 @@
+manifest_version: 2
+run_id: 2026-07-22-burn
+kind: burn
+status: complete
+lanes:
+- a
+- b
+- c
+started: '2026-07-22T16:56:24Z'
+finished: '2026-07-22T20:35:48Z'
+provenance:
+  hermes_commit: v2026.7.7.2
+  task_bank_commit: 136d98d6683f5897d96d78a7c6e4365b5bb969c4
+  datagen_config_hash: 9b3b32b78a4862ceba36645601cb2d8f403b9c81da8a0750e9c26c640a436991
+  gate_inputs_hash: 144f7c6e8a541c2cb9ba8a21fe39314f6e9e12cb772bf93a5250edbaf025158a
+  serializer_contract: v2
+  target: flash-v2_2
+  base_model: Qwen3.5-35B-A3B
+teachers:
+  roster:
+  - id: deepseek-v4-flash-20260717
+    provider: deepseek
+    route: direct
+  - id: deepseek-v4-pro-20260717
+    provider: deepseek
+    route: direct
+  - id: glm-5.2-20260717
+    provider: zhipu
+    route: direct
+  - id: kimi-k3-20260717
+    provider: moonshot
+    route: openrouter
+  assignments:
+    lane_a:
+      easy_mid: deepseek-v4-flash-20260717
+      hard: deepseek-v4-pro-20260717
+    lane_b:
+      profiles: deepseek-v4-flash-20260717
+      scenes: deepseek-v4-flash-20260717
+      dialogue: deepseek-v4-pro-20260717
+    lane_c:
+      user_sim: glm-5.2-20260717
+      character: deepseek-v4-pro-20260717
+    judge:
+      primary: glm-5.2-20260717
+      secondary: kimi-k3-20260717
+      tertiary: deepseek-v4-flash-20260717
+    harmonizer:
+      primary: deepseek-v4-flash-20260717
+counts:
+  instances: 0
+  rollouts: 5467
+  verified: 5190
+  judged: 2480
+  rendered_train: 1629
+  rendered_eval: 514
+  rendered_dpo_pairs: 250
+  rendered_nsp: 18934
+keep_rates:
+  verify: 0.9493
+  judge: 0.4778
+  by_lane:
+    a:
+      verify: 0.8943
+      judge: 0.8591
+    b:
+      verify: 0.9976
+      judge: 0.3262
+    c:
+      verify: 0.7734
+      judge: 0.9377
+spend_usd:
+  total: 4.5111
+  by_teacher:
+    deepseek-v4-pro-20260717: 2.9155
+    glm-5.2-20260717: 0.0
+    deepseek-v4-flash-20260717: 1.5956
+  by_lane:
+    c: 2.9155
+prompt_set_hash: d05ff1e5daf7a9b3d09fa5fffe00fd716ca3791a02a9cc63192bc51fbd3b07c0
+artifacts:
+  hf_dataset: aimeri/aviary-2026-07-22-burn
+  ship_exempt_lanes: []
+  eval_families_held_out:
+  - ao3_10012_the_west_wing
+  - ao3_10055_criminal_minds
+  - ao3_10106_harry_potter_rowling
+  - ao3_119_harry_potter_rowling
+  - ao3_20018_fic
+  - ao3_20037_due_south
+  - ao3_22_stargate_atlantis
+  - ao3_30059_fic
+  - ao3_30070_fic
+  - ao3_30094_sons_of_anarchy
+  - ao3_40017_harsh_realm
+  - ao3_40045_harsh_realm
+  - ao3_40084_pirates_of_the_caribbean_movies
+  - ao3_50023_saiunkoku_monogatari
+  - ao3_50078_stargate_sg_1
+  - ao3_50099_stargate_atlantis
+  - ao3_50131_doctor_who
+  - ao3_60039_fic
+  - ao3_60119_fic
+  - ao3_60144_prince_of_tennis
+  - ao3_70053_white_collar
+  - ao3_70124_harry_potter_j_k_rowling
+  - ao3_70150_lord_of_the_rings_2001_2002_2003
+  - ao3_80057_forever_knight
+  - ao3_80058_heroes_fandom
+  - ao3_80088_wei_kreuz
+  - ao3_90020_star_trek_enterprise
+  - ao3_90047_yu_gi_oh
+  - ao3_90091_a_team
+  - confession
+  - isaac_asimov_the_end_of_eternity
+  - jon_ingold_heaven_s_vault_book_3_the_flood
+  - revise
+  - samuel_r_delany_return_to_neveryon
+  eval_param_seed: 20260716
+notes: ''

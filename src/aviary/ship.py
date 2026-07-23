@@ -115,40 +115,162 @@ def plan_ship(run_id: str) -> tuple[Path, list[Path]]:
     return store.root, files
 
 
-def ship_run(run_id: str, repo_id: str | None = None, *, dry_run: bool = False) -> str:
+def ship_run(
+    run_id: str, repo_id: str | None = None, *, dry_run: bool = False, card_only: bool = False
+) -> str:
     """Upload a run to a private HF dataset repo; record the repo in its manifest.
 
+    `card_only` re-pushes just the dataset card to an already-shipped run — the
+    corpus is hundreds of MB and a card fix should not re-upload it.
     Returns the repo id (dry run returns the intended id without contacting HF).
     """
-    root, files = plan_ship(run_id)
-    repo = repo_id or default_repo_name(run_id)
+    manifest = RunManifest.load(manifest_path(run_id))
+    if not card_only:
+        root, _files = plan_ship(run_id)
+    repo = repo_id or manifest.artifacts.hf_dataset or default_repo_name(run_id)
     if dry_run:
         return repo
 
     api = _api()
     resolved = _create_private_repo(api, repo)
 
-    api.upload_folder(
-        folder_path=str(root),
-        repo_id=resolved,
-        repo_type="dataset",
-        commit_message=f"aviary run {run_id}",
-    )
-    # The manifest is the in-git trace and lives outside the run store; ship it too
-    # so the dataset carries its own provenance.
+    if not card_only:
+        api.upload_folder(
+            folder_path=str(root),
+            repo_id=resolved,
+            repo_type="dataset",
+            commit_message=f"aviary run {run_id}",
+        )
+        # The manifest is the in-git trace and lives outside the run store; ship it
+        # too so the dataset carries its own provenance.
+        api.upload_file(
+            path_or_fileobj=str(manifest_path(run_id)),
+            path_in_repo="manifest.yaml",
+            repo_id=resolved,
+            repo_type="dataset",
+            commit_message=f"aviary manifest {run_id}",
+        )
+
+    # Card last: it embeds the resolved repo id in its usage snippet, and without
+    # its `configs` block the Hub cannot locate the corpus among the run store.
+    manifest.artifacts.hf_dataset = resolved
     api.upload_file(
-        path_or_fileobj=str(manifest_path(run_id)),
-        path_in_repo="manifest.yaml",
+        path_or_fileobj=run_dataset_card(manifest).encode("utf-8"),
+        path_in_repo="README.md",
         repo_id=resolved,
         repo_type="dataset",
-        commit_message=f"aviary manifest {run_id}",
+        commit_message=f"dataset card for {run_id}",
     )
 
     # Provenance rule: the manifest records where the run shipped.
-    manifest = RunManifest.load(manifest_path(run_id))
-    manifest.artifacts.hf_dataset = resolved
     manifest.save(manifest_path(run_id))
     return resolved
+
+
+def run_dataset_card(manifest: RunManifest) -> str:
+    """Dataset card for a shipped run.
+
+    The YAML `configs` block is load-bearing, not decoration: a run store holds
+    thousands of files (raw/, gated/, laneb/ intermediates) and the Hub cannot
+    guess which handful are the corpus. Without it `load_dataset` fails.
+    """
+    c = manifest.counts
+    kr = manifest.keep_rates
+    p = manifest.provenance
+    lanes = "\n".join(
+        f"| {lane} | {r.verify:.3f} | {r.judge:.3f} |"
+        for lane, r in sorted((kr.by_lane or {}).items())
+    )
+    return f"""---
+tags:
+  - aviary
+  - sft
+  - roleplay
+configs:
+  - config_name: with_thoughts
+    default: true
+    data_files:
+      - split: train
+        path: rendered/train_with_thoughts.jsonl
+      - split: test
+        path: rendered/eval_with_thoughts.jsonl
+  - config_name: no_thoughts
+    data_files:
+      - split: train
+        path: rendered/train_no_thoughts.jsonl
+      - split: test
+        path: rendered/eval_no_thoughts.jsonl
+  - config_name: nsp
+    data_files:
+      - split: train
+        path: rendered/nsp.jsonl
+  - config_name: dpo
+    data_files:
+      - split: train
+        path: rendered/dpo.jsonl
+---
+
+# aviary run `{manifest.run_id}`
+
+PRIVATE bootstrap SFT corpus, rendered by aviary's choke-point serializer
+(contract `{p.serializer_contract}`) into the target's exact chat template.
+
+| artifact | rows |
+| --- | ---: |
+| train | {c.rendered_train:,} |
+| eval | {c.rendered_eval:,} |
+| next-speaker-prediction | {c.rendered_nsp:,} |
+| DPO pairs | {c.rendered_dpo_pairs:,} |
+
+Generated {c.rollouts:,} rollouts -> {c.verified:,} verified -> {c.judged:,} judged.
+
+## Reading it
+
+```python
+from datasets import load_dataset
+
+ds = load_dataset("{manifest.artifacts.hf_dataset or manifest.run_id}", "with_thoughts")
+ds["train"], ds["test"]
+```
+
+## ⚠️ `train_spans` — loss masking is required
+
+`text` is the **entire** rendered conversation, including the system prompt and
+user turns. `train_spans` is a list of `[start, end]` character offsets covering
+only the assistant turns (body through the closing `<|im_end|>`) — the
+loss-bearing regions. Training on the full `text` without masking to these spans
+teaches the model to generate user turns and system prompts.
+
+`nsp` rows use the same shape, with the span covering only the speaker label.
+`dpo` rows are `prompt_text` / `chosen_text` / `rejected_text` instead.
+
+## Splits
+
+`test` is a **family-level** holdout — whole task families, books, and scenario
+seeds withheld, so evaluation cannot leak through a paraphrase of a seen item.
+It also includes unseen parameterizations of seen templates, selected with
+seed `{manifest.artifacts.eval_param_seed}`.
+
+## Per-lane keep rates
+
+| lane | verify | judge |
+| --- | ---: | ---: |
+{lanes}
+
+Lane B judges low by design (an inner-thought quality floor); lane rates are not
+comparable to each other.
+
+## Provenance
+
+- hermes pin: `{p.hermes_commit}`
+- task bank commit: `{p.task_bank_commit}`
+- datagen config hash: `{p.datagen_config_hash[:16]}`
+- gate inputs hash: `{p.gate_inputs_hash[:16]}`
+- prompt set hash: `{manifest.prompt_set_hash[:16]}`
+- teachers: {", ".join(sorted(manifest.spend_usd.by_teacher)) or "n/a"}
+
+Full manifest: `manifest.yaml` in this repo.
+"""
 
 
 def plan_ship_external(name: str) -> tuple[Path, list[Path], dict]:

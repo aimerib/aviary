@@ -1,0 +1,70 @@
+manifest_version: 2
+run_id: 2026-07-17-pilot-full
+kind: pilot
+status: complete
+lanes:
+- b
+started: '2026-07-17T23:36:35Z'
+finished: '2026-07-18T00:02:30Z'
+provenance:
+  hermes_commit: v0.18.2
+  task_bank_commit: cbb4d0e6abf623a3806412dd0a0056ec470b823b
+  datagen_config_hash: 5503c0e2d776d4b16ab5b5c567f54415b85bece961d5094d8121a1d855b54911
+  gate_inputs_hash: 629a33958b4e64e6fee0e2a81933c58f6541db36b048be33c416f801659b95f8
+  serializer_contract: v2
+teachers:
+  roster:
+  - id: deepseek-v4-flash-20260717
+    provider: deepseek
+    route: direct
+  - id: deepseek-v4-pro-20260717
+    provider: deepseek
+    route: direct
+  - id: glm-5.2-20260717
+    provider: zhipu
+    route: direct
+  - id: kimi-k3-20260717
+    provider: moonshot
+    route: openrouter
+  assignments:
+    lane_a:
+      easy_mid: deepseek-v4-flash-20260717
+      hard: deepseek-v4-pro-20260717
+    lane_b:
+      profiles: deepseek-v4-flash-20260717
+      scenes: deepseek-v4-flash-20260717
+      dialogue: deepseek-v4-pro-20260717
+    lane_c:
+      user_sim: glm-5.2-20260717
+      character: deepseek-v4-pro-20260717
+    judge:
+      primary: glm-5.2-20260717
+      secondary: kimi-k3-20260717
+      tertiary: deepseek-v4-flash-20260717
+    harmonizer:
+      primary: deepseek-v4-flash-20260717
+counts:
+  instances: 0
+  rollouts: 131
+  verified: 0
+  judged: 0
+  rendered_train: 0
+  rendered_eval: 0
+  rendered_dpo_pairs: 0
+  rendered_nsp: 0
+keep_rates:
+  verify: 0.0
+  judge: 0.0
+spend_usd:
+  total: 0.8457
+  by_teacher:
+    deepseek-v4-flash-20260717: 0.0936
+    deepseek-v4-pro-20260717: 0.752
+  by_lane:
+    b: 0.8457
+prompt_set_hash: d05ff1e5daf7a9b3d09fa5fffe00fd716ca3791a02a9cc63192bc51fbd3b07c0
+artifacts:
+  hf_dataset: ''
+  eval_families_held_out: []
+  eval_param_seed: null
+notes: ''

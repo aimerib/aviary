@@ -1,0 +1,74 @@
+manifest_version: 2
+run_id: 2026-07-17-pilot-corpus
+kind: pilot
+status: complete
+lanes:
+- b
+started: '2026-07-18T00:07:04Z'
+finished: '2026-07-18T03:02:15Z'
+provenance:
+  hermes_commit: v0.18.2
+  task_bank_commit: cbb4d0e6abf623a3806412dd0a0056ec470b823b
+  datagen_config_hash: 26b6521fb24f5acb33135bcb5a6881c0db67b57b32105d6b1ccf5085f0041523
+  gate_inputs_hash: 629a33958b4e64e6fee0e2a81933c58f6541db36b048be33c416f801659b95f8
+  serializer_contract: v2
+teachers:
+  roster:
+  - id: deepseek-v4-flash-20260717
+    provider: deepseek
+    route: direct
+  - id: deepseek-v4-pro-20260717
+    provider: deepseek
+    route: direct
+  - id: glm-5.2-20260717
+    provider: zhipu
+    route: direct
+  - id: kimi-k3-20260717
+    provider: moonshot
+    route: openrouter
+  assignments:
+    lane_a:
+      easy_mid: deepseek-v4-flash-20260717
+      hard: deepseek-v4-pro-20260717
+    lane_b:
+      profiles: deepseek-v4-flash-20260717
+      scenes: deepseek-v4-flash-20260717
+      dialogue: deepseek-v4-pro-20260717
+    lane_c:
+      user_sim: glm-5.2-20260717
+      character: deepseek-v4-pro-20260717
+    judge:
+      primary: glm-5.2-20260717
+      secondary: kimi-k3-20260717
+      tertiary: deepseek-v4-flash-20260717
+    harmonizer:
+      primary: deepseek-v4-flash-20260717
+counts:
+  instances: 0
+  rollouts: 997
+  verified: 995
+  judged: 282
+  rendered_train: 221
+  rendered_eval: 60
+  rendered_dpo_pairs: 0
+  rendered_nsp: 5387
+keep_rates:
+  verify: 0.998
+  judge: 0.2834
+spend_usd:
+  total: 6.3861
+  by_teacher:
+    deepseek-v4-flash-20260717: 1.9006
+    deepseek-v4-pro-20260717: 4.4855
+    glm-5.2-20260717: 0.0
+  by_lane:
+    b: 6.3861
+prompt_set_hash: d05ff1e5daf7a9b3d09fa5fffe00fd716ca3791a02a9cc63192bc51fbd3b07c0
+artifacts:
+  hf_dataset: ''
+  eval_families_held_out:
+  - isaac_asimov_the_end_of_eternity
+  - jon_ingold_heaven_s_vault_book_3_the_flood
+  - samuel_r_delany_return_to_neveryon
+  eval_param_seed: 20260716
+notes: ''

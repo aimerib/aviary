@@ -29,6 +29,11 @@ def main(argv: list[str] | None = None) -> int:
             p.add_argument(
                 "--dry-run", action="store_true", help="validate + list files, contact nothing"
             )
+            p.add_argument(
+                "--card-only",
+                action="store_true",
+                help="re-push only the dataset card to an already-shipped run",
+            )
 
     pi = sub.add_parser(
         "prepare-interleave", help="render a cleaned external corpus through THE serializer"
@@ -92,11 +97,12 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"would ship {len(files)} files ({total / 1e6:.1f} MB) from {root}")
                 print(f"  -> PRIVATE hf dataset: {repo}")
                 return 0
-            repo = ship_run(args.run_id, args.repo)
+            repo = ship_run(args.run_id, args.repo, card_only=args.card_only)
         except ShipError as e:
             print(f"REFUSED TO SHIP: {e}", file=sys.stderr)
             return 2
-        print(f"shipped {args.run_id} -> private hf dataset {repo}")
+        what = "dataset card for" if args.card_only else "shipped"
+        print(f"{what} {args.run_id} -> private hf dataset {repo}")
         return 0
     if args.cmd == "prepare-interleave":
         import json

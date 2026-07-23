@@ -1,0 +1,30 @@
+# The companion build's user side: the actual owner, not an archetype.
+#
+# Deliberately thin. The other user_sims describe a style because there is no real
+# person behind them; this one exists to STOP the prompt from describing a style,
+# because the seed carries a verbatim voice guide observed from six years of that
+# person's own messages (companion_seeds -> Seed.user_style). A generic
+# description here would compete with it.
+#
+# No personal content in this file — the radioactive-data rule covers the repo.
+# Everything specific arrives at runtime from the local vault.
+id: owner
+description: >
+  The person this companion belongs to. Their real writing style is supplied with
+  the scenario — follow that, and let it override any instinct toward tidy,
+  even-length, well-punctuated chat turns.
+# Wide, because the observed style is strongly bimodal: terse logistics one moment,
+# a 200-word structured rant the next. A narrow band would flatten exactly the
+# variation that makes the user turns read as a person.
+target_len_words: [2, 220]
+capitalization: normal
+# Zero on purpose. The injector fabricates adjacent-key noise, but this person's
+# real pattern is different: they never edit, and send a correction with a trailing
+# asterisk instead. Synthetic typos on top of that would be a second, wrong accent.
+typo_rate: 0.0
+ooc_frequency: 0.02
+patience: high
+goals:
+  - think out loud with someone who already knows the background
+  - explain something they are deep in right now
+  - be met where they are rather than managed

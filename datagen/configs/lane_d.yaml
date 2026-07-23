@@ -19,6 +19,12 @@ sources:
     # Threads thinner than this are one-off logistics, not relationships: drops 39
     # of 57 threads and 4% of records. A count, not a name list, on purpose.
     min_thread_messages: 100
+    # No single thread may supply more than this share of the source's records.
+    # 67% of this export is one relationship; without a cap, the dominant assistant
+    # voice in lane D is one specific living person rather than a conversational
+    # register, and harmonize is {} for Sorcha so nothing downstream corrects it.
+    # Kept records are strided evenly across the thread, not truncated to its head.
+    max_thread_share: 0.35
 
 # Silence longer than this splits a stream into separate records; the record is
 # the session, and holdout is time-blocked because temporal adjacency is the
@@ -30,6 +36,14 @@ min_messages_per_record: 2
 # A one-sided run is a monologue, and usually an export artifact rather than a real
 # exchange (this export has a known window where outgoing messages are blank).
 require_both_roles: true
+
+# Substance floor, applied before any model call. Six years of messages are mostly
+# not bad conversation but EMPTY conversation ("k", "on my way"). These two numbers
+# drop 543 records for 3% of the tokens — a 31% cut in judge calls that costs
+# almost no signal. The sorcha_lane_d rubric still scores substance; this just
+# stops us paying GLM to reject acknowledgement tokens one at a time.
+min_record_chars: 200
+min_mean_message_chars: 25
 
 # Shared links keep scheme://host/path only. This export contains a live 1Password
 # share link whose fragment IS the credential; scrub looks for PII, not for
@@ -47,6 +61,17 @@ holdout_families:
   - im/2024-12
   - im/2025-12
   - im/2026-02
+
+# The owner's Obsidian vault: the journals-and-notes half of lane D. Read for
+# GROUNDING, not for records — it supplies lane C's companion seeds (see
+# lanes/c_selfplay/companion_seeds.py) and the voice guide that makes the
+# user-simulator write like the actual person. Unset -> no companion seeds, which
+# is why flash-v2_2 is unaffected. Path only; content never enters git.
+vault:
+  path: /Users/aimeri/Library/Mobile Documents/iCloud~md~obsidian/Documents/Slimekasten
+  kb_dir: Sorcha              # Me/ People/ Timeline/ Voice/ — built for this persona
+  notes_dirs: [Zettelkasten]  # his own writing: the list of things he'd explain unprompted
+  voice_note: Voice/Voice & texting style.md
 
 # LOCAL pseudonymization rules (PseudonymRules yaml: preserve + name_patterns).
 # Personal by nature -> lives outside the repo; unset means no pseudonymization

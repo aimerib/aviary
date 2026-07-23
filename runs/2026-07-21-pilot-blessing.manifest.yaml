@@ -1,0 +1,84 @@
+manifest_version: 2
+run_id: 2026-07-21-pilot-blessing
+kind: pilot
+status: complete
+lanes:
+- a
+- b
+- c
+started: '2026-07-22T04:50:11Z'
+finished: '2026-07-22T06:02:36Z'
+provenance:
+  hermes_commit: v2026.7.7.2
+  task_bank_commit: 83305867872a81ecb2435efeb57da46d73e807dd
+  datagen_config_hash: 9b3b32b78a4862ceba36645601cb2d8f403b9c81da8a0750e9c26c640a436991
+  gate_inputs_hash: 8da0470de4cb7b293174617aa36aa7f656d25e8d6832f728266405a084191d0f
+  serializer_contract: v2
+  target: flash-v2_2
+  base_model: Qwen3.5-35B-A3B
+teachers:
+  roster:
+  - id: deepseek-v4-flash-20260717
+    provider: deepseek
+    route: direct
+  - id: deepseek-v4-pro-20260717
+    provider: deepseek
+    route: direct
+  - id: glm-5.2-20260717
+    provider: zhipu
+    route: direct
+  - id: kimi-k3-20260717
+    provider: moonshot
+    route: openrouter
+  assignments:
+    lane_a:
+      easy_mid: deepseek-v4-flash-20260717
+      hard: deepseek-v4-pro-20260717
+    lane_b:
+      profiles: deepseek-v4-flash-20260717
+      scenes: deepseek-v4-flash-20260717
+      dialogue: deepseek-v4-pro-20260717
+    lane_c:
+      user_sim: glm-5.2-20260717
+      character: deepseek-v4-pro-20260717
+    judge:
+      primary: glm-5.2-20260717
+      secondary: kimi-k3-20260717
+      tertiary: deepseek-v4-flash-20260717
+    harmonizer:
+      primary: deepseek-v4-flash-20260717
+counts:
+  instances: 0
+  rollouts: 4903
+  verified: 4756
+  judged: 2080
+  rendered_train: 0
+  rendered_eval: 0
+  rendered_dpo_pairs: 0
+  rendered_nsp: 0
+keep_rates:
+  verify: 0.97
+  judge: 0.4373
+  by_lane:
+    a:
+      verify: 0.8857
+      judge: 0.8697
+    b:
+      verify: 0.9976
+      judge: 0.3262
+    c:
+      verify: 0.8177
+      judge: 0.9299
+spend_usd:
+  total: 1.2818
+  by_teacher:
+    glm-5.2-20260717: 0.0
+    deepseek-v4-flash-20260717: 1.2818
+  by_lane: {}
+prompt_set_hash: d05ff1e5daf7a9b3d09fa5fffe00fd716ca3791a02a9cc63192bc51fbd3b07c0
+artifacts:
+  hf_dataset: ''
+  ship_exempt_lanes: []
+  eval_families_held_out: []
+  eval_param_seed: null
+notes: ''

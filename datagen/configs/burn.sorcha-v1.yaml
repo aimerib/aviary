@@ -14,8 +14,12 @@ dedupe_threshold: 0.8
 lane_a_num_workers: 8
 lane_a_batch_size: 20
 lane_c:
+  # Lane C is the load-bearing lane for BOTH jobs: `owner` seeds carry the
+  # vault-grounded companion conversations, the RP personas carry SillyTavern
+  # character work off the lane B seeds. 527 companion seeds x 3 is the bulk of
+  # the corpus, so this is the number to move when scaling.
   conversations_per_seed: 3
-  personas: [lazy_texter, engaged_rper, nsfw_rper, task_asker]
+  personas: [owner, lazy_texter, engaged_rper, nsfw_rper, task_asker]
   rng_seed: 20260716
 
 # Bands for a/b/c are carried over from the flash burn: same lanes, same gates,

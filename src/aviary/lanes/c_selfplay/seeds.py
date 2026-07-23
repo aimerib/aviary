@@ -26,6 +26,17 @@ class Seed(BaseModel):
     scenario: str  # shown to the user-sim
     user_goal: str = ""  # what the simulated user wants out of the chat
 
+    # Facts the character-side teacher may use to be specific. Shown at GENERATION
+    # time; rendered into the record's system prompt only if `render_grounding`.
+    # SOUL.md wants owner knowledge in the weights rather than recited from a
+    # prompt, so the default keeps grounding out of the training text — the model
+    # sees the informed reply without being handed the notes.
+    grounding: str = ""
+    render_grounding: bool = False
+    # How the simulated user actually writes. Beats any amount of "write casually"
+    # instruction, because it is that person's real, observed style.
+    user_style: str = ""
+
 
 PERSONA_PLACEHOLDER = "{persona}"
 

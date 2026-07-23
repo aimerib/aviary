@@ -90,12 +90,30 @@ def run_selfplay(
         goal=seed.user_goal or (local.choice(persona.goals) if persona.goals else "chat"),
         scenario=seed.scenario,
         sentinel=END_SENTINEL,
+        style=(
+            "\n\nHow this person actually writes — match it, do not describe it:\n"
+            f"{seed.user_style}"
+            if seed.user_style
+            else ""
+        ),
     )
-    character_system = (
-        f"{seed.card}\n\n"
-        f"Response length for this conversation: {length_target}. "
-        f"Never write the other person's messages or actions."
-    )
+
+    # Two cards, deliberately different. The teacher gets the grounding so Sorcha can
+    # be specific; the RECORD keeps it only if the seed opts in. Otherwise the model
+    # sees an informed reply without being handed the notes that produced it, which
+    # is how the knowledge ends up in weights instead of in a prompt it will not have.
+    def _card(with_grounding: bool) -> str:
+        body = seed.card
+        if with_grounding and seed.grounding:
+            body += f"\n\n## What you already know about them\n{seed.grounding}"
+        return (
+            f"{body}\n\n"
+            f"Response length for this conversation: {length_target}. "
+            f"Never write the other person's messages or actions."
+        )
+
+    character_system = _card(with_grounding=True)
+    record_system = _card(with_grounding=seed.render_grounding)
 
     state = LoopState()
     stop_reason = "max_turns"
@@ -161,7 +179,7 @@ def run_selfplay(
         },
     )
     return ConversationRecord(
-        system=character_system,
+        system=record_system,
         messages=state.messages,
         provenance=Provenance(
             record_id=make_record_id("c", run_id, source),

@@ -1,0 +1,80 @@
+manifest_version: 2
+run_id: 2026-07-18-pilot-ao3scale
+kind: pilot
+status: complete
+lanes:
+- b
+started: '2026-07-18T17:12:39Z'
+finished: '2026-07-19T02:29:44Z'
+provenance:
+  hermes_commit: v0.18.2
+  task_bank_commit: dcdbb78585061e88f37bf5c8db4025afcbed5531
+  datagen_config_hash: f4cf553595b105dae1e5bdedfb7629fd43179474916fcfbc74206db7be6dfe43
+  gate_inputs_hash: 82af8f6a02886e3c3c8d251d5200ca77e66c5bf49866826d7608fd1c310cecb6
+  serializer_contract: v2
+teachers:
+  roster:
+  - id: deepseek-v4-flash-20260717
+    provider: deepseek
+    route: direct
+  - id: deepseek-v4-pro-20260717
+    provider: deepseek
+    route: direct
+  - id: glm-5.2-20260717
+    provider: zhipu
+    route: direct
+  - id: kimi-k3-20260717
+    provider: moonshot
+    route: openrouter
+  assignments:
+    lane_a:
+      easy_mid: deepseek-v4-flash-20260717
+      hard: deepseek-v4-pro-20260717
+    lane_b:
+      profiles: deepseek-v4-flash-20260717
+      scenes: deepseek-v4-flash-20260717
+      dialogue: deepseek-v4-pro-20260717
+    lane_c:
+      user_sim: glm-5.2-20260717
+      character: deepseek-v4-pro-20260717
+    judge:
+      primary: glm-5.2-20260717
+      secondary: kimi-k3-20260717
+      tertiary: deepseek-v4-flash-20260717
+    harmonizer:
+      primary: deepseek-v4-flash-20260717
+counts:
+  instances: 0
+  rollouts: 3057
+  verified: 3053
+  judged: 999
+  rendered_train: 0
+  rendered_eval: 0
+  rendered_dpo_pairs: 0
+  rendered_nsp: 0
+keep_rates:
+  verify: 0.9987
+  judge: 0.3272
+  by_lane:
+    b:
+      verify: 0.9987
+      judge: 0.3272
+spend_usd:
+  total: 28.5732
+  by_teacher:
+    deepseek-v4-flash-20260717: 1.25
+    deepseek-v4-pro-20260717: 27.3232
+    glm-5.2-20260717: 0.0
+  by_lane:
+    b: 28.5732
+prompt_set_hash: d05ff1e5daf7a9b3d09fa5fffe00fd716ca3791a02a9cc63192bc51fbd3b07c0
+artifacts:
+  hf_dataset: ''
+  eval_families_held_out: []
+  eval_param_seed: null
+notes: 'gate_inputs_hash amended 2026-07-19: the recorded value (629a3395...) was
+  polluted by mtime-dependent verifiers/**/__pycache__/*.pyc files (hash_tree bug,
+  fixed in the same change). Amended value = clean hash of the generation-time inputs:
+  commit dcdbb78 trees (gates/verifiers/tasks, verified byte-identical via git archive)
+  under the fixed function. datagen_config_hash was never polluted (no bytecode in
+  datagen/) and is unchanged.'

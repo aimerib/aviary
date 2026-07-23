@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 from aviary.gates.pseudonym import Pseudonymizer, PseudonymRules
 from aviary.gates.scrub import LaneScrubPolicy, load_patterns, scan_record
 from aviary.schema.records import ConversationRecord, Message, Provenance, SourceRef
@@ -146,7 +148,19 @@ def test_run_gates_applies_lane_policy_and_transform(tmp_path):
         {"d": laned_rubric},
         patterns,
         roster,
-        FakeTeacherClient(script=lambda r: '{"scores": {"coherence": 5, "naturalness": 4}}'),
+        FakeTeacherClient(
+            script=lambda r: json.dumps(
+                {
+                    "scores": {
+                        "substance": 5,
+                        "relational_texture": 4,
+                        "coherence": 5,
+                        "no_impersonation": 5,
+                        "safe_to_train": 5,
+                    }
+                }
+            )
+        ),
         prompts,
         persona_speaker="Sorcha",
         scrub_policies={

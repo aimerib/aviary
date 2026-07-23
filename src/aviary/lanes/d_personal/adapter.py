@@ -60,6 +60,9 @@ class SourceConfig(BaseModel):
     include_threads: list[str] = Field(default_factory=list)  # file stems; empty = all
     exclude_threads: list[str] = Field(default_factory=list)
     min_thread_messages: int = 0  # skip threads thinner than this before sessionizing
+    # Cap any one thread's share of this source's records (0 = uncapped). A single
+    # dominant relationship would otherwise BE the lane's assistant voice.
+    max_thread_share: float = 0.0
 
     @model_validator(mode="after")
     def _exactly_one_role_anchor(self) -> SourceConfig:
@@ -91,6 +94,13 @@ class LaneDConfig(BaseModel):
     # 1Password share link whose fragment IS the credential. Scrub runs later and
     # looks for PII, not for capability URLs; this is the cheaper guarantee.
     keep_url_query: bool = False
+    # Structural substance floor, applied before any model sees the record. The
+    # dominant content of a six-year message export is not bad conversation, it is
+    # EMPTY conversation ("k", "on my way", "yup"). The sorcha_lane_d rubric scores
+    # exactly this, but paying a judge call per acknowledgement token is waste — so
+    # the obvious cases die here and the rubric handles the judgement calls.
+    min_record_chars: int = 0  # total content chars across the record
+    min_mean_message_chars: int = 0  # guards long threads made entirely of tokens
     holdout_families: list[str] = Field(default_factory=list)  # e.g. "chat/2026-05"
 
     @classmethod
@@ -169,6 +179,11 @@ def _record_from_segment(
         for m in segment
     ]
     if cfg.require_both_roles and len({m.role for m in messages}) < 2:
+        return None
+    total = sum(len(m.content or "") for m in messages)
+    if total < cfg.min_record_chars:
+        return None
+    if cfg.min_mean_message_chars and total / len(messages) < cfg.min_mean_message_chars:
         return None
 
     month = _parse_ts(segment[0]["ts"]).strftime("%Y-%m")
@@ -256,11 +271,17 @@ class IMessageParser:
     def parse(
         self, source: SourceConfig, cfg: LaneDConfig, run_id: str
     ) -> Iterator[ConversationRecord]:
+        by_thread: dict[str, list[ConversationRecord]] = {}
         for thread, msgs in self._threads(source, cfg):
-            for seg_idx, segment in enumerate(_sessionize(msgs, cfg)):
-                record = _record_from_segment(source, cfg, run_id, thread, seg_idx, segment)
-                if record is not None:
-                    yield record
+            kept = [
+                record
+                for seg_idx, segment in enumerate(_sessionize(msgs, cfg))
+                if (record := _record_from_segment(source, cfg, run_id, thread, seg_idx, segment))
+                is not None
+            ]
+            if kept:
+                by_thread[thread] = kept
+        yield from _apply_thread_cap(by_thread, source.max_thread_share)
 
     def _threads(self, source: SourceConfig, cfg: LaneDConfig) -> Iterator[tuple[str, list[dict]]]:
         paths = sorted(source.path.glob("*.jsonl")) if source.path.is_dir() else [source.path]
@@ -299,6 +320,39 @@ class IMessageParser:
                 if not text:
                     continue
                 yield {"ts": _apple_ts(ts).isoformat(), "sender": sender, "text": text}
+
+
+def _apply_thread_cap(
+    by_thread: dict[str, list[ConversationRecord]], max_share: float
+) -> Iterator[ConversationRecord]:
+    """Downsample threads that exceed `max_share` of the total.
+
+    Solved by repeated tightening rather than one pass: capping the biggest thread
+    shrinks the total, which lowers the cap for the next one. Survivors are taken on
+    an even stride across the thread's whole span, so a capped thread stays
+    representative of six years instead of collapsing to its first months.
+    """
+    if max_share <= 0 or not by_thread:
+        yield from (r for records in by_thread.values() for r in records)
+        return
+
+    counts = {thread: len(records) for thread, records in by_thread.items()}
+    while True:
+        total = sum(counts.values())
+        limit = max(1, int(total * max_share))
+        over = {t: c for t, c in counts.items() if c > limit}
+        if not over:
+            break
+        for thread in over:
+            counts[thread] = limit
+
+    for thread, records in by_thread.items():
+        keep = counts[thread]
+        if keep >= len(records):
+            yield from records
+            continue
+        step = len(records) / keep
+        yield from (records[int(i * step)] for i in range(keep))
 
 
 class _StubParser:

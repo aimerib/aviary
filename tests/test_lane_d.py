@@ -332,3 +332,119 @@ def test_session_gap_splits_imessage_threads(tmp_path):
     recs = list(parse_all(_im_cfg(d, session_gap_minutes=240), "t"))
     assert len(recs) == 2
     assert {r.provenance.source.detail["segment"] for r in recs} == {0, 1}
+
+
+# --- thread dominance cap + substance floor ----------------------------------
+
+
+def _threaded_export(tmp_path, sizes: dict[str, int]):
+    """One thread per name, `n` two-message sessions each (a day apart)."""
+    d = tmp_path / "imessage"
+    d.mkdir(exist_ok=True)
+    for name, n in sizes.items():
+        lines = []
+        for i in range(n):
+            base = i * 60 * 24 * 3  # 3 days apart -> always a new session
+            lines.append(_im(FRIEND, base, _text(f"message {i} from the other side")))
+            lines.append(_im(OWNER, base + 1, _text(f"reply {i} from the owner here")))
+        (d / f"{name}.jsonl").write_text("\n".join(lines) + "\n")
+    return d
+
+
+def test_thread_cap_limits_any_single_voice(tmp_path):
+    # 67% of the real export is one relationship. Uncapped, that thread IS lane D's
+    # assistant voice — and harmonize is {} for Sorcha, so nothing downstream fixes it.
+    d = _threaded_export(tmp_path, {"Dominant": 80, "Small": 10, "Tiny": 10})
+
+    uncapped = list(parse_all(_im_cfg(d), "t"))
+    assert len(uncapped) == 100
+    share = sum(1 for r in uncapped if r.provenance.source.detail["conversation_id"] == "Dominant")
+    assert share / len(uncapped) == 0.8
+
+    capped = list(
+        parse_all(
+            LaneDConfig.model_validate(
+                {
+                    "sources": [
+                        {
+                            "id": "im",
+                            "parser": "imessage",
+                            "path": str(d),
+                            "owner_sender": OWNER,
+                            "max_thread_share": 0.35,
+                        }
+                    ]
+                }
+            ),
+            "t",
+        )
+    )
+    counts: dict[str, int] = {}
+    for r in capped:
+        counts[r.provenance.source.detail["conversation_id"]] = (
+            counts.get(r.provenance.source.detail["conversation_id"], 0) + 1
+        )
+    assert max(counts.values()) / len(capped) <= 0.35 + 1e-9
+    assert counts["Small"] == 10 and counts["Tiny"] == 10  # small threads untouched
+
+
+def test_capped_thread_is_strided_not_truncated(tmp_path):
+    # A capped thread must stay representative of its whole span; keeping the first
+    # N would collapse six years of a relationship into its first months.
+    d = _threaded_export(tmp_path, {"Dominant": 40, "Small": 5})
+    recs = list(
+        parse_all(
+            LaneDConfig.model_validate(
+                {
+                    "sources": [
+                        {
+                            "id": "im",
+                            "parser": "imessage",
+                            "path": str(d),
+                            "owner_sender": OWNER,
+                            "max_thread_share": 0.5,
+                        }
+                    ]
+                }
+            ),
+            "t",
+        )
+    )
+    segments = sorted(
+        r.provenance.source.detail["segment"]
+        for r in recs
+        if r.provenance.source.detail["conversation_id"] == "Dominant"
+    )
+    assert len(segments) < 40
+    assert segments[0] == 0
+    assert segments[-1] > 30  # reaches the far end of the thread, not just the head
+
+
+def test_substance_floor_drops_acknowledgement_tokens(tmp_path):
+    d = _im_export(
+        tmp_path,
+        [
+            _im(FRIEND, 0, _text("k")),
+            _im(OWNER, 1, _text("yup")),
+            _im(
+                FRIEND,
+                60 * 24,
+                _text(
+                    "so the whole thing fell apart at the last minute and I have been sitting "
+                    "with it all afternoon trying to work out whether I actually saw it coming"
+                ),
+            ),
+            _im(
+                OWNER,
+                60 * 24 + 1,
+                _text(
+                    "that is genuinely awful, tell me what happened from the start and do not "
+                    "skip the boring parts, the boring parts are usually where it went wrong"
+                ),
+            ),
+        ],
+    )
+    assert len(list(parse_all(_im_cfg(d), "t"))) == 2  # both sessions, unfiltered
+    kept = list(parse_all(_im_cfg(d, min_record_chars=200, min_mean_message_chars=25), "t"))
+    assert len(kept) == 1
+    assert "fell apart" in kept[0].messages[0].content

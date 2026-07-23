@@ -323,6 +323,35 @@ def cmd_generate(kind: str) -> str:
     return run_id
 
 
+def _companion_seeds(target: Target, prompts: PromptSet) -> list:
+    """Vault-grounded companion seeds, when lane_d.yaml declares a vault.
+
+    Off unless configured, so flash-v2_2 is unaffected: no vault, no seeds. The
+    vault lives in lane_d.yaml because it IS a personal stream (CLAUDE.md scopes
+    lane D to 'chat exports, journals, notes'); lane C reading it mirrors lane C
+    already seeding RP from a designated lane B run.
+    """
+    from aviary.lanes.c_selfplay.companion_seeds import companion_seeds, seed_mix
+    from aviary.lanes.d_personal.adapter import LaneDConfig
+    from aviary.lanes.d_personal.vault import Vault
+
+    lane_d = configs_dir() / "lane_d.yaml"
+    if not lane_d.exists():
+        return []
+    raw = yaml.safe_load(lane_d.read_text()) or {}
+    vault_cfg = raw.get("vault")
+    if not vault_cfg:
+        return []
+
+    from aviary.lanes.d_personal.vault import VaultConfig
+
+    LaneDConfig.load(lane_d)  # fail early on a malformed lane D config
+    vault = Vault.load(VaultConfig.model_validate(vault_cfg))
+    seeds = companion_seeds(vault, prompts[target.persona_system_key], target.persona_speaker)
+    log.info("lane C: %d companion seeds from vault %s", len(seeds), seed_mix(seeds))
+    return seeds
+
+
 def _generate_lane_c(cfg, store, roster, client, prompts, target: Target) -> int:
     from aviary.lanes.c_selfplay.driver import LaneCConfig, run_selfplay
     from aviary.lanes.c_selfplay.seeds import load_inline_seeds, seeds_from_lane_b
@@ -340,6 +369,7 @@ def _generate_lane_c(cfg, store, roster, client, prompts, target: Target) -> int
     seed_run = raw.get("seed_from_run")
     seed_store = RunStore(seed_run) if seed_run else store
     seeds += seeds_from_lane_b(seed_store, max_seeds=raw.get("max_lane_b_seeds"))
+    seeds += _companion_seeds(target, prompts)
     personas = load_personas(REPO_ROOT / "datagen" / "persona" / "user_sims")
     models = {
         "user_sim": roster.assigned("lane_c", "user_sim").id,

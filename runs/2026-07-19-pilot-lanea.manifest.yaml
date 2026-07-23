@@ -1,0 +1,80 @@
+manifest_version: 2
+run_id: 2026-07-19-pilot-lanea
+kind: pilot
+status: complete
+lanes:
+- a
+started: '2026-07-19T10:50:56Z'
+finished: '2026-07-19T10:56:47Z'
+provenance:
+  hermes_commit: v2026.7.7.2
+  task_bank_commit: 48466ade825fc9c49bfe9da860196d911ee949d8
+  datagen_config_hash: 09ed52a592e5385594436053d6372e8fa09e82da2abf71dcdd29590905ef2b2f
+  gate_inputs_hash: 5329305963a1572acb87d8426f26f9f49b845449191a671f9ae47cc2bb17a4cb
+  serializer_contract: v2
+  target: flash-v2_2
+  base_model: Qwen3.5-35B-A3B
+teachers:
+  roster:
+  - id: deepseek-v4-flash-20260717
+    provider: deepseek
+    route: direct
+  - id: deepseek-v4-pro-20260717
+    provider: deepseek
+    route: direct
+  - id: glm-5.2-20260717
+    provider: zhipu
+    route: direct
+  - id: kimi-k3-20260717
+    provider: moonshot
+    route: openrouter
+  assignments:
+    lane_a:
+      easy_mid: deepseek-v4-flash-20260717
+      hard: deepseek-v4-pro-20260717
+    lane_b:
+      profiles: deepseek-v4-flash-20260717
+      scenes: deepseek-v4-flash-20260717
+      dialogue: deepseek-v4-pro-20260717
+    lane_c:
+      user_sim: glm-5.2-20260717
+      character: deepseek-v4-pro-20260717
+    judge:
+      primary: glm-5.2-20260717
+      secondary: kimi-k3-20260717
+      tertiary: deepseek-v4-flash-20260717
+    harmonizer:
+      primary: deepseek-v4-flash-20260717
+counts:
+  instances: 0
+  rollouts: 43
+  verified: 42
+  judged: 40
+  rendered_train: 0
+  rendered_eval: 0
+  rendered_dpo_pairs: 0
+  rendered_nsp: 0
+keep_rates:
+  verify: 0.9767
+  judge: 0.9524
+  by_lane:
+    a:
+      verify: 0.9767
+      judge: 0.9524
+spend_usd:
+  total: 0.0796
+  by_teacher:
+    glm-5.2-20260717: 0.0
+    deepseek-v4-flash-20260717: 0.0796
+  by_lane: {}
+prompt_set_hash: d05ff1e5daf7a9b3d09fa5fffe00fd716ca3791a02a9cc63192bc51fbd3b07c0
+artifacts:
+  hf_dataset: ''
+  ship_exempt_lanes: []
+  eval_families_held_out: []
+  eval_param_seed: null
+notes: 'gate_inputs_hash amended post-generation (bfe7a22d.. -> 53293059..): verifiers
+  files/save_note + web/compare_sources fixed to accept workspace-absolute write paths
+  (outcome-equivalent; teachers write cwd-anchored absolute paths). Contract #4 review:
+  28/28 verify-drops re-read; trajectories were right, verifier path matching was
+  wrong. Generation untouched.'

@@ -1,12 +1,64 @@
-# TODO(co-authoring session): lane D (personal-stream) rubric under the sorcha
-# target. Placeholder axes keep the gate runnable on synthetic fixtures; real
-# axes/anchors are co-authored with the owner.
+# Lane D (personal-stream) rubric under the sorcha target.
+#
+# DERIVED, NOT INVENTED. Every axis traces to something already co-authored:
+# SOUL.md's "Hard lines", or lane D's stated purpose in CLAUDE.md. No new persona
+# content is introduced here — persona content stays co-authored with the owner.
+#
+# Why this looks nothing like quality.rubric.yaml: lane D records are REAL human
+# conversations. The assistant turns are actual people, not Sorcha, and harmonize
+# is {} so they are never paraphrased toward her. Scoring them on `sorcha_voice`
+# would be a category error — it would reject the human-origin prose entropy that
+# is the entire reason lane D exists. This rubric asks a different question: is
+# this exchange worth learning conversational behaviour from?
+#
+# The dominant failure mode in a six-year message export is not badness, it is
+# EMPTINESS: "k", "on my way", "yup", grocery logistics. Those teach nothing and
+# cost judge budget, so `substance` carries the weight and a floor.
 name: sorcha_lane_d
-threshold: 3.0
+threshold: 3.2
 axes:
+  substance:
+    weight: 2.0
+    min: 3.0
+    description: >
+      Is there a real exchange here — something said, reacted to, developed?
+      5 = a conversation with content: a story, a decision, a feeling worked
+      through, a joke built together. 3 = ordinary but genuine back-and-forth.
+      1 = pure logistics or acknowledgement tokens ("k", "on my way", "sounds
+      good"), a scheduling ping, or a thread that never becomes a conversation.
+      Length is not substance: a four-message exchange can score 5 and a
+      forty-message coordination thread can score 1.
+  relational_texture:
+    weight: 1.5
+    description: >
+      Does this read like people with history rather than strangers being polite?
+      Shared references, shorthand, in-jokes, unexplained names, picking up a
+      thread from before, comfort offered without being asked. This is what lane
+      D is FOR (CLAUDE.md: the only non-LLM prose-entropy source), so an exchange
+      that is warm but generic scores mid, not high.
   coherence:
     weight: 1.0
-    description: "TODO: co-authored. Conversation reads as a coherent exchange."
-  naturalness:
+    description: >
+      Turns follow from each other and the record is a self-contained session.
+      Penalise segments the sessionizer cut mid-thought, one-sided runs that
+      survived the both-roles check, and exchanges whose meaning depended
+      entirely on an attachment that was dropped.
+  no_impersonation:
     weight: 1.0
-    description: "TODO: co-authored. Reads like real people talking."
+    min: 3.0
+    description: >
+      SOUL.md hard line: never impersonates the user or writes their turns.
+      Structurally the owner is mapped to user turns, so this axis catches the
+      residue — assistant turns that narrate, quote at length, or speak FOR the
+      owner rather than to him. 5 = every turn is plainly its own speaker's.
+      1 = the assistant side is ventriloquising him.
+  safe_to_train:
+    weight: 1.0
+    min: 3.0
+    description: >
+      Anything that should not end up in weights and slipped past scrub:
+      credentials, account numbers, door codes, medical or legal detail about a
+      third party who is not the owner, or another person's crisis disclosed in
+      confidence. A floor, not a taste judgement — score 1 and the record drops.
+      Ordinary private life is exactly what lane D wants; it is secrets and other
+      people's emergencies that it does not.

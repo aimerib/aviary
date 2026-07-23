@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 
 import pytest
+import yaml
 
 from aviary.schema.manifest import RunManifest, Teachers
 from aviary.ship import (
@@ -15,6 +16,7 @@ from aviary.ship import (
     default_repo_name,
     plan_ship,
     plan_ship_external,
+    run_dataset_card,
     ship_external,
     ship_run,
 )
@@ -113,6 +115,43 @@ def test_dry_run_still_enforces_exempt_lanes(tmp_path, monkeypatch):
     _setup(tmp_path, monkeypatch, manifest=_manifest(ship_exempt_lanes=["d"]))
     with pytest.raises(ShipError, match="ship-exempt"):
         ship_run(RUN, dry_run=True)
+
+
+def test_run_card_declares_configs_for_every_rendered_artifact():
+    # The configs block is load-bearing: a run store has thousands of files and
+    # the Hub cannot guess which are the corpus. Missing it => load_dataset fails.
+    m = _manifest()
+    m.counts.rendered_train, m.counts.rendered_eval = 1629, 514
+    card = run_dataset_card(m)
+    head = card.split("---")[1]
+    for path in (
+        "rendered/train_with_thoughts.jsonl",
+        "rendered/train_no_thoughts.jsonl",
+        "rendered/eval_with_thoughts.jsonl",
+        "rendered/eval_no_thoughts.jsonl",
+        "rendered/nsp.jsonl",
+        "rendered/dpo.jsonl",
+    ):
+        assert path in head, path
+    assert "default: true" in head  # one config must be the default
+
+
+def test_run_card_yaml_frontmatter_parses():
+    card = run_dataset_card(_manifest())
+    assert card.startswith("---\n")
+    front = yaml.safe_load(card.split("---")[1])
+    names = [c["config_name"] for c in front["configs"]]
+    assert names == ["with_thoughts", "no_thoughts", "nsp", "dpo"]
+    with_thoughts = front["configs"][0]
+    assert {d["split"] for d in with_thoughts["data_files"]} == {"train", "test"}
+
+
+def test_run_card_warns_about_loss_masking():
+    # Training on full `text` without masking to train_spans teaches the model to
+    # generate user turns and system prompts; the card must say so.
+    card = run_dataset_card(_manifest())
+    assert "train_spans" in card
+    assert "masking" in card.lower()
 
 
 # --- cleaned external corpora ------------------------------------------------
