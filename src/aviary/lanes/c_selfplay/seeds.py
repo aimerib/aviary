@@ -10,7 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import yaml
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from aviary.io.jsonl import read_jsonl
 from aviary.io.store import RunStore
@@ -37,8 +37,21 @@ class Seed(BaseModel):
     # instruction, because it is that person's real, observed style.
     user_style: str = ""
 
+    # Which user-sim personas may drive THIS seed. Empty = every configured persona.
+    #
+    # Not an optimization — a correctness fix. Lane C used to cross every seed with
+    # every persona, which puts an `nsfw_rper` on a seed about the user's
+    # mother-in-law dying and a `lazy_texter` on a companion scene that only makes
+    # sense in his own voice. Those records are incoherent AND they multiply the
+    # run: seeds x personas x conversations_per_seed was 8,865 conversations for a
+    # burn, ~157 hours of teacher calls, most of them mismatched.
+    user_sim_personas: list[str] = Field(default_factory=list)
+
 
 PERSONA_PLACEHOLDER = "{persona}"
+
+# User-sim personas appropriate to character roleplay (never the owner persona).
+RP_PERSONAS = ("lazy_texter", "engaged_rper", "nsfw_rper", "task_asker")
 
 
 def load_inline_seeds(path: Path, persona_system: str, persona_speaker: str) -> list[Seed]:
@@ -105,6 +118,10 @@ def seeds_from_lane_b(
                 card=rec.system + f"\n\nYou play {speakers[0]} and only {speakers[0]}.",
                 scenario=rec.system.split("## Scene", 1)[-1].strip(),
                 user_goal=f"Play {speakers[1]} in this scene.",
+                # RP scenes are SillyTavern-shaped: a roleplayer driving a
+                # character. The `owner` persona belongs to companion seeds only —
+                # it would put the owner's real texting voice into fiction.
+                user_sim_personas=list(RP_PERSONAS),
             )
         )
     if max_seeds is not None and len(seeds) > max_seeds:

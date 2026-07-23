@@ -1,5 +1,5 @@
 manifest_version: 2
-run_id: 2026-07-22-pilot-sorcha1
+run_id: 2026-07-22-pilot-sorcha2
 kind: pilot
 status: running
 lanes:
@@ -7,12 +7,12 @@ lanes:
 - b
 - c
 - d
-started: '2026-07-23T03:27:49Z'
+started: '2026-07-23T03:34:41Z'
 finished: ''
 provenance:
   hermes_commit: v2026.7.7.2
-  task_bank_commit: 5ea54e4965803f25365be95d9ef2f8fdb16c00dd
-  datagen_config_hash: 97642c090f8792cb43168c04072d01b0282db7bbe9ff02a61bde06bf64b39a5b
+  task_bank_commit: e45d60257cd04e39e728cd0972254f312d9dc355
+  datagen_config_hash: 6fbbcb5a5e07aa3d5a21048c1499d8964d00748a170714954a3b069f30b1d3bf
   gate_inputs_hash: 144f7c6e8a541c2cb9ba8a21fe39314f6e9e12cb772bf93a5250edbaf025158a
   serializer_contract: v3
   target: sorcha-v1
@@ -40,7 +40,7 @@ teachers:
       scenes: deepseek-v4-flash-20260717
       dialogue: deepseek-v4-pro-20260717
     lane_c:
-      user_sim: glm-5.2-20260717
+      user_sim: kimi-k3-20260717
       character: deepseek-v4-pro-20260717
     judge:
       primary: glm-5.2-20260717

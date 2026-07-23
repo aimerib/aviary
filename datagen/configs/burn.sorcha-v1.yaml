@@ -18,7 +18,8 @@ lane_c:
   # vault-grounded companion conversations, the RP personas carry SillyTavern
   # character work off the lane B seeds. 527 companion seeds x 3 is the bulk of
   # the corpus, so this is the number to move when scaling.
-  conversations_per_seed: 3
+  conversations_per_seed: 2
+  max_lane_b_seeds: 120
   personas: [owner, lazy_texter, engaged_rper, nsfw_rper, task_asker]
   rng_seed: 20260716
 

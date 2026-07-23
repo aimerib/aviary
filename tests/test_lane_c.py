@@ -196,3 +196,58 @@ def test_seeds_from_lane_b_caps_with_even_stride(tmp_path):
     assert len(capped) == 5
     assert capped == seeds_from_lane_b(store, max_seeds=5)  # deterministic
     assert capped[-1].family != all_seeds[4].family  # stride spans, not first-5
+
+
+# --- per-seed persona routing ------------------------------------------------
+
+
+def test_companion_seeds_are_owner_voiced_only(tmp_path):
+    """A companion scene is the owner talking to his own companion. An RP persona
+    here would be someone else wearing his life as a costume — and crossing every
+    seed with every persona is what made a burn 8,865 conversations."""
+    from aviary.lanes.c_selfplay.companion_seeds import OWNER_PERSONA, companion_seeds
+    from aviary.lanes.d_personal.vault import Vault, VaultConfig
+
+    root = tmp_path / "v"
+    (root / "KB" / "Timeline").mkdir(parents=True)
+    (root / "KB" / "Timeline" / "t.md").write_text(
+        "---\ntype: timeline\nyear: 2024\n---\n\n- **Mar 1:** a synthetic event occurred here.\n"
+    )
+    vault = Vault.load(VaultConfig(path=root, kb_dir="KB", notes_dirs=[]))
+    seeds = companion_seeds(vault, "PERSONA", "Speaker")
+    assert seeds
+    for seed in seeds:
+        assert seed.user_sim_personas == [OWNER_PERSONA]
+
+
+def test_rp_seeds_never_use_the_owner_persona(tmp_path):
+    """The owner persona carries his real texting voice. Putting it on a fiction
+    scene would leak that voice into roleplay."""
+    from aviary.io.jsonl import write_jsonl
+    from aviary.io.store import RunStore
+    from aviary.lanes.c_selfplay.companion_seeds import OWNER_PERSONA
+    from aviary.lanes.c_selfplay.seeds import RP_PERSONAS, seeds_from_lane_b
+
+    store = RunStore("seedrun", root=tmp_path)
+    write_jsonl(store.raw("b"), [_scene_record()])
+    seeds = seeds_from_lane_b(store)
+    assert seeds
+    for seed in seeds:
+        assert OWNER_PERSONA not in seed.user_sim_personas
+        assert set(seed.user_sim_personas) == set(RP_PERSONAS)
+
+
+def _scene_record():
+    from aviary.schema.records import ConversationRecord, Message, Provenance, SourceRef
+
+    ref = SourceRef(kind="book_scene", detail={"chunk_idx": 0, "scene_idx": 0})
+    return ConversationRecord(
+        system="Roleplay faithfully.\n\n## Scene\nA quiet room.",
+        messages=[
+            Message(role="assistant", speaker="Ada", content="Hello."),
+            Message(role="assistant", speaker="Bram", content="Hi."),
+        ],
+        provenance=Provenance(
+            record_id="r1", lane="b", run_id="seedrun", family="work-1", source=ref
+        ),
+    )

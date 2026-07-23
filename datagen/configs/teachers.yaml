@@ -34,7 +34,11 @@ teachers:
     base_url: https://api.deepseek.com/v1
     wire_model: deepseek-v4-pro
     api_key_env: DEEPSEEK_API_KEY
-    max_concurrency: 4
+    # Raised 4 -> 12 (2026-07-22). Lane C workers are min(concurrency) across the
+    # lane's models, so pro at 4 capped the whole lane at 4 in-flight conversations
+    # — measured 30 calls/min, ~8s/call, entirely latency-bound with zero rate
+    # limits. Vendor limits were never the constraint here; our own cap was.
+    max_concurrency: 12
     json_extra_body: {thinking: {type: disabled}}   # verified 2026-07-17: thinking-on returns empty content on long scenes
 
   - id: glm-5.2-20260717
@@ -52,7 +56,7 @@ teachers:
     base_url: https://openrouter.ai/api/v1
     wire_model: moonshotai/kimi-k3
     api_key_env: OPENROUTER_API_KEY
-    max_concurrency: 6
+    max_concurrency: 12
 
 assignments:
   lane_a:

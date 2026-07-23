@@ -34,6 +34,9 @@ lane_c:
   # event/person/topic/obsession mix survives. Each seed is a full multi-turn
   # self-play conversation at two teacher calls per turn — uncapped, this is a burn.
   max_companion_seeds: 40
+  # Seeds now route to their own personas (companion -> owner, RP -> roleplayers),
+  # so the job count is comp*1 + laneb*4 rather than (comp+laneb)*4.
+  max_lane_b_seeds: 20
 
 # Lane D generation is free but judging it is not: 1,227 records would be ~50
 # minutes of GLM at measured throughput before lanes A/B/C even start.

@@ -71,6 +71,9 @@ class LaneCRunConfig(BaseModel):
     # Sampled on an even stride so the sample keeps the event/person/topic/obsession
     # mix rather than becoming whichever kind sorts first.
     max_companion_seeds: int = 0
+    # Override lane_c.yaml's max_lane_b_seeds for this run kind (0 = use the file).
+    # lane_c.yaml is shared with flash, so a pilot trims RP seeds here instead.
+    max_lane_b_seeds: int = 0
 
 
 class LaneBand(BaseModel):
@@ -381,7 +384,8 @@ def _generate_lane_c(cfg, store, roster, client, prompts, target: Target) -> int
     # to this run's own lane B output when seed_from_run is unset (combined [b,c] run).
     seed_run = raw.get("seed_from_run")
     seed_store = RunStore(seed_run) if seed_run else store
-    seeds += seeds_from_lane_b(seed_store, max_seeds=raw.get("max_lane_b_seeds"))
+    max_b = cfg.lane_c.max_lane_b_seeds or raw.get("max_lane_b_seeds")
+    seeds += seeds_from_lane_b(seed_store, max_seeds=max_b)
     seeds += _companion_seeds(target, prompts, cfg.lane_c.max_companion_seeds)
     personas = load_personas(REPO_ROOT / "datagen" / "persona" / "user_sims")
     models = {
@@ -397,7 +401,12 @@ def _generate_lane_c(cfg, store, roster, client, prompts, target: Target) -> int
     jobs = [
         (seed, personas[persona_id], rng.randrange(2**31))
         for seed in seeds
-        for persona_id in cfg.lane_c.personas
+        # A seed may restrict which user-sim personas suit it: companion scenes
+        # only make sense in the owner's voice, RP scenes only in a roleplayer's.
+        # Crossing every seed with every persona produced incoherent records and
+        # multiplied the run by 4-5x for no gain.
+        for persona_id in (seed.user_sim_personas or cfg.lane_c.personas)
+        if persona_id in personas
         for _ in range(cfg.lane_c.conversations_per_seed)
     ]
 

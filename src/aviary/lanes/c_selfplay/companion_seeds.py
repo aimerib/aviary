@@ -37,6 +37,9 @@ from aviary.lanes.d_personal.vault import Note, Vault
 # declared in a config, because declaring them would put real names in git.
 HOLDOUT_FRACTION = 0.1
 
+# The user-sim persona for companion seeds: the owner himself.
+OWNER_PERSONA = "owner"
+
 
 def _is_holdout(family: str, fraction: float = HOLDOUT_FRACTION) -> bool:
     bucket = int(hashlib.sha256(f"holdout:{family}".encode()).hexdigest()[:8], 16) % 1000
@@ -66,6 +69,9 @@ def _seed(
         grounding=grounding,
         user_style=user_style,
         render_grounding=render_grounding,
+        # Companion scenes are the owner talking to his own companion. An RP
+        # persona here would be someone else wearing his life as a costume.
+        user_sim_personas=[OWNER_PERSONA],
     )
 
 
