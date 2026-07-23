@@ -40,6 +40,12 @@ render run_id *args:
 stats run_id:
     uv run aviary stats {{run_id}}
 
+# Upload a rendered run to a PRIVATE HF dataset repo; records it in the manifest.
+# Always private (no flag widens it); refuses runs containing ship-exempt lanes.
+# Use --dry-run to validate and list files without contacting HF.
+ship run_id *args:
+    uv run aviary ship {{run_id}} {{args}}
+
 test:
     uv run pytest
 

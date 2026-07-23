@@ -15,12 +15,19 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("install", help="verify pinned hermes checkout + symlink datagen dirs")
     sub.add_parser("pilot", help="small calibration run across enabled lanes")
     sub.add_parser("burn", help="full run; refuses without a recent healthy pilot manifest")
-    for name in ("gate", "render", "stats"):
+    for name in ("gate", "render", "stats", "ship"):
         p = sub.add_parser(name)
         p.add_argument("run_id")
         if name == "render":
             p.add_argument(
                 "--prior", action="append", default=[], help="prior run_id for corpus dedupe"
+            )
+        if name == "ship":
+            p.add_argument(
+                "--repo", default=None, help="HF dataset repo (default: aviary-<run_id>)"
+            )
+            p.add_argument(
+                "--dry-run", action="store_true", help="validate + list files, contact nothing"
             )
 
     args = parser.parse_args(argv)
@@ -52,6 +59,23 @@ def main(argv: list[str] | None = None) -> int:
         from aviary.orchestrate import cmd_stats
 
         print(cmd_stats(args.run_id))
+        return 0
+    if args.cmd == "ship":
+        from aviary.ship import ShipError, plan_ship, ship_run
+
+        try:
+            if args.dry_run:
+                root, files = plan_ship(args.run_id)
+                repo = ship_run(args.run_id, args.repo, dry_run=True)
+                total = sum(f.stat().st_size for f in files)
+                print(f"would ship {len(files)} files ({total / 1e6:.1f} MB) from {root}")
+                print(f"  -> PRIVATE hf dataset: {repo}")
+                return 0
+            repo = ship_run(args.run_id, args.repo)
+        except ShipError as e:
+            print(f"REFUSED TO SHIP: {e}", file=sys.stderr)
+            return 2
+        print(f"shipped {args.run_id} -> private hf dataset {repo}")
         return 0
     return 1
 

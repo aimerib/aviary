@@ -33,5 +33,9 @@ def runs_dir() -> Path:
     return REPO_ROOT / "runs"
 
 
+def manifest_path(run_id: str) -> Path:
+    return runs_dir() / f"{run_id}.manifest.yaml"
+
+
 def configs_dir() -> Path:
     return REPO_ROOT / "datagen" / "configs"

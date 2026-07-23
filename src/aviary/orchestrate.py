@@ -19,7 +19,7 @@ from pydantic import BaseModel, Field
 from aviary.hashing import hash_tree
 from aviary.io.jsonl import read_jsonl, write_jsonl
 from aviary.io.store import RunStore
-from aviary.paths import REPO_ROOT, configs_dir, data_dir, runs_dir
+from aviary.paths import REPO_ROOT, configs_dir, data_dir, manifest_path, runs_dir
 from aviary.schema.manifest import (
     Artifacts,
     Counts,
@@ -180,10 +180,6 @@ class RunExistsError(RuntimeError):
     """A run with this id already exists. Overwriting it would rewrite the manifest
     and reuse the data dir — silently blending two generations (and reusing stale
     lane-B checkpoints) under one manifest. Refuse (data-integrity)."""
-
-
-def manifest_path(run_id: str) -> Path:
-    return runs_dir() / f"{run_id}.manifest.yaml"
 
 
 def _assert_fresh_run(run_id: str, store: RunStore) -> None:
