@@ -69,8 +69,17 @@ def _fake_hermes(tmp_path, main_args, distributions, toolsets):
 
 
 _MAIN_ARGS = [
-    "dataset_file", "batch_size", "run_name", "distribution", "model", "base_url",
-    "api_key", "num_workers", "max_turns", "ephemeral_system_prompt", "resume",
+    "dataset_file",
+    "batch_size",
+    "run_name",
+    "distribution",
+    "model",
+    "base_url",
+    "api_key",
+    "num_workers",
+    "max_turns",
+    "ephemeral_system_prompt",
+    "resume",
 ]
 _DISTS = {"terminal_web": {"toolsets": {"terminal": 100, "file": 100, "web": 80}}}
 _TOOLSETS = {
@@ -359,3 +368,55 @@ def test_zip_param_mode_and_interleaved_rollout_order():
             tools=["write_file"],
             verifier="v.py",
         )
+
+
+# --- persona neutrality of the task bank -------------------------------------
+
+PERSONA_NAMES = ("olivia", "liv", "sorcha")
+
+
+def test_no_task_prompt_hardcodes_a_persona_name():
+    """Scar tissue: every task prompt opened with "hey liv" — Olivia's NICKNAME —
+    so the first Sorcha lane A batch had the user addressing Sorcha as Olivia. A
+    grep for "Olivia" found nothing. One task bank serves every target, so the
+    address has to come from the target, not the template."""
+    import re
+
+    from aviary.lanes.a_agentic.taskbank import load_taskbank
+
+    offenders = []
+    for template in load_taskbank(REPO / "tasks"):
+        for name in PERSONA_NAMES:
+            if re.search(rf"\b{name}\b", template.prompt, re.I):
+                offenders.append((template.id, name))
+    assert not offenders, f"task prompts naming a persona: {offenders}"
+
+
+def test_persona_placeholder_is_filled_from_the_target():
+    from aviary.lanes.a_agentic.taskbank import expand_all, load_taskbank
+
+    templates = load_taskbank(REPO / "tasks")
+    for address in ("liv", "Sorcha"):
+        instances = expand_all(templates, address)
+        assert instances
+        assert any(address in i.prompt for i in instances)
+        assert not any("{persona}" in i.prompt for i in instances)
+
+
+def test_flash_task_prompts_are_byte_identical_to_the_hardcoded_era():
+    """flash-v2_2 must reproduce the pre-target pipeline byte-for-byte, so
+    substituting its address back in has to reproduce the literal old text."""
+    from aviary.lanes.a_agentic.taskbank import expand_all, load_taskbank
+    from aviary.targets import Target
+
+    flash = Target.load("flash-v2_2")
+    assert flash.address == "liv"
+    prompts = [i.prompt for i in expand_all(load_taskbank(REPO / "tasks"), flash.address)]
+    assert any(p.startswith("hey liv,") for p in prompts)
+
+
+def test_every_target_resolves_an_address():
+    from aviary.targets import Target
+
+    for name in ("flash-v2_2", "sorcha-v1"):
+        assert Target.load(name).address

@@ -43,6 +43,11 @@ class ChatResponse(BaseModel):
     usage: Usage = Field(default_factory=Usage)
     model: str
     cached: bool = False
+    # OpenAI-compatible stop reason. "length" means the reply was CUT OFF at
+    # max_tokens, which is a different failure from a malformed reply and needs a
+    # different remedy (more budget, not a repair round). Defaulted so cached
+    # responses written before this field existed still load.
+    finish_reason: str = ""
 
 
 class TeacherClient(Protocol):
@@ -135,4 +140,5 @@ class HttpTeacherClient:
                 output_tokens=usage.get("completion_tokens", 0),
             ),
             model=req.model,
+            finish_reason=data["choices"][0].get("finish_reason") or "",
         )

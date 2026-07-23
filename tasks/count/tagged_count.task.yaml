@@ -122,7 +122,7 @@ params:
     - lists/volunteer-count.txt
 
 prompt: |
-  hey liv, save this list to {destination} exactly as written:
+  hey {persona}, save this list to {destination} exactly as written:
 
   {entries_block}
 

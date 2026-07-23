@@ -15,6 +15,15 @@ from aviary.hashing import canonical_json
 
 _PLACEHOLDER = re.compile(r"\{(\w+)\}")
 
+# Placeholders the task bank does NOT expect in `params` — they are filled from the
+# build target, not from the template's own parameter grid.
+#
+# `persona`: how the simulated user addresses the assistant. Task prompts used to
+# hardcode "hey liv", Olivia's nickname, which put Olivia into every lane A record
+# of a SORCHA run — the exact contamination the target system exists to prevent,
+# and invisible to a grep for "Olivia".
+TARGET_PLACEHOLDERS = frozenset({"persona"})
+
 
 class TaskTemplate(BaseModel):
     id: str
@@ -35,7 +44,7 @@ class TaskTemplate(BaseModel):
 
     @model_validator(mode="after")
     def _check(self) -> TaskTemplate:
-        placeholders = set(_PLACEHOLDER.findall(self.prompt))
+        placeholders = set(_PLACEHOLDER.findall(self.prompt)) - TARGET_PLACEHOLDERS
         missing = placeholders - set(self.params)
         if missing:
             raise ValueError(f"{self.id}: prompt placeholders without params: {sorted(missing)}")
@@ -73,7 +82,7 @@ def load_taskbank(tasks_root: Path) -> list[TaskTemplate]:
     return templates
 
 
-def expand(template: TaskTemplate) -> list[TaskInstance]:
+def expand(template: TaskTemplate, persona: str = "") -> list[TaskInstance]:
     if not template.params:
         combos: list[dict[str, str]] = [{}]
     else:
@@ -94,7 +103,7 @@ def expand(template: TaskTemplate) -> list[TaskInstance]:
             family=template.family,
             holdout=template.holdout,
             params={k: str(v) for k, v in combo.items()},
-            prompt=template.prompt.format(**combo),
+            prompt=template.prompt.format(**combo, persona=persona),
             n_rollouts=template.n_rollouts,
             verifier=template.verifier,
         )
@@ -102,8 +111,11 @@ def expand(template: TaskTemplate) -> list[TaskInstance]:
     ]
 
 
-def expand_all(templates: list[TaskTemplate]) -> list[TaskInstance]:
-    return [inst for t in templates for inst in expand(t)]
+def expand_all(templates: list[TaskTemplate], persona: str = "") -> list[TaskInstance]:
+    """`persona` is how the user addresses the assistant in task prompts. It comes
+    from the build target so one task bank serves every persona — a hardcoded name
+    here lands in every lane A record of every target."""
+    return [inst for t in templates for inst in expand(t, persona)]
 
 
 def rollout_order(instances: list[TaskInstance]) -> list[TaskInstance]:

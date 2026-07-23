@@ -59,7 +59,7 @@ params:
     - "Status: draft"
 
 prompt: |
-  hey liv, i need {count} short notes about {topic}, saved as
+  hey {persona}, i need {count} short notes about {topic}, saved as
   {prefix_dir}/note-1.txt through {prefix_dir}/note-{count}.txt. every single
   one needs to start with the exact line "{required_line}" as its first line —
   no exceptions, i've got a script that reads just that line. double check all

@@ -30,6 +30,12 @@ class Target(BaseModel):
     base_model: str  # recorded in the manifest; both current targets are Qwen3.5-35B-A3B
     persona: str  # datagen/persona/<persona>/ — system.md is the generation identity
     persona_speaker: str  # assistant `speaker` in lanes A/C; the harmonize voice gate
+    # How a user ADDRESSES this persona in task prompts ({persona} in tasks/*.yaml).
+    # Separate from persona_speaker because it is casual address, not a label:
+    # Olivia's is "liv", which is exactly why grepping the task bank for "Olivia"
+    # found nothing while every lane A prompt still said "hey liv". Empty falls
+    # back to persona_speaker.
+    persona_address: str = ""
     judge_voice_axis: str  # the quality rubric's voice axis (documentation of intent)
     lanes: list[str]  # record sets a render for this target may include
     quality_rubric: str  # repo-relative; persona-owned (carries the voice axis)
@@ -40,6 +46,10 @@ class Target(BaseModel):
     harmonize: dict[str, list[str]] = Field(default_factory=dict)
     # Lane-specific quality rubrics beyond the defaults (e.g. lane D under sorcha).
     lane_rubrics: dict[str, str] = Field(default_factory=dict)
+
+    @property
+    def address(self) -> str:
+        return self.persona_address or self.persona_speaker
 
     @property
     def persona_dir(self) -> Path:

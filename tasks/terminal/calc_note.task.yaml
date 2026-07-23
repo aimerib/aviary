@@ -58,7 +58,7 @@ params:
     - money/loan-41000.txt
 
 prompt: |
-  hey liv, if i borrow ${principal} at {rate_pct}% for {years} years, what does
+  hey {persona}, if i borrow ${principal} at {rate_pct}% for {years} years, what does
   that come to monthly? i need the exact number, cents included — i'm comparing
   offers. save the monthly payment and a one-line explanation to {destination}.
 

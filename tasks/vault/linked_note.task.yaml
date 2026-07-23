@@ -49,7 +49,7 @@ params:
     - vault-portuguese/notes/learning-plan.md
 
 prompt: |
-  hey liv, start me a little notes vault: make a hub note at {hub} for my
+  hey {persona}, start me a little notes vault: make a hub note at {hub} for my
   projects, then write up {topic} in {destination} — proper note, with yaml
   frontmatter up top including some tags. link the new note from the hub with a
   wikilink, and give the note a backlink to the hub too so i can get around

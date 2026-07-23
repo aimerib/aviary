@@ -46,7 +46,7 @@ params:
     - research/southkorea-vs-portugal.md
 
 prompt: |
-  hey liv, quick one: how many times bigger is {bigger} than {smaller}, actually?
+  hey {persona}, quick one: how many times bigger is {bigger} than {smaller}, actually?
   find current numbers from real sources, do the division properly in the
   terminal so it's not napkin math, and save me a short answer in {destination}
   — under 200 words, with the two raw numbers, the ratio, and links to the

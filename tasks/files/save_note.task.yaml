@@ -53,7 +53,7 @@ params:
     - notes/vet-callback.index.txt
 
 prompt: |
-  hey liv, can you write a {kind} and save it to {destination}? oh and add a line
+  hey {persona}, can you write a {kind} and save it to {destination}? oh and add a line
   to {index} saying what you saved and where, so i can find it later.
 
 tools:

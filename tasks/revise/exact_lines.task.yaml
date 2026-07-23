@@ -48,7 +48,7 @@ params:
     - lists/apartment-check.txt
 
 prompt: |
-  hey liv, draft a {kind} and save it to {destination}. then go back over the
+  hey {persona}, draft a {kind} and save it to {destination}. then go back over the
   file and make sure it's exactly {n_lines} lines — one item per line,
   alphabetical order, no numbering, no bullets, no blank lines. i'm piping it
   into a script that binary-searches, so the format actually matters.

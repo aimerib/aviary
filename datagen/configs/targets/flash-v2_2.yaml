@@ -4,6 +4,7 @@ name: flash-v2_2
 base_model: Qwen3.5-35B-A3B
 persona: olivia
 persona_speaker: Olivia
+persona_address: liv   # task prompts said "hey liv"; keeps flash byte-identical
 judge_voice_axis: olivia_voice
 lanes: [a, b, c]
 quality_rubric: datagen/persona/olivia/quality.rubric.yaml

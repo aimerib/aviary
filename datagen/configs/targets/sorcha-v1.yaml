@@ -8,14 +8,19 @@
 # deferral, not a principle: lanes a and c generate NEW Sorcha-voiced rollouts and
 # were postponed past v2.2, while lane B (persona-neutral extraction) and lane D
 # (human-origin, no teacher calls) were free to run first. Both are now in scope.
-# Lane A is persona-clean by construction — only a task's `prompt` field reaches
-# the teacher, and no task prompt names a persona; the voice comes from the
-# target's system prompt at ingest. Lane C inline seeds are persona-neutral
-# (`{persona}` substitution in lanes/c_selfplay/seeds.py).
+# Lane A was NOT persona-clean, contrary to an earlier note here. Only a task's
+# `prompt` reaches the teacher, but 9 of 9 prompts opened with "hey liv" —
+# Olivia's nickname — so the first Sorcha lane A batch had the user addressing
+# Sorcha as Olivia. A grep for "Olivia" finds nothing; the nickname is the leak.
+# Task prompts now say `{persona}`, filled from persona_address below.
+# Lane C inline seeds are likewise persona-neutral (lanes/c_selfplay/seeds.py).
 name: sorcha-v1
 base_model: Qwen3.5-35B-A3B
 persona: sorcha
 persona_speaker: Sorcha
+# Her own name, not an invented diminutive — SOUL.md defines no nickname and
+# persona content is not mine to author.
+persona_address: Sorcha
 judge_voice_axis: sorcha_voice
 lanes: [a, b, c, d]
 quality_rubric: datagen/persona/sorcha/quality.rubric.yaml

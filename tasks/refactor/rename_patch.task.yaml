@@ -58,7 +58,7 @@ params:
     - refactor/tagline-draft.txt
 
 prompt: |
-  hey liv, draft {content_desc} and save it to {destination} — mention
+  hey {persona}, draft {content_desc} and save it to {destination} — mention
   "{old_term}" a few times naturally throughout, it's the name we've been
   using. actually, hold on — we're renaming it to "{new_term}". use patch to
   replace every occurrence of "{old_term}" with "{new_term}" in the file,

@@ -444,7 +444,7 @@ def _generate_lane_a(cfg, store, roster, prompts, run_id, target: Target) -> int
     from aviary.paths import hermes_dir
 
     templates = load_taskbank(REPO_ROOT / "tasks")
-    instances = expand_all(templates)
+    instances = expand_all(templates, target.address)
     if not instances:
         log.warning("lane A enabled but the task bank is empty; skipping")
         return 0

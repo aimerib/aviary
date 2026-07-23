@@ -37,7 +37,7 @@ params:
     - research/cursive-memory.md
 
 prompt: |
-  hey liv, i keep running into opposite claims about {topic}. can you look at a
+  hey {persona}, i keep running into opposite claims about {topic}. can you look at a
   few actual sources (three at least) and save me a comparison in {destination}?
   keep it under 300 words — i want the gist, not a term paper. link what you
   used so i can read more.
