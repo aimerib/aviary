@@ -201,8 +201,18 @@ def _lane_workers(roster: Roster, lane_key: str, roles: tuple[str, ...]) -> int:
     """Concurrency for coarse-grained lane parallelism (whole books/conversations):
     the smallest per-provider call cap among the lane's models, so N concurrent
     units keep each provider within max_concurrency (each unit issues <=1 call per
-    provider at a time)."""
-    caps = [roster.assigned(lane_key, role).max_concurrency for role in roles]
+    provider at a time).
+
+    Counts the whole ROTATION POOL per role, not just the primary. A role that
+    rotates can route any given unit to any model in its pool, so the cap has to be
+    the smallest of them: with lane C's character side rotating deepseek-pro (12)
+    and glm (6), reading only the primary gave 12 workers and drove glm at twice
+    its own limit."""
+    caps = [
+        route.max_concurrency
+        for role in roles
+        for route in roster.assigned_pool(lane_key, role)
+    ]
     return max(1, min(caps)) if caps else 1
 
 

@@ -378,3 +378,24 @@ def test_rotate_falls_back_rather_than_failing_when_avoid_excludes_everything():
     r = _pool_roster()
     only_kimi = [r.route_for("kimi-20260717")]
     assert r.rotate(only_kimi, "seed", avoid="moonshot").id == "kimi-20260717"
+
+
+def test_lane_workers_respects_the_smallest_cap_in_a_rotation_pool():
+    # Regression: _lane_workers read only the PRIMARY role, so lane C ran at
+    # min(kimi 12, deepseek 12) = 12 workers while half its conversations routed to
+    # glm, whose cap is 6 — twice its own limit.
+    from aviary.orchestrate import _lane_workers
+
+    r = _pool_roster()
+    for t in r.teachers:
+        t.max_concurrency = {"deepseek": 12, "moonshot": 12, "zhipu": 6}[t.provider]
+    assert _lane_workers(r, "lane_c", ("user_sim", "character")) == 6
+
+
+def test_lane_workers_unchanged_for_a_single_teacher_role():
+    from aviary.orchestrate import _lane_workers
+
+    r = _pool_roster()
+    for t in r.teachers:
+        t.max_concurrency = 9
+    assert _lane_workers(r, "lane_c", ("user_sim",)) == 9
