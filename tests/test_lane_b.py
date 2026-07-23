@@ -147,8 +147,15 @@ def test_lane_b_end_to_end(tmp_path):
     rendered = render_conversation(rec, ThoughtMode.WITH)
     assert "<think>" in rendered.text
     assert "Thomas: " in rendered.text
+    assert rec.messages[0].thought in rendered.text
+
+    # Contract v3: reasoning-off is the EMPTY think block, not the absence of one —
+    # that is what `enable_thinking=false` primes at inference. What must disappear
+    # is the thought text, not the framing.
     without = render_conversation(rec, ThoughtMode.WITHOUT)
-    assert "<think>" not in without.text
+    assert rec.messages[0].thought not in without.text
+    assert "<think>\n\n</think>\n\n" in without.text
+    assert without.text.count("<think>") == without.text.count("<think>\n\n</think>\n\n")
 
     # stage checkpoints exist -> rerun consumes them, no new teacher calls
     calls_before = len(client.requests)

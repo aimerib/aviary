@@ -13,7 +13,7 @@ provenance:
   hermes_commit: ""            # pinned tag/SHA from teachers.yaml (lane A)
   task_bank_commit: ""         # SHA of this repo at rollout time
   datagen_config_hash: ""      # sha256 over datagen/{configs,toolsets,persona,prompts}
-  serializer_contract: v2      # bump ONLY with a golden-file change (render/CONTRACT.md)
+  serializer_contract: v3      # bump ONLY with a golden-file change (render/CONTRACT.md)
 
 teachers:
   roster:                      # dated snapshot IDs only — never `latest`

@@ -115,7 +115,9 @@ def test_default_strips_think_and_flag_restores_it(tmp_path, monkeypatch):
 
     prepare("rp")
     stripped = (root / "rendered" / "train_no_thoughts.jsonl").read_text()
-    assert "<think>" not in stripped
+    # Contract v3: the block stays, its contents go (the template's reasoning-off form).
+    assert THINK not in stripped
+    assert "SCENE: tavern" not in stripped
     assert "Mara looks up." in stripped
 
     prepare("rp", with_thoughts=True)
@@ -146,9 +148,7 @@ def test_mix_report_quantifies_dilution(tmp_path, monkeypatch):
 
     run_rendered = tmp_path / "data" / "myrun" / "rendered"
     run_rendered.mkdir(parents=True)
-    (run_rendered / "train_no_thoughts.jsonl").write_text(
-        json.dumps({"text": "x" * 4000}) + "\n"
-    )
+    (run_rendered / "train_no_thoughts.jsonl").write_text(json.dumps({"text": "x" * 4000}) + "\n")
 
     report = prepare("rp", against_run="myrun")
     mix = report["mix_against"]

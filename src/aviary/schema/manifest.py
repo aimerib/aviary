@@ -91,7 +91,7 @@ class Provenance(BaseModel):
     # verifiers, tasks). Frozen at generation, re-asserted at gate/render so a
     # rubric/verifier/task edit can't silently change keep/judge/dedupe outcomes.
     gate_inputs_hash: str = ""
-    serializer_contract: str = "v2"
+    serializer_contract: str = "v3"
     # Build target this run generated for (datagen/configs/targets/<name>.yaml) and
     # its base model. Empty on pre-target manifests.
     target: str = ""

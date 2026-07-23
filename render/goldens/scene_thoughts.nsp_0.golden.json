@@ -1,9 +1,9 @@
 {
-  "text": "<|im_start|>system\nRoleplay the following scene faithfully.\n\n## Characters\nMarianne: A governess with a habit of saying the quiet part out loud.\nEdmund: The estate's heir, allergic to sincerity.\n\n## Scene\nThe east library, past midnight. A storm has knocked the power out and neither can sleep.<|im_end|>\n<|im_start|>assistant\nMarianne: (sets the candle on the shelf) You're hiding from the storm or from your father?<|im_end|>\n<|im_start|>assistant\nEdmund:",
+  "text": "<|im_start|>system\nRoleplay the following scene faithfully.\n\n## Characters\nMarianne: A governess with a habit of saying the quiet part out loud.\nEdmund: The estate's heir, allergic to sincerity.\n\n## Scene\nThe east library, past midnight. A storm has knocked the power out and neither can sleep.<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\nMarianne: (sets the candle on the shelf) You're hiding from the storm or from your father?<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\nEdmund:",
   "train_spans": [
     [
-      450,
-      457
+      488,
+      495
     ]
   ],
   "meta": {
@@ -13,6 +13,6 @@
     "thought_mode": "no_thoughts",
     "sample_kind": "next_speaker",
     "turn_index": "1",
-    "contract": "v2"
+    "contract": "v3"
   }
 }

@@ -1,21 +1,21 @@
 {
-  "text": "<|im_start|>system\nRoleplay the following scene faithfully.\n\n## Characters\nMarianne: A governess with a habit of saying the quiet part out loud.\nEdmund: The estate's heir, allergic to sincerity.\n\n## Scene\nThe east library, past midnight. A storm has knocked the power out and neither can sleep.<|im_end|>\n<|im_start|>assistant\n<think>\nHe flinched at the thunder earlier. It wasn't the thunder.\n</think>\nMarianne: (sets the candle on the shelf) You're hiding from the storm or from your father?<|im_end|>\n<|im_start|>assistant\n<think>\nShe notices everything. That's inconvenient.\n</think>\nEdmund: Both have identical tempers. (pulls a book he isn't reading) The library was closer than my rooms.<|im_end|>\n<|im_start|>assistant\n<think>\nGently. If I push he'll bolt.\n</think>\nMarianne: Then sit. I'll pretend to believe you, and you can pretend the book is right-side up.<|im_end|>\n<|im_start|>assistant\nEdmund: (turns the book over, almost smiling) You are a menace, Miss Hale.<|im_end|>\n",
+  "text": "<|im_start|>system\nRoleplay the following scene faithfully.\n\n## Characters\nMarianne: A governess with a habit of saying the quiet part out loud.\nEdmund: The estate's heir, allergic to sincerity.\n\n## Scene\nThe east library, past midnight. A storm has knocked the power out and neither can sleep.<|im_end|>\n<|im_start|>assistant\n<think>\nHe flinched at the thunder earlier. It wasn't the thunder.\n</think>\n\nMarianne: (sets the candle on the shelf) You're hiding from the storm or from your father?<|im_end|>\n<|im_start|>assistant\n<think>\nShe notices everything. That's inconvenient.\n</think>\n\nEdmund: Both have identical tempers. (pulls a book he isn't reading) The library was closer than my rooms.<|im_end|>\n<|im_start|>assistant\n<think>\nGently. If I push he'll bolt.\n</think>\n\nMarianne: Then sit. I'll pretend to believe you, and you can pretend the book is right-side up.<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\nEdmund: (turns the book over, almost smiling) You are a menace, Miss Hale.<|im_end|>\n",
   "train_spans": [
     [
       327,
-      503
+      504
     ],
     [
-      526,
-      704
+      527,
+      706
     ],
     [
-      727,
-      879
+      729,
+      882
     ],
     [
-      902,
-      986
+      905,
+      1008
     ]
   ],
   "meta": {
@@ -24,6 +24,6 @@
     "family": "work_north_and_south_variant",
     "thought_mode": "with_thoughts",
     "sample_kind": "conversation",
-    "contract": "v2"
+    "contract": "v3"
   }
 }
