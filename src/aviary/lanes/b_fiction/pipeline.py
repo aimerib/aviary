@@ -81,6 +81,42 @@ class LaneBConfig:
         return cls(books=books, **opts)
 
 
+def _stride(items: list[BookConfig], n: int) -> list[BookConfig]:
+    """`n` items spread evenly across `items`, deterministically."""
+    if n <= 0:
+        return []
+    if len(items) <= n:
+        return list(items)
+    step = len(items) / n
+    return [items[int(i * step)] for i in range(n)]
+
+
+def sample_books(books: list[BookConfig], max_books: int) -> list[BookConfig]:
+    """Cap the corpus to `max_books`, keeping the holdout ratio and the author mix.
+
+    A pilot does not need all 482 books — lane C samples 20 seeds off the back of
+    it — but it does need a book list shaped like the real one. Taking the first N
+    would take N books by one or two authors, and could take zero holdout books,
+    which leaves the split rule untested precisely where it hard-fails.
+
+    So: stride each stratum separately, then restore config order. Deterministic,
+    no seed — the same cap always yields the same corpus, which is what makes the
+    response cache worth anything across pilot reruns.
+    """
+    if max_books <= 0 or len(books) <= max_books:
+        return list(books)
+    held = [b for b in books if b.holdout]
+    train = [b for b in books if not b.holdout]
+    if not held or not train:
+        return _stride(books, max_books)
+    # Round the holdout share, but always leave room for at least one of each.
+    n_held = max(1, round(max_books * len(held) / len(books)))
+    n_held = min(n_held, max_books - 1, len(held))
+    picked = _stride(train, max_books - n_held) + _stride(held, n_held)
+    order = {b.work_id: i for i, b in enumerate(books)}
+    return sorted(picked, key=lambda b: order[b.work_id])
+
+
 def run_lane_b(
     cfg: LaneBConfig,
     store: RunStore,

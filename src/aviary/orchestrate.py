@@ -108,6 +108,15 @@ class RunConfig(BaseModel):
     # Lane D generation is free (no teacher calls) but JUDGING it is not, and the
     # export's size is fixed by history rather than by the run. 0 = all (burn).
     lane_d_max_records: int = 0
+    # Cap on lane B books. 0 = the whole corpus (burn).
+    #
+    # This knob did not exist until 2026-07-23, and its absence was masked: lane B
+    # replayed from the response cache, so "all 482 books" cost nothing and nobody
+    # noticed the pilot had no cap. Changing the cache key format invalidated that
+    # replay and the next pilot went to 27h / ~$111 of live extraction — to then
+    # subsample it down to 20 lane C seeds. A pilot must be able to bound the one
+    # lane whose volume comes from the corpus rather than from this file.
+    lane_b_max_books: int = 0
     # Per-lane keep-rate bands the burn guard enforces against the blessing pilot.
     # Every lane the burn runs MUST have a band here and MUST have been measured by
     # the pilot, or the guard refuses (never burn an unpiloted lane — esp. lane A).
@@ -295,6 +304,20 @@ def cmd_generate(kind: str) -> str:
             from aviary.lanes.b_fiction.pipeline import LaneBConfig, run_lane_b
 
             lane_b_cfg = LaneBConfig.load(configs_dir() / "lane_b.yaml")
+            if cfg.lane_b_max_books:
+                from dataclasses import replace as _replace
+
+                from aviary.lanes.b_fiction.pipeline import sample_books
+
+                kept = sample_books(lane_b_cfg.books, cfg.lane_b_max_books)
+                log.info(
+                    "lane B: %d of %d books (cap=%d, %d holdout)",
+                    len(kept),
+                    len(lane_b_cfg.books),
+                    cfg.lane_b_max_books,
+                    sum(1 for b in kept if b.holdout),
+                )
+                lane_b_cfg = _replace(lane_b_cfg, books=kept)
             roles = ("profiles", "scenes", "dialogue")
             models = {role: roster.assigned("lane_b", role).id for role in roles}
             rollouts += run_lane_b(

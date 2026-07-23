@@ -8,7 +8,7 @@
 #   a — task rollouts in Sorcha's voice. Persona-clean by construction (only a
 #       task's `prompt` reaches the teacher; the voice comes from her system
 #       prompt at ingest), so the flash task bank is reused as-is.
-#   b — fiction extraction. Persona-neutral; replays from the response cache.
+#   b — fiction extraction. Persona-neutral, and CAPPED (see lane_b_max_books).
 #   c — self-play. Inline seeds are `{persona}`-substituted to Sorcha; RP seeds
 #       from the designated lane B run are persona-transparent.
 #   d — the iMessage export. No teacher calls, so it costs nothing and is the
@@ -19,7 +19,17 @@ eval_param_fraction: 0.15
 split_seed: 20260716
 dpo_min_margin: 1.0
 dedupe_threshold: 0.8
-lane_a_num_workers: 4
+# 40 of 482 books, stratified so the holdout ratio and author mix survive.
+#
+# Lane B is the only lane whose volume comes from the corpus rather than from
+# this file, and until 2026-07-23 there was no cap at all. That was invisible
+# while lane B replayed from the response cache; changing the cache key format
+# made it live again and the next pilot projected to 27h / ~$111 — to then
+# subsample it to the 20 lane C seeds below. Measured 2026-07-23: ~0.3 books/min
+# at 8 workers, so 40 books is ~2h and still measures keep rates honestly.
+# The burn leaves this at 0 (whole corpus).
+lane_b_max_books: 40
+lane_a_num_workers: 8   # lane A ran 3/84 batches in 29min at 4; matches burn
 lane_a_batch_size: 11
 lane_a_max_turns: 12
 lane_c:

@@ -6,7 +6,7 @@ from pathlib import Path
 from aviary.io.jsonl import read_jsonl
 from aviary.io.store import RunStore
 from aviary.lanes.b_fiction.books import BookConfig, chunk_text, load_book_text, strip_gutenberg
-from aviary.lanes.b_fiction.pipeline import LaneBConfig, run_lane_b
+from aviary.lanes.b_fiction.pipeline import LaneBConfig, run_lane_b, sample_books
 from aviary.render.serializer import ThoughtMode, render_conversation
 from aviary.schema.records import ConversationRecord
 from aviary.teacher.client import ChatRequest
@@ -205,3 +205,62 @@ def test_alias_resolution_and_speaker_gate(tmp_path):
         {k: "deepseek-v4-flash-20260610" for k in ("profiles", "scenes", "dialogue")},
     )
     assert n == 0  # unresolvable speaker drops the scene, never bends attribution
+
+
+def _books(n: int, holdout_every: int = 0) -> list[BookConfig]:
+    return [
+        BookConfig(
+            work_id=f"w{i:03d}",
+            path=BOOK,
+            author=f"author{i % 7}",
+            holdout=bool(holdout_every) and i % holdout_every == 0,
+        )
+        for i in range(n)
+    ]
+
+
+def test_sample_books_is_a_noop_without_a_cap():
+    books = _books(20, 5)
+    assert sample_books(books, 0) == books
+    assert sample_books(books, 999) == books
+
+
+def test_sample_books_caps_and_keeps_config_order():
+    books = _books(482, 10)
+    kept = sample_books(books, 40)
+    assert len(kept) == 40
+    order = [b.work_id for b in kept]
+    assert order == sorted(order), "sampled books must stay in config order"
+    assert len(set(order)) == 40, "no duplicates"
+
+
+def test_sample_books_preserves_the_holdout_ratio():
+    # 482 books, ~10% holdout -> a 40-book cap should keep ~4, and must never
+    # keep zero: the renderer hard-fails on holdout violations, so a pilot with
+    # no holdout family leaves the split rule untested.
+    books = _books(482, 10)
+    kept = sample_books(books, 40)
+    n_held = sum(1 for b in kept if b.holdout)
+    assert 1 <= n_held <= 8
+    assert any(not b.holdout for b in kept), "must keep train books too"
+
+
+def test_sample_books_is_deterministic():
+    books = _books(482, 10)
+    assert [b.work_id for b in sample_books(books, 40)] == [
+        b.work_id for b in sample_books(books, 40)
+    ]
+
+
+def test_sample_books_spreads_across_the_corpus():
+    # A stride, not a prefix: the last book must be reachable, or a capped pilot
+    # only ever sees the top of the config.
+    books = _books(482, 10)
+    kept = sample_books(books, 40)
+    assert int(kept[-1].work_id[1:]) > 400
+
+
+def test_sample_books_handles_a_single_stratum():
+    assert len(sample_books(_books(50), 10)) == 10  # no holdout books at all
+    allheld = [BookConfig(work_id=f"h{i}", path=BOOK, holdout=True) for i in range(50)]
+    assert len(sample_books(allheld, 10)) == 10
