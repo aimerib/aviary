@@ -156,6 +156,7 @@ task you were asked to do, stop and say so instead of working around it.
 | `src/aviary/lanes/`   | a_agentic (hermes), b_fiction (extraction), c_selfplay, d_personal |
 | `src/aviary/gates/`   | verify/judge/scrub/dedupe/spans/harmonize + pipeline     |
 | `src/aviary/render/`  | THE serializer, split, DPO pairing, render orchestration |
+| `src/aviary/external/`| Filtering third-party corpora for review; emits JSONL, never training text. Output: `$AVIARY_DATA_DIR/external/<name>/` |
 | `tasks/<family>/`     | Lane A task templates (YAML; schema: `tasks/TEMPLATE.task.yaml`) |
 | `verifiers/`          | Verifier plugins (pure functions) + `fixtures/`; laneb/, lanec/ structural verifiers |
 | `datagen/configs/`    | teachers roster, pricing, pilot/burn, lane configs; `targets/` build targets |

@@ -37,5 +37,15 @@ def manifest_path(run_id: str) -> Path:
     return runs_dir() / f"{run_id}.manifest.yaml"
 
 
+def external_dir(name: str = "") -> Path:
+    """Cleaned third-party corpora, kept beside run stores but never inside one.
+
+    A run store is the auditable output of OUR pipeline (raw -> gated -> rendered)
+    and ships as a unit; third-party data has different provenance and licensing,
+    so it lives in its own tree and is never swept into a run's ship."""
+    root = data_dir() / "external"
+    return root / name if name else root
+
+
 def configs_dir() -> Path:
     return REPO_ROOT / "datagen" / "configs"

@@ -46,6 +46,23 @@ stats run_id:
 ship run_id *args:
     uv run aviary ship {{run_id}} {{args}}
 
+# Filter a third-party RP corpus into $AVIARY_DATA_DIR/external/ for human review.
+# Never renders training text; output is JSONL + an auditable drop report.
+clean-rp-reasoning *args:
+    uv run --extra external aviary clean-rp-reasoning {{args}}
+
+# Render a cleaned external corpus into interleave-ready training text through
+# THE serializer (same chat template as our corpus). Strips <think> by default;
+# pass --against <run_id> to see the resulting corpus mix.
+prepare-interleave name *args:
+    uv run aviary prepare-interleave {{name}} {{args}}
+
+# Upload a cleaned external corpus to its own PRIVATE HF repo, with the filter
+# report and a generated dataset card. Refuses without report.json. Uploads the
+# whole tree, so cleaned.jsonl AND rendered/ artifacts go together.
+ship-external name *args:
+    uv run --extra ship aviary ship-external {{name}} {{args}}
+
 test:
     uv run pytest
 

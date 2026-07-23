@@ -30,6 +30,27 @@ def main(argv: list[str] | None = None) -> int:
                 "--dry-run", action="store_true", help="validate + list files, contact nothing"
             )
 
+    pi = sub.add_parser(
+        "prepare-interleave", help="render a cleaned external corpus through THE serializer"
+    )
+    pi.add_argument("name", help="corpus dir under $AVIARY_DATA_DIR/external/")
+    pi.add_argument(
+        "--with-thoughts", action="store_true", help="emit <think> blocks (default: strip them)"
+    )
+    pi.add_argument("--against", default=None, help="run_id to report the resulting mix against")
+
+    se = sub.add_parser("ship-external", help="upload a cleaned external corpus (private)")
+    se.add_argument("name", help="corpus dir under $AVIARY_DATA_DIR/external/")
+    se.add_argument("--repo", default=None, help="HF repo (default: aviary-external-<name>)")
+    se.add_argument("--dry-run", action="store_true", help="validate only, contact nothing")
+
+    cr = sub.add_parser("clean-rp-reasoning", help="filter aimeri/rp-reasoning-v2 for review")
+    cr.add_argument("--cap", type=int, default=0, help="downsample survivors to N (0 = all)")
+    cr.add_argument("--shards", type=int, default=5)
+    cr.add_argument("--seed", type=int, default=20260716)
+    cr.add_argument("--strict-minor", action="store_true", help="also drop school-age settings")
+    cr.add_argument("--drop-claude", action="store_true", help="drop rows naming Claude/Anthropic")
+
     args = parser.parse_args(argv)
 
     if args.cmd == "install":
@@ -76,6 +97,52 @@ def main(argv: list[str] | None = None) -> int:
             print(f"REFUSED TO SHIP: {e}", file=sys.stderr)
             return 2
         print(f"shipped {args.run_id} -> private hf dataset {repo}")
+        return 0
+    if args.cmd == "prepare-interleave":
+        import json
+
+        from aviary.external.interleave import prepare
+
+        report = prepare(
+            args.name, with_thoughts=args.with_thoughts, against_run=args.against
+        )
+        print(json.dumps(report, indent=2))
+        return 0
+    if args.cmd == "ship-external":
+        from aviary.ship import ShipError, plan_ship_external, ship_external
+
+        try:
+            if args.dry_run:
+                root, files, report = plan_ship_external(args.name)
+                repo = ship_external(args.name, args.repo, dry_run=True)
+                total = sum(f.stat().st_size for f in files)
+                print(f"would ship {len(files)} files ({total / 1e6:.1f} MB) from {root}")
+                print(f"  rows written: {report.get('written', '?')}")
+                print(f"  -> PRIVATE hf dataset: {repo}")
+                return 0
+            repo = ship_external(args.name, args.repo)
+        except ShipError as e:
+            print(f"REFUSED TO SHIP: {e}", file=sys.stderr)
+            return 2
+        print(f"shipped external corpus {args.name} -> private hf dataset {repo}")
+        return 0
+    if args.cmd == "clean-rp-reasoning":
+        import json
+
+        from aviary.external.rp_reasoning import clean
+        from aviary.paths import external_dir
+
+        out = external_dir("rp-reasoning-v2")
+        report = clean(
+            out,
+            shards=args.shards,
+            cap=args.cap,
+            seed=args.seed,
+            strict_minor=args.strict_minor,
+            drop_claude=args.drop_claude,
+        )
+        print(json.dumps(report, indent=2))
+        print(f"\nwritten to {out}")
         return 0
     return 1
 
