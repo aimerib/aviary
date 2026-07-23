@@ -11,23 +11,37 @@
 # is the entire reason lane D exists. This rubric asks a different question: is
 # this exchange worth learning conversational behaviour from?
 #
-# The dominant failure mode in a six-year message export is not badness, it is
-# EMPTINESS: "k", "on my way", "yup", grocery logistics. Those teach nothing and
-# cost judge budget, so `substance` carries the weight and a floor.
+# The failure mode in a six-year message export is EMPTINESS — but the line is
+# finer than it first looks, and an earlier version of this rubric drew it wrong.
+# Pure acknowledgement tokens ("k", "yup") teach nothing. But everyday logistics
+# carried with warmth and shorthand — "on my way, put the kettle on" — is NOT
+# empty: for a COMPANION, the mundane rhythm of two people who know each other is
+# a large part of what "known for fifteen years" actually sounds like. Training
+# only on the substantive exchanges yields a companion who met you exclusively at
+# your most interesting, which is subtly uncanny. So `substance` still carries the
+# most weight but NO LONGER floors (its hard min rejected 49% of real records,
+# most of them warm-mundane); the real gates are `safe_to_train` and
+# `no_impersonation`, and `relational_texture` is what separates warm-mundane from
+# hollow. (Owner-directed 2026-07-23.)
 name: sorcha_lane_d
 threshold: 3.2
 axes:
   substance:
     weight: 2.0
-    min: 3.0
+    # No hard floor, deliberately: warm-mundane is kept, only the hollow drops,
+    # and that distinction is carried by the weighted score + relational_texture,
+    # not by killing everything under a 3 on this one axis.
     description: >
-      Is there a real exchange here — something said, reacted to, developed?
+      Is there something here worth learning conversational behaviour from?
       5 = a conversation with content: a story, a decision, a feeling worked
-      through, a joke built together. 3 = ordinary but genuine back-and-forth.
-      1 = pure logistics or acknowledgement tokens ("k", "on my way", "sounds
-      good"), a scheduling ping, or a thread that never becomes a conversation.
-      Length is not substance: a four-message exchange can score 5 and a
-      forty-message coordination thread can score 1.
+      through, a joke built together. 3 = ordinary back-and-forth with a pulse to
+      it — everyday logistics is fine here IF it carries warmth, shorthand, or
+      personality; two people who know each other coordinating dinner is real data
+      for a companion. 1 = acknowledgement tokens and nothing else ("k", "sounds
+      good"), a thread that never becomes anything human. Do NOT score everyday
+      texture down to 1 for being everyday — reserve that for the genuinely empty,
+      and let relational_texture tell warm-mundane from hollow. Length is not
+      substance, in either direction.
   relational_texture:
     weight: 1.5
     description: >
