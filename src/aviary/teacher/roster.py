@@ -9,6 +9,7 @@ different vendor than generated it.
 
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 
 import yaml
@@ -59,17 +60,47 @@ class Roster(BaseModel):
     def assigned(self, lane_key: str, role: str) -> TeacherRoute:
         return self.route_for(self.assignments[lane_key][role])
 
-    def judge_for(self, generator_id: str) -> TeacherRoute:
-        """Cross-vendor judge: first judge-role teacher from a different vendor."""
+    def judge_candidates(self, generator_id: str) -> list[TeacherRoute]:
+        """Every judge-role teacher from a different vendor than the generator,
+        in declared order. Empty is a configuration error, not a fallback."""
         gen_provider = self.route_for(generator_id).provider
-        candidates = [self.route_for(i) for i in self.assignments["judge"].values()]
-        for c in candidates:
-            if c.provider != gen_provider:
-                return c
-        raise ValueError(
-            f"no cross-vendor judge available for provider {gen_provider!r}; "
-            "add a judge assignment from another vendor"
-        )
+        return [
+            r
+            for r in (self.route_for(i) for i in self.assignments["judge"].values())
+            if r.provider != gen_provider
+        ]
+
+    def judge_for(self, generator_id: str, key: str = "") -> TeacherRoute:
+        """Cross-vendor judge, load-balanced across every eligible vendor.
+
+        First-match-in-order made the declaration order a priority list: with
+        DeepSeek generating most records, GLM won every time, Kimi was structurally
+        unreachable, and one vendor's rate limit became the whole pipeline's
+        throughput ceiling (measured: 19 rate-limits per 130 calls). Spreading the
+        load is the point.
+
+        `key` picks the judge deterministically rather than randomly, for two
+        reasons. Reproducibility — a rerun must route identically or the cached
+        responses miss. And DPO integrity: callers pass a record's `sibling_group`,
+        so every sibling of one instance lands on the SAME judge. DPO gates on
+        `chosen.overall - rejected.overall`, and two vendors do not share a scoring
+        scale, so siblings split across judges would manufacture and destroy pairs
+        on vendor offset rather than on quality.
+
+        An empty key keeps the old first-match behaviour, so callers that have no
+        stable key are still deterministic.
+        """
+        candidates = self.judge_candidates(generator_id)
+        if not candidates:
+            raise ValueError(
+                f"no cross-vendor judge available for provider "
+                f"{self.route_for(generator_id).provider!r}; "
+                "add a judge assignment from another vendor"
+            )
+        if not key:
+            return candidates[0]
+        bucket = int(hashlib.sha256(key.encode()).hexdigest()[:8], 16) % len(candidates)
+        return candidates[bucket]
 
     @classmethod
     def load(cls, path: Path) -> Roster:

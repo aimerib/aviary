@@ -165,3 +165,89 @@ def test_prompt_set_hash_discipline():
         edited.assert_hash(ps1.hash)
     with pytest.raises(PromptSetError):
         ps1["missing"]
+
+
+# --- judge load balancing ----------------------------------------------------
+
+
+def _balanced_roster() -> Roster:
+    def t(tid, provider):
+        return {
+            "id": tid,
+            "provider": provider,
+            "route": "direct",
+            "base_url": "x",
+            "wire_model": "w",
+            "api_key_env": "K",
+        }
+
+    return Roster(
+        teachers=[
+            t("deepseek-v4-pro-20260717", "deepseek"),
+            t("glm-5.2-20260717", "zhipu"),
+            t("kimi-k3-20260717", "moonshot"),
+        ],
+        assignments={
+            "judge": {
+                "primary": "glm-5.2-20260717",
+                "secondary": "kimi-k3-20260717",
+                "tertiary": "deepseek-v4-pro-20260717",
+            }
+        },
+    )
+
+
+def test_judge_never_shares_a_vendor_with_the_generator():
+    roster = _balanced_roster()
+    for key in (f"rec-{i}" for i in range(50)):
+        judge = roster.judge_for("deepseek-v4-pro-20260717", key)
+        assert judge.provider != "deepseek"
+
+
+def test_judge_load_is_spread_not_first_match():
+    """Declaration order was acting as a priority list: DeepSeek generates most
+    records, so GLM won every time and Kimi was structurally unreachable — one
+    vendor's rate limit became the pipeline's throughput ceiling."""
+    roster = _balanced_roster()
+    picked = {roster.judge_for("deepseek-v4-pro-20260717", f"rec-{i}").provider for i in range(100)}
+    assert picked == {"zhipu", "moonshot"}  # both eligible vendors actually used
+
+    counts: dict[str, int] = {}
+    for i in range(400):
+        p = roster.judge_for("deepseek-v4-pro-20260717", f"rec-{i}").provider
+        counts[p] = counts.get(p, 0) + 1
+    assert min(counts.values()) / max(counts.values()) > 0.7  # roughly even
+
+
+def test_sibling_groups_share_one_judge():
+    """DPO gates on chosen.overall - rejected.overall. Two vendors do not share a
+    scoring scale, so siblings split across judges would create and destroy pairs
+    on vendor offset rather than on quality."""
+    roster = _balanced_roster()
+    for group in ("grp-a", "grp-b", "grp-c", "grp-d"):
+        chosen = roster.judge_for("deepseek-v4-pro-20260717", group)
+        for _ in range(5):
+            assert roster.judge_for("deepseek-v4-pro-20260717", group).id == chosen.id
+
+
+def test_judge_routing_is_reproducible_across_instances():
+    # A rerun must route identically or every cached judge response misses.
+    a, b = _balanced_roster(), _balanced_roster()
+    for i in range(30):
+        key = f"rec-{i}"
+        assert (
+            a.judge_for("deepseek-v4-pro-20260717", key).id
+            == b.judge_for("deepseek-v4-pro-20260717", key).id
+        )
+
+
+def test_empty_key_keeps_deterministic_first_match():
+    roster = _balanced_roster()
+    assert roster.judge_for("deepseek-v4-pro-20260717").id == "glm-5.2-20260717"
+
+
+def test_no_cross_vendor_judge_is_an_error_not_a_fallback():
+    roster = _balanced_roster()
+    roster.assignments["judge"] = {"primary": "deepseek-v4-pro-20260717"}
+    with pytest.raises(ValueError, match="no cross-vendor judge"):
+        roster.judge_for("deepseek-v4-pro-20260717", "k")

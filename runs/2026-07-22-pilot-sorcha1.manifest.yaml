@@ -1,0 +1,74 @@
+manifest_version: 2
+run_id: 2026-07-22-pilot-sorcha1
+kind: pilot
+status: running
+lanes:
+- a
+- b
+- c
+- d
+started: '2026-07-23T03:27:49Z'
+finished: ''
+provenance:
+  hermes_commit: v2026.7.7.2
+  task_bank_commit: 5ea54e4965803f25365be95d9ef2f8fdb16c00dd
+  datagen_config_hash: 97642c090f8792cb43168c04072d01b0282db7bbe9ff02a61bde06bf64b39a5b
+  gate_inputs_hash: 144f7c6e8a541c2cb9ba8a21fe39314f6e9e12cb772bf93a5250edbaf025158a
+  serializer_contract: v3
+  target: sorcha-v1
+  base_model: Qwen3.5-35B-A3B
+teachers:
+  roster:
+  - id: deepseek-v4-flash-20260717
+    provider: deepseek
+    route: direct
+  - id: deepseek-v4-pro-20260717
+    provider: deepseek
+    route: direct
+  - id: glm-5.2-20260717
+    provider: zhipu
+    route: direct
+  - id: kimi-k3-20260717
+    provider: moonshot
+    route: openrouter
+  assignments:
+    lane_a:
+      easy_mid: deepseek-v4-flash-20260717
+      hard: deepseek-v4-pro-20260717
+    lane_b:
+      profiles: deepseek-v4-flash-20260717
+      scenes: deepseek-v4-flash-20260717
+      dialogue: deepseek-v4-pro-20260717
+    lane_c:
+      user_sim: glm-5.2-20260717
+      character: deepseek-v4-pro-20260717
+    judge:
+      primary: glm-5.2-20260717
+      secondary: kimi-k3-20260717
+      tertiary: deepseek-v4-flash-20260717
+    harmonizer:
+      primary: deepseek-v4-flash-20260717
+counts:
+  instances: 0
+  rollouts: 0
+  verified: 0
+  judged: 0
+  rendered_train: 0
+  rendered_eval: 0
+  rendered_dpo_pairs: 0
+  rendered_nsp: 0
+keep_rates:
+  verify: 0.0
+  judge: 0.0
+  by_lane: {}
+spend_usd:
+  total: 0.0
+  by_teacher: {}
+  by_lane: {}
+prompt_set_hash: 2340a3d748160ba5c3e0c04e114d955ba69dcfe05de9e425b8def49f83b4fea2
+artifacts:
+  hf_dataset: ''
+  ship_exempt_lanes: []
+  eval_families_held_out: []
+  eval_param_seed: null
+notes: ''

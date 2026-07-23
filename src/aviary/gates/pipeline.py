@@ -185,7 +185,12 @@ def run_gates(
     def _judge(rec: ConversationRecord):
         rubric = _rubric_for(rec, rubric_by_lane, persona_speaker)
         if rec.provenance.teachers:
-            judge_model = roster.judge_for(_generator_id(rec)).id
+            # Key on the sibling group so DPO siblings share one judge: the pair
+            # gate compares chosen.overall - rejected.overall, and two vendors do
+            # not share a scoring scale. Records with no siblings key on their own
+            # id, which just spreads them evenly.
+            key = rec.provenance.sibling_group or rec.provenance.record_id
+            judge_model = roster.judge_for(_generator_id(rec), key).id
         else:
             # Human-origin records (lane D personal streams) have no generating
             # vendor, so every judge is cross-vendor by definition — use primary.

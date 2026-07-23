@@ -63,9 +63,16 @@ assignments:
     scenes: deepseek-v4-flash-20260717
     dialogue: deepseek-v4-pro-20260717  # A/B outcome 2026-07-17: kimi too costly/throttled, glm dropped long scenes; pro = reliable + cheap (idiolect overlaps lane A, accepted)
   lane_c:
-    user_sim: glm-5.2-20260717        # user side ≠ character side, by design
+    # Moved off GLM 2026-07-22. user side ≠ character side is still satisfied
+    # (moonshot vs deepseek), but the real reason is load: z.ai served BOTH the
+    # user-sim and the judge, and measured 19 rate-limits per 130 calls in the
+    # first sorcha pilot. Lane C generation and judging were queueing behind each
+    # other on one quota. Kimi rides OpenRouter, a different bucket entirely.
+    user_sim: kimi-k3-20260717
     character: deepseek-v4-pro-20260717
   judge:
+    # Order is no longer priority — judge_for load-balances across every eligible
+    # cross-vendor judge, keyed so a sibling group always lands on one judge.
     primary: glm-5.2-20260717
     secondary: kimi-k3-20260717
     tertiary: deepseek-v4-flash-20260717
