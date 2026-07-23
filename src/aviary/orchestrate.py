@@ -247,10 +247,36 @@ def find_manifest(run_id: str) -> RunManifest:
     return RunManifest.load(manifest_path(run_id))
 
 
+def _lane_subset(config_lanes: list[str]) -> list[str]:
+    """Optionally narrow the run to AVIARY_LANES (comma-separated), for cheap
+    validation pilots that only touch the lanes a change affects — e.g. a persona
+    edit needs c+d re-measured, not another 810-rollout lane A regen.
+
+    INTERSECTION only: a lane not already declared by the target is silently
+    dropped, never added. The target's lane set is a contract (target-bounded
+    renders, lane D exemptions), and an env var must not be able to widen it. A
+    lane named in AVIARY_LANES but absent from the target is a config error worth
+    shouting about rather than honouring."""
+    raw = os.environ.get("AVIARY_LANES", "").strip()
+    if not raw:
+        return config_lanes
+    want = [x.strip() for x in raw.split(",") if x.strip()]
+    unknown = [x for x in want if x not in config_lanes]
+    if unknown:
+        raise ValueError(
+            f"AVIARY_LANES={raw!r} names lane(s) {unknown} not in this target's lane set "
+            f"{config_lanes}; an env override may narrow the run, never widen it"
+        )
+    kept = [lane for lane in config_lanes if lane in want]  # preserve config order
+    log.info("AVIARY_LANES: running %s of %s", kept, config_lanes)
+    return kept
+
+
 def cmd_generate(kind: str) -> str:
     """pilot/burn: run every enabled lane's generation, write the manifest."""
     target = Target.resolve()
     cfg = RunConfig.for_target(kind, target)
+    cfg.lanes = _lane_subset(cfg.lanes)
     roster = Roster.load(configs_dir() / "teachers.yaml")
     prompts = load_prompt_set(target)
     # Optional label distinguishes same-day runs of the same kind — e.g. A/B teacher
