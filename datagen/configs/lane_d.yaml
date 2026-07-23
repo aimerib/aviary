@@ -1,18 +1,24 @@
 # Lane D — personal streams (Sorcha builds only; see docs/lane_d_timing.md).
-# DISABLED by default: no run config lists lane d, and this scaffold declares no
-# sources. Enable by adding sources here and `d` to a run config's lanes, under
-# AVIARY_TARGET=sorcha-v1.
+# Enabled 2026-07-22 for the sorcha-v1 target. Lane D is still off for every other
+# target: only a run config listing `d` under AVIARY_TARGET=sorcha-v1 reads it.
 #
 # Sources are LOCAL paths, never committed (lane B book convention). The
-# radioactive-data rule applies to this file too: paths are fine, content and
-# real names are not.
-#
-# sources:
-#   - id: chat                       # family prefix: chat/<YYYY-MM>
-#     parser: generic_jsonl          # see lanes/d_personal/adapter.py for the format
-#     path: /local/exports/chat.jsonl
-#     assistant_sender: <owner handle in the export>
-sources: []
+# radioactive-data rule applies to this file too: paths are fine, content and real
+# names are not. That is why thread selection below is a THRESHOLD and not an
+# include/exclude list — naming the threads would put real people in git.
+
+sources:
+  - id: im                                    # family prefix: im/<YYYY-MM>
+    parser: imessage                          # imessage-exporter JSONL, one file per thread
+    path: /Users/aimeri/imessage_export
+    # The export labels the owner "Me". owner_sender (not assistant_sender) puts the
+    # owner in the USER seat: the model is never trained to produce his turns, which
+    # is SOUL.md's "never impersonates the user" enforced in the data itself. The
+    # other party becomes the assistant side.
+    owner_sender: "Me"
+    # Threads thinner than this are one-off logistics, not relationships: drops 39
+    # of 57 threads and 4% of records. A count, not a name list, on purpose.
+    min_thread_messages: 100
 
 # Silence longer than this splits a stream into separate records; the record is
 # the session, and holdout is time-blocked because temporal adjacency is the
@@ -21,9 +27,26 @@ session_gap_minutes: 240
 max_messages_per_record: 200
 min_messages_per_record: 2
 
-# Whole months held out per source, e.g. [chat/2026-05]. Flows through the
-# family-level split rule unchanged.
-holdout_families: []
+# A one-sided run is a monologue, and usually an export artifact rather than a real
+# exchange (this export has a known window where outgoing messages are blank).
+require_both_roles: true
+
+# Shared links keep scheme://host/path only. This export contains a live 1Password
+# share link whose fragment IS the credential; scrub looks for PII, not for
+# capability URLs.
+keep_url_query: false
+
+# Whole months held out, one per calendar year — deterministic spread across the
+# 2020-05..2026-07 span rather than a cherry-picked tail, 9.3% of records. Flows
+# through the family-level split rule unchanged.
+holdout_families:
+  - im/2020-08
+  - im/2021-08
+  - im/2022-03
+  - im/2023-01
+  - im/2024-12
+  - im/2025-12
+  - im/2026-02
 
 # LOCAL pseudonymization rules (PseudonymRules yaml: preserve + name_patterns).
 # Personal by nature -> lives outside the repo; unset means no pseudonymization

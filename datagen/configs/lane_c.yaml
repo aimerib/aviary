@@ -1,7 +1,12 @@
-# Lane C inline seeds are OLIVIA simple-chats (minority slice). RP character seeds
+# Lane C inline seeds are PERSONA simple-chats (minority slice). RP character seeds
 # come from a DESIGNATED lane B run below — an RP-appropriate corpus (AO3), never the
 # published-fiction prose corpus (novel characters are off-distribution for RP).
 # Books feed lane B prose entropy; AO3 feeds lane B prose AND the lane C RP seeds.
+#
+# Seed text is PERSONA-NEUTRAL: write `{persona}`, never a name. The build target
+# substitutes its own persona_speaker at load. A hardcoded name lands in both the
+# user-sim prompt and the character card, which is exactly how Olivia would end up
+# inside a Sorcha corpus. (Renders are target-bounded to catch it; don't rely on that.)
 
 # The lane B run whose characters seed RP self-play. Update to your AO3 lane B run.
 # Unset -> fall back to this run's own lane B output (combined [b,c] run).
@@ -22,13 +27,13 @@ seeds:
   - seed_id: errand-trip-plan
     family: errands
     scenario: >
-      The user is planning a weekend trip and wants Olivia to think it through with them.
+      The user is planning a weekend trip and wants {persona} to think it through with them.
     user_goal: leave with a concrete plan
   - seed_id: holdout-confession
     family: confession
     holdout: true
     scenario: >
-      The user has been putting off telling Olivia something awkward and finally does.
+      The user has been putting off telling {persona} something awkward and finally does.
     user_goal: get it off their chest
 
 driver:

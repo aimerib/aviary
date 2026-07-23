@@ -59,7 +59,11 @@ def _roster() -> Roster:
 
 def test_sorcha_target_synthetic_run_end_to_end(tmp_path):
     target = Target.load("sorcha-v1")
-    assert target.lanes == ["b", "d"]  # nothing Olivia-voiced may enter this render
+    # Lanes a/c joined 2026-07-22; the invariant was never "only b+d", it is that
+    # nothing Olivia-voiced may enter this render.
+    assert target.lanes == ["a", "b", "c", "d"]
+    assert target.persona == "sorcha" and target.persona_speaker == "Sorcha"
+    assert target.harmonize == {}  # her voice comes from generation, not paraphrase
 
     # --- adapter: synthetic export with a march (train) and may (holdout) month ---
     export = tmp_path / "export.jsonl"

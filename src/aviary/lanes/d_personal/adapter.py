@@ -21,12 +21,13 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterator
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Protocol
+from urllib.parse import urlsplit, urlunsplit
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from aviary.schema.records import (
     ConversationRecord,
@@ -40,11 +41,38 @@ from aviary.schema.records import (
 class SourceConfig(BaseModel):
     id: str  # source name; becomes the family prefix (`<id>/<YYYY-MM>`)
     parser: str  # key into PARSERS
-    path: Path  # local, never committed
-    # Sender whose messages become assistant turns (the voice being modeled);
-    # every other sender maps to user turns. Speaker names are preserved on both
-    # sides — the scrub stage owns pseudonymization, not the adapter.
-    assistant_sender: str
+    path: Path  # local, never committed; a file or (imessage) a directory of threads
+
+    # Exactly one of these decides the role mapping. Speaker names are preserved on
+    # both sides — the scrub stage owns pseudonymization, not the adapter.
+    #
+    # `assistant_sender`: that sender becomes assistant turns (the voice being
+    #   modeled), everyone else user turns.
+    # `owner_sender`: that sender becomes USER turns, everyone else assistant.
+    #   This is the mapping a companion build wants: the owner sits where the owner
+    #   actually sits at inference, and the model is never trained to produce the
+    #   owner's own turns — SOUL.md's hard line ("never impersonates the user or
+    #   writes their turns") is a training-data property before it is a rubric axis.
+    assistant_sender: str = ""
+    owner_sender: str = ""
+
+    # imessage only: which threads to read from a directory export.
+    include_threads: list[str] = Field(default_factory=list)  # file stems; empty = all
+    exclude_threads: list[str] = Field(default_factory=list)
+    min_thread_messages: int = 0  # skip threads thinner than this before sessionizing
+
+    @model_validator(mode="after")
+    def _exactly_one_role_anchor(self) -> SourceConfig:
+        if bool(self.assistant_sender) == bool(self.owner_sender):
+            raise ValueError(
+                f"source {self.id!r}: set exactly one of assistant_sender / owner_sender"
+            )
+        return self
+
+    def role_for(self, sender: str) -> str:
+        if self.assistant_sender:
+            return "assistant" if sender == self.assistant_sender else "user"
+        return "user" if sender == self.owner_sender else "assistant"
 
 
 class LaneDConfig(BaseModel):
@@ -54,6 +82,15 @@ class LaneDConfig(BaseModel):
     session_gap_minutes: int = 240
     max_messages_per_record: int = 200
     min_messages_per_record: int = 2
+    # A record with only one side is a monologue, not a conversation — and a
+    # one-sided run is usually an export artifact (blank outgoing windows), not a
+    # real exchange. Dropped rather than trained on.
+    require_both_roles: bool = True
+    # Keep only the scheme://host/path of shared links. Message exports carry live
+    # secrets in query strings and fragments — the raw corpus here contains a
+    # 1Password share link whose fragment IS the credential. Scrub runs later and
+    # looks for PII, not for capability URLs; this is the cheaper guarantee.
+    keep_url_query: bool = False
     holdout_families: list[str] = Field(default_factory=list)  # e.g. "chat/2026-05"
 
     @classmethod
@@ -106,46 +143,52 @@ class GenericJsonlParser:
 
         for conv_id, msgs in streams.items():
             for seg_idx, segment in enumerate(_sessionize(msgs, cfg)):
-                if len(segment) < cfg.min_messages_per_record:
-                    continue
-                yield self._record(source, cfg, run_id, conv_id, seg_idx, segment)
+                record = _record_from_segment(source, cfg, run_id, conv_id, seg_idx, segment)
+                if record is not None:
+                    yield record
 
-    def _record(
-        self,
-        source: SourceConfig,
-        cfg: LaneDConfig,
-        run_id: str,
-        conv_id: str,
-        seg_idx: int,
-        segment: list[dict],
-    ) -> ConversationRecord:
-        month = _parse_ts(segment[0]["ts"]).strftime("%Y-%m")
-        family = f"{source.id}/{month}"
-        ref = SourceRef(
-            kind="personal_stream",
-            detail={"source": source.id, "conversation_id": conv_id, "segment": seg_idx},
+
+def _record_from_segment(
+    source: SourceConfig,
+    cfg: LaneDConfig,
+    run_id: str,
+    conv_id: str,
+    seg_idx: int,
+    segment: list[dict],
+) -> ConversationRecord | None:
+    """One sessionized segment -> one record, or None if it isn't a conversation."""
+    if len(segment) < cfg.min_messages_per_record:
+        return None
+    messages = [
+        Message(
+            role=source.role_for(m["sender"]),
+            speaker=m["sender"],
+            content=m["text"],
+            ts=m["ts"],
         )
-        messages = [
-            Message(
-                role="assistant" if m["sender"] == source.assistant_sender else "user",
-                speaker=m["sender"],
-                content=m["text"],
-                ts=m["ts"],
-            )
-            for m in segment
-        ]
-        return ConversationRecord(
-            system="",  # persona attachment is a build-target concern, not the adapter's
-            messages=messages,
-            provenance=Provenance(
-                record_id=make_record_id("d", run_id, ref),
-                lane="d",
-                run_id=run_id,
-                family=family,
-                holdout=family in cfg.holdout_families,
-                source=ref,
-            ),
-        )
+        for m in segment
+    ]
+    if cfg.require_both_roles and len({m.role for m in messages}) < 2:
+        return None
+
+    month = _parse_ts(segment[0]["ts"]).strftime("%Y-%m")
+    family = f"{source.id}/{month}"
+    ref = SourceRef(
+        kind="personal_stream",
+        detail={"source": source.id, "conversation_id": conv_id, "segment": seg_idx},
+    )
+    return ConversationRecord(
+        system="",  # persona attachment is a build-target concern, not the adapter's
+        messages=messages,
+        provenance=Provenance(
+            record_id=make_record_id("d", run_id, ref),
+            lane="d",
+            run_id=run_id,
+            family=family,
+            holdout=family in cfg.holdout_families,
+            source=ref,
+        ),
+    )
 
 
 def _sessionize(msgs: list[dict], cfg: LaneDConfig) -> Iterator[list[dict]]:
@@ -159,6 +202,103 @@ def _sessionize(msgs: list[dict], cfg: LaneDConfig) -> Iterator[list[dict]]:
         segment.append(m)
     if segment:
         yield segment
+
+
+APPLE_EPOCH = datetime(2001, 1, 1, tzinfo=UTC)
+OBJECT_REPLACEMENT = "￼"  # Apple's inline-attachment placeholder inside text
+
+
+def _apple_ts(nanos: int) -> datetime:
+    """imessage-exporter timestamps are nanoseconds since the Core Data epoch."""
+    return APPLE_EPOCH + timedelta(seconds=nanos / 1_000_000_000)
+
+
+def _clean_url(raw: str, keep_query: bool) -> str:
+    if keep_query:
+        return raw
+    split = urlsplit(raw)
+    return urlunsplit((split.scheme, split.netloc, split.path, "", ""))
+
+
+def _part_text(part: dict, keep_query: bool) -> str:
+    """Text carried by one message part, '' if the part is not textual.
+
+    Attachments ('segments') carry no text and are deliberately not stubbed with a
+    marker: a placeholder would teach the model to emit '[image]'.
+    """
+    kind = part.get("type")
+    if kind == "text":
+        return (part.get("text") or "").replace(OBJECT_REPLACEMENT, "").strip()
+    if kind == "edited":
+        # The last revision is what the sender meant; earlier ones are keystrokes.
+        history = part.get("history") or []
+        return (history[-1].get("text") or "").strip() if history else ""
+    if kind == "url":
+        url = part.get("url") or ""
+        return _clean_url(url, keep_query) if url else ""
+    return ""
+
+
+class IMessageParser:
+    """`imessage-exporter` JSONL. One file per thread, one message per line:
+
+        {"guid": …, "timestamp": 612011036240000000,   # ns since 2001-01-01
+         "sender": "Me" | "<display name>", "is_from_me": bool,
+         "service": "iMessage" | "SMS" | "RCS", "type": "message" | "announcement",
+         "parts": [{"type": "text", "text": …} | {"type": "segments", …} | …]}
+
+    `source.path` is the export DIRECTORY; each `<thread>.jsonl` becomes one
+    conversation stream, sessionized and role-mapped like every other lane D source.
+    Announcements (renames, joins) are skipped, as are messages that reduce to no
+    text at all — a bare attachment or a tapback is not a turn.
+    """
+
+    def parse(
+        self, source: SourceConfig, cfg: LaneDConfig, run_id: str
+    ) -> Iterator[ConversationRecord]:
+        for thread, msgs in self._threads(source, cfg):
+            for seg_idx, segment in enumerate(_sessionize(msgs, cfg)):
+                record = _record_from_segment(source, cfg, run_id, thread, seg_idx, segment)
+                if record is not None:
+                    yield record
+
+    def _threads(self, source: SourceConfig, cfg: LaneDConfig) -> Iterator[tuple[str, list[dict]]]:
+        paths = sorted(source.path.glob("*.jsonl")) if source.path.is_dir() else [source.path]
+        include, exclude = set(source.include_threads), set(source.exclude_threads)
+        for path in paths:
+            thread = path.stem
+            if (include and thread not in include) or thread in exclude:
+                continue
+            msgs = list(self._messages(path, cfg))
+            if len(msgs) < source.min_thread_messages:
+                continue
+            if msgs:
+                yield thread, msgs
+
+    def _messages(self, path: Path, cfg: LaneDConfig) -> Iterator[dict]:
+        with path.open(encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                raw = json.loads(line)
+                if raw.get("type") != "message":
+                    continue
+                sender, ts = raw.get("sender"), raw.get("timestamp")
+                if not sender or ts is None:
+                    continue
+                text = "\n".join(
+                    t
+                    for t in (
+                        _part_text(p, cfg.keep_url_query)
+                        for p in (raw.get("parts") or [])
+                        if isinstance(p, dict)
+                    )
+                    if t
+                )
+                if not text:
+                    continue
+                yield {"ts": _apple_ts(ts).isoformat(), "sender": sender, "text": text}
 
 
 class _StubParser:
@@ -179,7 +319,7 @@ class _StubParser:
 
 PARSERS: dict[str, SourceParser] = {
     "generic_jsonl": GenericJsonlParser(),
-    "imessage": _StubParser("imessage"),
+    "imessage": IMessageParser(),
     "discord": _StubParser("discord"),
     "journal": _StubParser("journal"),
 }

@@ -1,18 +1,31 @@
 # Sorcha — private single-user companion. Same base as flash, disjoint persona.
 # DISABLED/non-default: nothing selects this target unless AVIARY_TARGET=sorcha-v1.
 # Persona content CO-AUTHORED with the owner 2026-07-19 (see datagen/persona/
-# sorcha/); laned.rubric.yaml still placeholder. Lanes a/c join after Sorcha-persona
-# datagen runs exist (post-v2.2 spend); lane D ships nowhere (manifest records it).
+# sorcha/); laned.rubric.yaml still placeholder. Lane D ships nowhere (manifest
+# records it).
+#
+# Lanes a/c JOINED 2026-07-22 (owner-directed). The earlier [b, d] was a spend
+# deferral, not a principle: lanes a and c generate NEW Sorcha-voiced rollouts and
+# were postponed past v2.2, while lane B (persona-neutral extraction) and lane D
+# (human-origin, no teacher calls) were free to run first. Both are now in scope.
+# Lane A is persona-clean by construction — only a task's `prompt` field reaches
+# the teacher, and no task prompt names a persona; the voice comes from the
+# target's system prompt at ingest. Lane C inline seeds are persona-neutral
+# (`{persona}` substitution in lanes/c_selfplay/seeds.py).
 name: sorcha-v1
 base_model: Qwen3.5-35B-A3B
 persona: sorcha
 persona_speaker: Sorcha
 judge_voice_axis: sorcha_voice
-lanes: [b, d]
+lanes: [a, b, c, d]
 quality_rubric: datagen/persona/sorcha/quality.rubric.yaml
 character_rubric: gates/judge/character_rp.rubric.yaml
 harmonize_prompt: datagen/persona/sorcha/paraphrase_prompt.md
 harmonize: {}    # permanent (2026-07-19 session): lane B is contract-protected,
-                 # lane D is the owner's real rhythm — never paraphrased into Sorcha
+                 # lane D is the owner's real rhythm — never paraphrased into Sorcha.
+                 # Still {} with a/c in scope: paraphrase_prompt.md is a deliberate
+                 # placeholder that says Sorcha's voice enters through lane A/C
+                 # GENERATION, not paraphrase, and that enabling it requires
+                 # authoring that prompt WITH the owner. Not a unilateral call.
 lane_rubrics:
   d: datagen/persona/sorcha/laned.rubric.yaml

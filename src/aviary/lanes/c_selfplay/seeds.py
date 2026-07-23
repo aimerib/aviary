@@ -27,22 +27,37 @@ class Seed(BaseModel):
     user_goal: str = ""  # what the simulated user wants out of the chat
 
 
+PERSONA_PLACEHOLDER = "{persona}"
+
+
 def load_inline_seeds(path: Path, persona_system: str, persona_speaker: str) -> list[Seed]:
     """Inline seeds are PERSONA simple-chats: the assistant side plays the build
     target's persona. RP records must never carry this speaker — the harmonizer
-    keys off it to know whose voice it may rewrite."""
+    keys off it to know whose voice it may rewrite.
+
+    Seed text is persona-NEUTRAL: it refers to the assistant as `{persona}` and
+    that token is substituted with the build target's speaker here. A seed that
+    hardcodes a name would put that name in the user-sim's prompt and in the
+    character card, which is how Olivia would end up inside a Sorcha corpus —
+    the one thing the sorcha target exists to prevent.
+    """
     raw = yaml.safe_load(path.read_text()) or {}
+
+    def fill(text: str) -> str:
+        return text.replace(PERSONA_PLACEHOLDER, persona_speaker)
+
     seeds = []
     for s in raw.get("seeds", []):
+        scenario = fill(s["scenario"])
         seeds.append(
             Seed(
                 seed_id=s["seed_id"],
                 family=s["family"],
                 holdout=s.get("holdout", False),
                 character_name=persona_speaker,
-                card=f"{persona_system}\n\n## Scenario\n{s['scenario']}",
-                scenario=s["scenario"],
-                user_goal=s.get("user_goal", ""),
+                card=f"{persona_system}\n\n## Scenario\n{scenario}",
+                scenario=scenario,
+                user_goal=fill(s.get("user_goal", "")),
             )
         )
     return seeds
