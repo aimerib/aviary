@@ -75,7 +75,7 @@ class HttpTeacherClient:
 
     def complete(self, req: ChatRequest, lane: str = "") -> ChatResponse:
         if self.cache is not None:
-            hit = self.cache.get(req)
+            hit = self.cache.get(req, self.roster.route_for(req.model))
             if hit is not None:
                 return hit.model_copy(update={"cached": True})
 
@@ -84,7 +84,7 @@ class HttpTeacherClient:
         if self.ledger is not None:
             self.ledger.add(req.model, lane, resp.usage.input_tokens, resp.usage.output_tokens)
         if self.cache is not None:
-            self.cache.put(req, resp)
+            self.cache.put(req, resp, self.roster.route_for(req.model))
         return resp
 
     def _call_with_retry(self, route: TeacherRoute, req: ChatRequest) -> ChatResponse:

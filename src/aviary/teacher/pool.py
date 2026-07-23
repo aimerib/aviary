@@ -23,9 +23,7 @@ T = TypeVar("T")
 
 
 class TeacherPool:
-    def __init__(
-        self, client: TeacherClient, roster: Roster | None = None, max_workers: int = 16
-    ):
+    def __init__(self, client: TeacherClient, roster: Roster | None = None, max_workers: int = 16):
         self.client = client
         self.roster = roster
         self.max_workers = max_workers

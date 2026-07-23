@@ -251,3 +251,23 @@ def _scene_record():
             record_id="r1", lane="b", run_id="seedrun", family="work-1", source=ref
         ),
     )
+
+
+def test_every_reasoning_teacher_has_a_thinking_off_control():
+    """Scar tissue: Kimi K3 was assigned to the lane C user-sim without a
+    thinking-off control. It spent its whole 300-token budget reasoning, returned
+    empty content, and 74% of lane C records came out with ZERO messages — while
+    the run exited 0 with a full-looking jsonl.
+
+    Any model used where `reasoning_off` is requested must carry a control, or the
+    flag silently merges an empty dict and does nothing."""
+    from aviary.paths import configs_dir
+    from aviary.teacher.roster import Roster
+
+    roster = Roster.load(configs_dir() / "teachers.yaml")
+    # Lane C sets reasoning_off=True on BOTH sides of the self-play loop.
+    for role in ("user_sim", "character"):
+        route = roster.assigned("lane_c", role)
+        assert route.json_extra_body, (
+            f"lane_c.{role} ({route.id}) has no json_extra_body, so reasoning_off is a no-op for it"
+        )

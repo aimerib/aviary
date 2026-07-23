@@ -15,10 +15,30 @@ from aviary.hashing import canonical_json, sha256_text
 
 if TYPE_CHECKING:
     from aviary.teacher.client import ChatRequest, ChatResponse
+    from aviary.teacher.roster import TeacherRoute
 
 
-def request_key(req: ChatRequest) -> str:
-    return sha256_text(canonical_json(req.model_dump(mode="json")))
+def route_fingerprint(route: TeacherRoute | None) -> dict:
+    """The parts of a route that change the bytes actually sent to the provider.
+
+    Not cosmetic: `json_extra_body` carries the thinking-off controls, and it lives
+    on the ROUTE, not the request. Without it in the key, turning Kimi's reasoning
+    off changed nothing — the 100 empty responses recorded before the fix were
+    replayed verbatim, so the run failed identically and looked like the fix had
+    not worked. A cache keyed on less than the request it replays is a cache that
+    lies.
+    """
+    if route is None:
+        return {}
+    return {"wire_model": route.wire_model, "json_extra_body": route.json_extra_body}
+
+
+def request_key(req: ChatRequest, route: TeacherRoute | None = None) -> str:
+    payload = req.model_dump(mode="json")
+    fingerprint = route_fingerprint(route)
+    if fingerprint:
+        payload = {**payload, "_route": fingerprint}
+    return sha256_text(canonical_json(payload))
 
 
 class ResponseCache:
@@ -29,10 +49,10 @@ class ResponseCache:
     def _path(self, key: str) -> Path:
         return self.root / key[:2] / f"{key}.json"
 
-    def get(self, req: ChatRequest) -> ChatResponse | None:
+    def get(self, req: ChatRequest, route: TeacherRoute | None = None) -> ChatResponse | None:
         from aviary.teacher.client import ChatResponse
 
-        path = self._path(request_key(req))
+        path = self._path(request_key(req, route))
         if not path.exists():
             return None
         try:
@@ -43,8 +63,14 @@ class ResponseCache:
             # below existed, or a partial disk) is a cache MISS, not a fatal error.
             return None
 
-    def put(self, req: ChatRequest, resp: ChatResponse) -> None:
-        key = request_key(req)
+    def put(self, req: ChatRequest, resp: ChatResponse, route: TeacherRoute | None = None) -> None:
+        # An empty completion is a FAILURE, not a result. Caching one freezes the
+        # failure permanently and invisibly: 3,991 empty responses (6.2% of the
+        # cache) were being replayed on every rerun, 3,598 of them lane B scenes
+        # that could therefore never succeed no matter how often the run repeated.
+        if not (resp.text or "").strip():
+            return
+        key = request_key(req, route)
         path = self._path(key)
         path.parent.mkdir(parents=True, exist_ok=True)
         data = json.dumps(

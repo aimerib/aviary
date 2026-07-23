@@ -57,6 +57,13 @@ teachers:
     wire_model: moonshotai/kimi-k3
     api_key_env: OPENROUTER_API_KEY
     max_concurrency: 12
+    # Kimi K3 reasons by default and OpenRouter bills/consumes those tokens against
+    # max_tokens. Probed live 2026-07-23: an unconstrained call spends ~326 tokens
+    # reasoning, so lane C's 300-token user-sim budget returned EMPTY content and
+    # 74% of lane C records came out with zero messages. `reasoning.enabled=false`
+    # returns real content with 0 reasoning tokens. Same class of failure as
+    # DeepSeek's thinking-on empty-content problem above.
+    json_extra_body: {reasoning: {enabled: false}}
 
 assignments:
   lane_a:

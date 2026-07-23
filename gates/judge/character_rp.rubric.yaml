@@ -12,8 +12,11 @@ axes:
     description: >
       Every turn stays true to the character's established persona, voice, and
       knowledge from the card — never drifts into a generic assistant, a different
-      character, or an "Olivia" register. 5 = unmistakably this character; 1 =
-      could be anyone / breaks character.
+      character, or the BUILD TARGET'S OWN assistant persona bleeding into a
+      roleplay character. (Named "Olivia" here until 2026-07-23; this rubric is
+      shared by every target, and naming one target's persona made it read as
+      nonsense under the other.) 5 = unmistakably this character; 1 = could be
+      anyone / breaks character.
   coherence:
     weight: 1.0
     description: >

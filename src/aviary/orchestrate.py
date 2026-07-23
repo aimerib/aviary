@@ -429,11 +429,33 @@ def _generate_lane_c(cfg, store, roster, client, prompts, target: Target) -> int
     )
     results = pool.run([lambda j=job: _one(j) for job in jobs])
     records = []
+    empty = 0
     for job, res in zip(jobs, results, strict=True):
         if isinstance(res, Exception):
             log.warning("lane C conversation (seed %s) failed: %s", job[0].seed_id, res)
+        elif not res.messages:
+            # A conversation that produced no turns is not a record. This is almost
+            # always a teacher misconfiguration rather than a hard failure — a
+            # reasoning model with no thinking-off control spends its whole budget
+            # reasoning and returns empty content, so the loop breaks on turn one.
+            empty += 1
         else:
             records.append(res)
+
+    if empty:
+        share = empty / len(jobs)
+        # Loud on purpose. 74% of lane C came out empty once and the run still
+        # exited 0 with a full-looking jsonl: the same shape as the keyless-gate
+        # corruption. A silent majority-empty lane must never look like success.
+        log.log(
+            logging.ERROR if share > 0.2 else logging.WARNING,
+            "lane C: %d/%d conversations produced NO turns (%.0f%%). Above ~20%% this "
+            "is a teacher config problem, not bad luck — check that the user_sim "
+            "model has a thinking-off control in teachers.yaml.",
+            empty,
+            len(jobs),
+            share * 100,
+        )
     return write_jsonl(store.raw("c"), records)
 
 

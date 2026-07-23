@@ -251,3 +251,65 @@ def test_no_cross_vendor_judge_is_an_error_not_a_fallback():
     roster.assignments["judge"] = {"primary": "deepseek-v4-pro-20260717"}
     with pytest.raises(ValueError, match="no cross-vendor judge"):
         roster.judge_for("deepseek-v4-pro-20260717", "k")
+
+
+# --- cache correctness -------------------------------------------------------
+
+
+def _route(wire="w", extra=None):
+    from aviary.teacher.roster import TeacherRoute
+
+    return TeacherRoute(
+        id="deepseek-v4-flash-20260717",
+        provider="deepseek",
+        route="direct",
+        base_url="x",
+        wire_model=wire,
+        api_key_env="K",
+        json_extra_body=extra or {},
+    )
+
+
+def _req():
+    return ChatRequest(
+        model="deepseek-v4-flash-20260717", system="s", messages=[{"role": "user", "content": "hi"}]
+    )
+
+
+def test_cache_key_covers_route_level_request_modifiers():
+    """json_extra_body carries the thinking-off controls and lives on the ROUTE,
+    not the request. Keyed on the request alone, turning Kimi's reasoning off
+    changed nothing: 100 empty responses recorded before the fix replayed verbatim
+    and the run failed identically, looking like the fix had not worked."""
+    from aviary.teacher.cache import request_key
+
+    plain = request_key(_req(), _route())
+    reasoning_off = request_key(_req(), _route(extra={"reasoning": {"enabled": False}}))
+    other_wire = request_key(_req(), _route(wire="different"))
+    assert plain != reasoning_off
+    assert plain != other_wire
+
+
+def test_cache_key_is_stable_for_an_unchanged_route():
+    from aviary.teacher.cache import request_key
+
+    extra = {"reasoning": {"enabled": False}}
+    assert request_key(_req(), _route(extra=extra)) == request_key(_req(), _route(extra=extra))
+
+
+def test_empty_responses_are_never_cached(tmp_path):
+    """An empty completion is a failure, not a result. Caching one freezes the
+    failure: 6.2% of the cache was empty replies, 3,598 of them lane B scenes that
+    could never succeed no matter how many times the run repeated."""
+    from aviary.teacher.cache import ResponseCache
+    from aviary.teacher.client import ChatResponse
+
+    cache = ResponseCache(tmp_path)
+    route = _route()
+    for blank in ("", "   ", "\n\n"):
+        cache.put(_req(), ChatResponse(text=blank, model="m"), route)
+        assert cache.get(_req(), route) is None
+
+    cache.put(_req(), ChatResponse(text="real content", model="m"), route)
+    hit = cache.get(_req(), route)
+    assert hit is not None and hit.text == "real content"
