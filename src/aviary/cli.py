@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
+from pathlib import Path
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -55,6 +56,15 @@ def main(argv: list[str] | None = None) -> int:
     cr.add_argument("--seed", type=int, default=20260716)
     cr.add_argument("--strict-minor", action="store_true", help="also drop school-age settings")
     cr.add_argument("--drop-claude", action="store_true", help="drop rows naming Claude/Anthropic")
+
+    fb = sub.add_parser("fetch-books", help="download public-domain fiction for lane B")
+    fb.add_argument("source", choices=["gutenberg", "standardebooks"])
+    fb.add_argument("--out", type=Path, required=True, help="download dir (OUTSIDE the repo)")
+    fb.add_argument("--limit", type=int, default=100)
+    fb.add_argument("--min-interiority", type=float, default=7.0, help="gutenberg keep threshold")
+    fb.add_argument("--score-report", action="store_true", help="score only, download nothing")
+    fb.add_argument("--existing", type=Path, default=None, help="lane_b.yaml to dedupe against")
+    fb.add_argument("--emit-yaml", action="store_true", help="print appendable book entries")
 
     args = parser.parse_args(argv)
 
@@ -109,9 +119,7 @@ def main(argv: list[str] | None = None) -> int:
 
         from aviary.external.interleave import prepare
 
-        report = prepare(
-            args.name, with_thoughts=args.with_thoughts, against_run=args.against
-        )
+        report = prepare(args.name, with_thoughts=args.with_thoughts, against_run=args.against)
         print(json.dumps(report, indent=2))
         return 0
     if args.cmd == "ship-external":
@@ -149,6 +157,29 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(json.dumps(report, indent=2))
         print(f"\nwritten to {out}")
+        return 0
+    if args.cmd == "fetch-books":
+        from aviary.lanes.b_fiction.fetch import (
+            dump_book_yaml,
+            existing_keys,
+            fetch_gutenberg,
+            fetch_standardebooks,
+        )
+
+        have = existing_keys(args.existing) if args.existing else set()
+        if args.source == "gutenberg":
+            books = fetch_gutenberg(
+                args.out,
+                limit=args.limit,
+                min_interiority=args.min_interiority,
+                existing=have,
+                dry_run=args.score_report,
+            )
+        else:
+            books = fetch_standardebooks(args.out, limit=args.limit)
+        if args.emit_yaml and not args.score_report:
+            fresh = [b for b in books if b.title.lower() not in have]
+            print("\n" + dump_book_yaml(fresh))
         return 0
     return 1
 

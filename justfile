@@ -63,6 +63,13 @@ prepare-interleave name *args:
 ship-external name *args:
     uv run --extra ship aviary ship-external {{name}} {{args}}
 
+# Download public-domain fiction for lane B from open repositories (Gutenberg via
+# Gutendex; Standard Ebooks is patron-gated and fails honestly). --out must be
+# OUTSIDE the repo. Score-first: `just fetch-books gutenberg --out DIR --limit 40
+# --score-report` to pick a --min-interiority, then drop --score-report to download.
+fetch-books *args:
+    uv run aviary fetch-books {{args}}
+
 test:
     uv run pytest
 
