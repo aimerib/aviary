@@ -193,7 +193,18 @@ def run_gates(
             judge_model = roster.judge_for(_generator_id(rec), key).id
         else:
             # Human-origin records (lane D personal streams) have no generating
-            # vendor, so every judge is cross-vendor by definition — use primary.
+            # vendor, so every judge is cross-vendor by definition.
+            #
+            # Pinned to ONE judge on purpose, and NOT load-balanced like the rest.
+            # Balancing would spread the owner's real conversations across all three
+            # judge vendors; lane D is the radioactive lane (contract #7, ships
+            # nowhere), so the fewest third parties that can see it, the better.
+            # "It already goes to one vendor" does not justify sending it to three.
+            #
+            # The cost is concentration: every lane D record lands on the judge
+            # primary, and at burn scale (~3.8k records) that is a lot of load on a
+            # metered quota that hard-stops rather than throttling. Prefer capping
+            # lane_d_max_records or moving the primary over widening exposure.
             judge_model = roster.assigned("judge", "primary").id
         return judge_record(rec, rubric, client, judge_model, prompts)
 
