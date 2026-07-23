@@ -1,0 +1,42 @@
+# Sorcha full run. Selected by AVIARY_TARGET=sorcha-v1 (RunConfig.for_target);
+# the shared burn.yaml stays the flash config.
+#
+#   AVIARY_TARGET=sorcha-v1 just burn
+#
+# Refuses without a recent sorcha pilot manifest whose per-lane keep rates sit
+# inside the bands below and whose datagen_config_hash matches.
+kind: burn
+lanes: [a, b, c, d]
+eval_param_fraction: 0.15
+split_seed: 20260716
+dpo_min_margin: 1.0
+dedupe_threshold: 0.8
+lane_a_num_workers: 8
+lane_a_batch_size: 20
+lane_c:
+  conversations_per_seed: 3
+  personas: [lazy_texter, engaged_rper, nsfw_rper, task_asker]
+  rng_seed: 20260716
+
+# Bands for a/b/c are carried over from the flash burn: same lanes, same gates,
+# only the persona differs — so a large deviation is real signal about the Sorcha
+# prompt rather than noise to tune away. Re-calibrate them from the FIRST sorcha
+# pilot rather than assuming they transfer.
+#
+# Lane D's band is PROVISIONAL. Lane D has no task verifier (human-origin records)
+# and its judge runs the placeholder sorcha_lane_d rubric, so its rates are a
+# measurement, not a pass/fail, until that rubric is co-authored with the owner.
+burn_bands:
+  a:
+    verify: [0.55, 0.95]
+    judge: [0.50, 0.98]
+  b:
+    verify: [0.40, 1.0]
+    judge: [0.15, 0.50]
+  c:
+    verify: [0.55, 0.95]
+    judge: [0.60, 0.98]
+  d:
+    verify: [0.5, 1.0]
+    judge: [0.3, 0.98]
+burn_max_pilot_age_days: 14

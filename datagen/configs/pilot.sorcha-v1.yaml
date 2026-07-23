@@ -1,0 +1,28 @@
+# Sorcha calibration pilot. Selected automatically by AVIARY_TARGET=sorcha-v1
+# (RunConfig.for_target); the shared pilot.yaml stays the flash config so running
+# Sorcha cannot de-authorize the flash burn.
+#
+#   AVIARY_TARGET=sorcha-v1 just pilot
+#
+# All four lanes, because sorcha-v1 now declares all four:
+#   a — task rollouts in Sorcha's voice. Persona-clean by construction (only a
+#       task's `prompt` reaches the teacher; the voice comes from her system
+#       prompt at ingest), so the flash task bank is reused as-is.
+#   b — fiction extraction. Persona-neutral; replays from the response cache.
+#   c — self-play. Inline seeds are `{persona}`-substituted to Sorcha; RP seeds
+#       from the designated lane B run are persona-transparent.
+#   d — the iMessage export. No teacher calls, so it costs nothing and is the
+#       only lane whose volume is fixed rather than dialled (~3.8k records).
+kind: pilot
+lanes: [a, b, c, d]
+eval_param_fraction: 0.15
+split_seed: 20260716
+dpo_min_margin: 1.0
+dedupe_threshold: 0.8
+lane_a_num_workers: 4
+lane_a_batch_size: 11
+lane_a_max_turns: 12
+lane_c:
+  conversations_per_seed: 1
+  personas: [lazy_texter, engaged_rper, nsfw_rper]
+  rng_seed: 20260716

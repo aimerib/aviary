@@ -43,6 +43,7 @@ log = logging.getLogger(__name__)
 # run is reproducible regardless of when it executes; override per run in the config.
 DEFAULT_SEED = 20260716
 
+
 def prompt_files(target: Target) -> dict[str, Path]:
     """The frozen PromptSet's contents for a build target. Persona-owned prompts
     (system + paraphrase) resolve through the target; the key for the persona
@@ -103,6 +104,19 @@ class RunConfig(BaseModel):
     @classmethod
     def load(cls, path: Path) -> RunConfig:
         return cls.model_validate(yaml.safe_load(path.read_text()))
+
+    @classmethod
+    def for_target(cls, kind: str, target: Target) -> RunConfig:
+        """Run config for `kind` under `target`: `<kind>.<target>.yaml` if present,
+        else the shared `<kind>.yaml`.
+
+        Targets do not share a lane set — sorcha-v1 runs lane D, flash-v2_2 must
+        never touch it — so they cannot share one run config either. Without this
+        split, running Sorcha would mean editing pilot.yaml, which changes the
+        datagen config hash and de-authorizes the flash burn as a side effect.
+        """
+        scoped = configs_dir() / f"{kind}.{target.name}.yaml"
+        return cls.load(scoped if scoped.exists() else configs_dir() / f"{kind}.yaml")
 
 
 def load_prompt_set(target: Target) -> PromptSet:
@@ -203,8 +217,8 @@ def find_manifest(run_id: str) -> RunManifest:
 
 def cmd_generate(kind: str) -> str:
     """pilot/burn: run every enabled lane's generation, write the manifest."""
-    cfg = RunConfig.load(configs_dir() / f"{kind}.yaml")
     target = Target.resolve()
+    cfg = RunConfig.for_target(kind, target)
     roster = Roster.load(configs_dir() / "teachers.yaml")
     prompts = load_prompt_set(target)
     # Optional label distinguishes same-day runs of the same kind — e.g. A/B teacher
@@ -438,8 +452,8 @@ def cmd_gate(run_id: str) -> None:
 
     manifest = find_manifest(run_id)
     _assert_frozen_inputs(manifest)
-    cfg = RunConfig.load(configs_dir() / f"{manifest.kind}.yaml")
     target = Target.resolve()
+    cfg = RunConfig.for_target(manifest.kind, target)
     roster = Roster.load(configs_dir() / "teachers.yaml")
     prompts = load_prompt_set(target)
     prompts.assert_hash(manifest.prompt_set_hash)
@@ -524,8 +538,8 @@ def cmd_render(run_id: str, prior_run_ids: list[str] | None = None) -> None:
 
     manifest = find_manifest(run_id)
     _assert_frozen_inputs(manifest)
-    cfg = RunConfig.load(configs_dir() / f"{manifest.kind}.yaml")
     target = Target.resolve()
+    cfg = RunConfig.for_target(manifest.kind, target)
     store = RunStore(run_id)
     extra: list[ConversationRecord] = []
     for prior in prior_run_ids or []:

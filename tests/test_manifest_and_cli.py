@@ -129,3 +129,41 @@ def test_schema_lane_d_additive():
     assert exact_key(with_ts) == exact_key(without_ts)  # dedupe never sees ts
     src = SourceRef(kind="personal_stream", detail={"source": "chat"})
     assert make_record_id("d", "t", src) == make_record_id("d", "t", src)
+
+
+# --- target-scoped run configs ----------------------------------------------
+
+
+def test_run_config_is_target_scoped():
+    """Targets do not share a lane set, so they cannot share a run config. Without
+    the split, running Sorcha means editing pilot.yaml, which changes the datagen
+    config hash and de-authorizes the flash burn as a side effect."""
+    from aviary.orchestrate import RunConfig
+    from aviary.targets import Target
+
+    flash = RunConfig.for_target("pilot", Target.load("flash-v2_2"))
+    sorcha = RunConfig.for_target("pilot", Target.load("sorcha-v1"))
+
+    assert flash.lanes == ["a", "b", "c"]  # unchanged; lane D never enters flash
+    assert sorcha.lanes == ["a", "b", "c", "d"]
+
+    # A target with no scoped file falls back to the shared one.
+    assert RunConfig.for_target("burn", Target.load("flash-v2_2")).lanes == ["a", "b", "c"]
+
+
+def test_every_lane_a_target_runs_has_a_burn_band():
+    """The burn guard refuses a lane the pilot never measured; catching a missing
+    band here beats discovering it after a full generation spend."""
+    from aviary.orchestrate import RunConfig
+    from aviary.targets import Target
+
+    for target_name in ("flash-v2_2", "sorcha-v1"):
+        target = Target.load(target_name)
+        for kind in ("pilot", "burn"):
+            cfg = RunConfig.for_target(kind, target)
+            # A run may never generate a lane its target is not allowed to render.
+            assert set(cfg.lanes) <= set(target.lanes), (target_name, kind)
+        # Bands are read from the BURN config by guard_burn, not from the pilot.
+        burn = RunConfig.for_target("burn", target)
+        missing = set(burn.lanes) - set(burn.burn_bands)
+        assert not missing, f"{target_name} burn lanes without a band: {sorted(missing)}"
