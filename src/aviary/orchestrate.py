@@ -209,9 +209,7 @@ def _lane_workers(roster: Roster, lane_key: str, roles: tuple[str, ...]) -> int:
     and glm (6), reading only the primary gave 12 workers and drove glm at twice
     its own limit."""
     caps = [
-        route.max_concurrency
-        for role in roles
-        for route in roster.assigned_pool(lane_key, role)
+        route.max_concurrency for role in roles for route in roster.assigned_pool(lane_key, role)
     ]
     return max(1, min(caps)) if caps else 1
 

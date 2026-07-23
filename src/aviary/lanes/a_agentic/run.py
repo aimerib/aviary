@@ -155,9 +155,7 @@ def run_hermes_batch(
         subprocess.run(cmd, cwd=hermes_dir, check=True, timeout=timeout_s)
     except subprocess.TimeoutExpired as e:
         # A hung/looping rollout must not block the whole burn indefinitely.
-        raise BurnGuardError(
-            f"hermes batch exceeded {timeout_s}s wall-clock and was killed"
-        ) from e
+        raise BurnGuardError(f"hermes batch exceeded {timeout_s}s wall-clock and was killed") from e
     produced = hermes_dir / "data" / run_name / "trajectories.jsonl"
     if not produced.exists():
         raise BurnGuardError(f"hermes batch finished but wrote no {produced}")

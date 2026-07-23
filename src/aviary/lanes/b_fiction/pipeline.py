@@ -28,6 +28,7 @@ from aviary.teacher.prompts import PromptSet
 
 log = logging.getLogger(__name__)
 
+
 def _fingerprint(payload: dict) -> str:
     return hashlib.sha256(canonical_json(payload).encode()).hexdigest()[:16]
 

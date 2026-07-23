@@ -320,12 +320,30 @@ def _pool_roster():
     return Roster.model_validate(
         {
             "teachers": [
-                {"id": "ds-20260717", "provider": "deepseek", "route": "direct", "wire_model": "ds",
-                 "base_url": "https://x", "api_key_env": "K"},
-                {"id": "glm-20260717", "provider": "zhipu", "route": "direct", "wire_model": "glm",
-                 "base_url": "https://y", "api_key_env": "K"},
-                {"id": "kimi-20260717", "provider": "moonshot", "route": "openrouter", "wire_model": "kimi",
-                 "base_url": "https://z", "api_key_env": "K"},
+                {
+                    "id": "ds-20260717",
+                    "provider": "deepseek",
+                    "route": "direct",
+                    "wire_model": "ds",
+                    "base_url": "https://x",
+                    "api_key_env": "K",
+                },
+                {
+                    "id": "glm-20260717",
+                    "provider": "zhipu",
+                    "route": "direct",
+                    "wire_model": "glm",
+                    "base_url": "https://y",
+                    "api_key_env": "K",
+                },
+                {
+                    "id": "kimi-20260717",
+                    "provider": "moonshot",
+                    "route": "openrouter",
+                    "wire_model": "kimi",
+                    "base_url": "https://z",
+                    "api_key_env": "K",
+                },
             ],
             "assignments": {
                 "lane_c": {

@@ -71,9 +71,26 @@ USER_PLACEHOLDER = re.compile(r"\{\{\s*user\s*\}\}", re.I)
 ANY_PLACEHOLDER = re.compile(r"\{\{\s*\w+\s*\}\}")
 
 _SUB_NAMES = (
-    "Alex", "Sam", "Jordan", "Riley", "Casey", "Morgan", "Quinn", "Avery",
-    "Rowan", "Emerson", "Skyler", "Reese", "Finley", "Harper", "Elliot",
-    "Sawyer", "Nico", "Marlow", "Juno", "Wren",
+    "Alex",
+    "Sam",
+    "Jordan",
+    "Riley",
+    "Casey",
+    "Morgan",
+    "Quinn",
+    "Avery",
+    "Rowan",
+    "Emerson",
+    "Skyler",
+    "Reese",
+    "Finley",
+    "Harper",
+    "Elliot",
+    "Sawyer",
+    "Nico",
+    "Marlow",
+    "Juno",
+    "Wren",
 )
 
 Turn = dict[str, str]

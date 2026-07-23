@@ -101,9 +101,7 @@ def _corpus_size(path: Path) -> tuple[int, int]:
     return rows, _approx_tokens(chars)
 
 
-def prepare(
-    name: str, *, with_thoughts: bool = False, against_run: str | None = None
-) -> dict:
+def prepare(name: str, *, with_thoughts: bool = False, against_run: str | None = None) -> dict:
     """Render `external/<name>/cleaned.jsonl` into `external/<name>/rendered/`."""
     root = external_dir(name)
     src = root / "cleaned.jsonl"

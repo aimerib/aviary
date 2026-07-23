@@ -65,9 +65,11 @@ class Pseudonymizer:
     def _sub_text(self, text: str) -> str:
         for pattern in self._patterns:
             text = pattern.sub(
-                lambda m: m.group(0)
-                if m.group(0).lower() in self._preserve
-                else self._pseudonym_for(m.group(0)),
+                lambda m: (
+                    m.group(0)
+                    if m.group(0).lower() in self._preserve
+                    else self._pseudonym_for(m.group(0))
+                ),
                 text,
             )
         return text
