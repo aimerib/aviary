@@ -77,6 +77,13 @@ fetch-books *args:
 ingest-ao3 *args:
     uv run aviary ingest-ao3 {{args}}
 
+# Auto Evol-Instruct for lane A: a teacher invents new surface content for a task
+# template, ground truth is RECOMPUTED deterministically (verifier untouched), and the
+# new instances are emitted for human review. Only templates with a registered deriver
+# (evolve.py) — e.g. `just evolve-tasks tasks/count/tagged_count.task.yaml --n 30`.
+evolve-tasks *args:
+    uv run aviary evolve-tasks {{args}}
+
 test:
     uv run pytest
 

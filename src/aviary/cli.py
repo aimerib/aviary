@@ -84,6 +84,13 @@ def main(argv: list[str] | None = None) -> int:
     ao.add_argument("--existing", type=Path, default=None, help="lane_b.yaml to dedupe against")
     ao.add_argument("--emit-yaml", action="store_true", help="print appendable book entries")
 
+    et = sub.add_parser(
+        "evolve-tasks", help="Auto Evol-Instruct: grow a task template's instances via a teacher"
+    )
+    et.add_argument("template", type=Path, help="tasks/<family>/<name>.task.yaml (needs a deriver)")
+    et.add_argument("--n", type=int, default=20, help="target number of new instances")
+    et.add_argument("--model", default=None, help="roster teacher id (default: lane C character)")
+
     args = parser.parse_args(argv)
 
     if args.cmd == "install":
@@ -223,6 +230,54 @@ def main(argv: list[str] | None = None) -> int:
         )
         if args.emit_yaml:
             print("\n" + dump_book_yaml(books))
+        return 0
+    if args.cmd == "evolve-tasks":
+        import yaml
+
+        from aviary.lanes.a_agentic.evolve import (
+            DERIVERS,
+            EVOLVE_SYSTEM,
+            evolve_template,
+            existing_instance_keys,
+        )
+        from aviary.orchestrate import make_clients
+        from aviary.paths import configs_dir
+        from aviary.teacher.client import ChatRequest
+        from aviary.teacher.roster import Roster
+
+        template = yaml.safe_load(args.template.read_text())
+        tid = template.get("id")
+        if tid not in DERIVERS:
+            print(f"no evolve deriver for {tid!r}; registered: {sorted(DERIVERS)}", file=sys.stderr)
+            return 2
+        roster = Roster.load(configs_dir() / "teachers.yaml")
+        client, _ = make_clients(roster, "evolve")
+        model = args.model or roster.assigned_pool("lane_c", "character")[0].id
+
+        def generate(prompt: str) -> str:
+            return client.complete(
+                ChatRequest(
+                    model=model,
+                    system=EVOLVE_SYSTEM,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.9,
+                    max_tokens=2048,
+                    reasoning_off=False,
+                ),
+                lane="a",
+            ).text
+
+        new = evolve_template(
+            template, generate, n=args.n, existing=existing_instance_keys(template)
+        )
+        print(f"# {len(new)} new instances for {tid} (ground truth recomputed)", file=sys.stderr)
+        print(
+            f"# review the difficulty band, then append each list to {args.template}",
+            file=sys.stderr,
+        )
+        if new:
+            cols = {k: [inst[k] for inst in new] for k in new[0]}
+            print(yaml.safe_dump(cols, sort_keys=False, allow_unicode=True, width=100))
         return 0
     return 1
 
