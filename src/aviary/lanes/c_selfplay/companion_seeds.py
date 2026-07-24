@@ -31,6 +31,7 @@ import hashlib
 from collections.abc import Iterable
 
 from aviary.lanes.c_selfplay.seeds import Seed
+from aviary.lanes.d_personal.adapter import RedditInterest
 from aviary.lanes.d_personal.vault import Note, Vault
 
 # Fraction of companion families held out. Deterministic by family hash rather than
@@ -237,22 +238,76 @@ def obsession_seeds(vault: Vault, persona_system: str, speaker: str, *, cap: int
     return out
 
 
+def reddit_interest_seeds(
+    interests: list[RedditInterest],
+    persona_system: str,
+    speaker: str,
+    user_style: str,
+    *,
+    cap: int,
+) -> list[Seed]:
+    """One seed per community he actually participates in.
+
+    Same job as obsession_seeds — the thing he'd explain unprompted — but sourced from
+    where he shows up to talk (r/LocalLLaMA, r/amateurradio, r/SillyTavernAI) rather
+    than his private notes. Grounded in a few of his real comments so the character
+    teacher knows HOW he thinks about it, not just that he likes it. Generation-only
+    (render_grounding=False): his reddit words shape her replies, they are not recited.
+    """
+    out: list[Seed] = []
+    for interest in interests[:cap]:
+        seed_id = f"companion-interest-{interest.family_key}"
+        grounding = (
+            f"## r/{interest.subreddit}\n"
+            f"A community he actively follows and posts in ({interest.comment_count} "
+            "comments of his). How he talks and thinks about it, in his own words:\n\n"
+            + "\n\n---\n\n".join(interest.samples)
+        )
+        out.append(
+            _seed(
+                seed_id=seed_id,
+                family=interest.family_key,
+                persona_system=persona_system,
+                persona_speaker=speaker,
+                scenario=(
+                    "The user is deep in something he follows closely — the kind of thing "
+                    f"he posts about in r/{interest.subreddit}. "
+                    f"{_variant(OBSESSION_FRAMINGS, seed_id)} You do not know this subject "
+                    "well — that is the point. Light up, ask real questions, connect it to "
+                    "things he has said before, and do not perform expertise you lack."
+                ),
+                user_goal="get into the thing he's into with someone who wants to hear it",
+                grounding=grounding,
+                user_style=user_style,
+                render_grounding=False,
+            )
+        )
+    return out
+
+
 def companion_seeds(
     vault: Vault,
     persona_system: str,
     persona_speaker: str,
     *,
+    interests: list[RedditInterest] | None = None,
     max_events: int = 200,
     max_people: int = 40,
     max_topics: int = 120,
     max_obsessions: int = 200,
+    max_interests: int = 30,
 ) -> list[Seed]:
-    """All four kinds. Caps are per-kind so no single kind can swamp the mix."""
+    """All five kinds. Caps are per-kind so no single kind can swamp the mix. The
+    obsession/interest split is deliberate: notes he wrote vs communities he shows up
+    in — both are 'what he loves', from different evidence."""
     kinds: Iterable[list[Seed]] = (
         event_seeds(vault, persona_system, persona_speaker, cap=max_events),
         person_seeds(vault, persona_system, persona_speaker, cap=max_people),
         topic_seeds(vault, persona_system, persona_speaker, cap=max_topics),
         obsession_seeds(vault, persona_system, persona_speaker, cap=max_obsessions),
+        reddit_interest_seeds(
+            interests or [], persona_system, persona_speaker, vault.voice, cap=max_interests
+        ),
     )
     return [seed for kind in kinds for seed in kind]
 
@@ -272,6 +327,7 @@ __all__ = [
     "event_seeds",
     "obsession_seeds",
     "person_seeds",
+    "reddit_interest_seeds",
     "seed_mix",
     "topic_seeds",
 ]

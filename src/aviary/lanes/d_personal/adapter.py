@@ -19,10 +19,12 @@ in lane_d.yaml and flow through the existing family-level split rule unchanged.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
-from collections import Counter
+from collections import Counter, defaultdict
 from collections.abc import Iterator
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Protocol
@@ -632,6 +634,55 @@ class RedditParser:
                     }
                 )
         return out
+
+
+@dataclass(frozen=True)
+class RedditInterest:
+    """A community the owner actually participates in — a 'thing he'd explain
+    unprompted', sourced from where he shows up to talk rather than his private notes.
+    Grounding for lane C companion seeds; the samples are his real comments and are
+    generation-only (never rendered, never committed)."""
+
+    subreddit: str
+    comment_count: int
+    samples: tuple[str, ...]
+
+    @property
+    def family_key(self) -> str:
+        # Name-free and stable across runs, like vault Note.family_key. A subreddit is
+        # public, but hashing keeps the family scheme uniform with the rest of lane C.
+        digest = hashlib.sha256(self.subreddit.lower().encode()).hexdigest()[:8]
+        return f"reddit-{digest}"
+
+
+def reddit_interests(
+    path: Path, *, min_comments: int = 5, samples: int = 4, sample_chars: int = 600
+) -> list[RedditInterest]:
+    """The subreddits the owner engages with, strongest first, each with a few of his
+    most substantive comments as grounding. Read at runtime from the local export,
+    never committed. Below min_comments is a passing curiosity, not an interest."""
+    paths = sorted(path.glob("*.json")) if path.is_dir() else [path]
+    deleted = {"", "[deleted]", "[removed]"}
+    by_sub: dict[str, list[str]] = defaultdict(list)
+    for p in paths:
+        raw = json.loads(p.read_text(encoding="utf-8"))
+        for c in raw.get("comments", []):
+            text = (c.get("text") or "").strip()
+            sub = (c.get("subreddit") or "").strip()
+            if sub and text not in deleted:
+                by_sub[sub].append(text)
+    out = [
+        RedditInterest(
+            subreddit=sub,
+            comment_count=len(texts),
+            # longest few = most substantive; a truncated tail is fine for grounding
+            samples=tuple(t[:sample_chars] for t in sorted(texts, key=len, reverse=True)[:samples]),
+        )
+        for sub, texts in by_sub.items()
+        if len(texts) >= min_comments
+    ]
+    out.sort(key=lambda r: r.comment_count, reverse=True)
+    return out
 
 
 class _StubParser:

@@ -415,9 +415,18 @@ def _companion_seeds(target: Target, prompts: PromptSet, max_seeds: int = 0) -> 
 
     from aviary.lanes.d_personal.vault import VaultConfig
 
-    LaneDConfig.load(lane_d)  # fail early on a malformed lane D config
+    lane_d_cfg = LaneDConfig.load(lane_d)  # fail early on a malformed lane D config
     vault = Vault.load(VaultConfig.model_validate(vault_cfg))
-    seeds = companion_seeds(vault, prompts[target.persona_system_key], target.persona_speaker)
+    # Reddit interests: the same "things he loves" grounding as the vault's obsessions,
+    # sourced from the communities he actually posts in. Harvested at runtime from the
+    # reddit source when lane_d.yaml declares one; content never enters git.
+    from aviary.lanes.d_personal.adapter import reddit_interests
+
+    reddit_src = next((s for s in lane_d_cfg.sources if s.parser == "reddit"), None)
+    interests = reddit_interests(reddit_src.path) if reddit_src else []
+    seeds = companion_seeds(
+        vault, prompts[target.persona_system_key], target.persona_speaker, interests=interests
+    )
     if max_seeds and len(seeds) > max_seeds:
         step = len(seeds) / max_seeds
         seeds = [seeds[int(i * step)] for i in range(max_seeds)]

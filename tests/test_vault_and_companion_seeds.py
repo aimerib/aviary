@@ -14,9 +14,11 @@ from aviary.lanes.c_selfplay.companion_seeds import (
     event_seeds,
     obsession_seeds,
     person_seeds,
+    reddit_interest_seeds,
     seed_mix,
     topic_seeds,
 )
+from aviary.lanes.d_personal.adapter import RedditInterest, reddit_interests
 from aviary.lanes.d_personal.vault import Vault, VaultConfig
 
 PERSONA = "You are Fictional Persona, a synthetic test character."
@@ -186,3 +188,70 @@ def test_empty_vault_yields_no_seeds(tmp_path):
     root.mkdir()
     vault = Vault.load(VaultConfig(path=root))
     assert companion_seeds(vault, PERSONA, SPEAKER) == []
+
+
+# --- reddit interests (grounding half) ---------------------------------------
+
+
+def _reddit_dir(tmp_path, comments):
+    """comments: (subreddit, text). All synthetic (radioactive rule)."""
+    import json
+
+    d = tmp_path / "reddit"
+    d.mkdir()
+    payload = {
+        "account": "a",
+        "me": {"name": "Owner"},
+        "posts": [],
+        "comments": [
+            {
+                "sent": "2026-01-01T00:00:00Z",
+                "subreddit": s,
+                "permalink": f"/p/{i}",
+                "in_reply_to": {"author": "x", "title": "t", "text": "body"},
+                "text": txt,
+            }
+            for i, (s, txt) in enumerate(comments)
+        ],
+    }
+    (d / "a.json").write_text(json.dumps(payload))
+    return d
+
+
+def test_reddit_interests_rank_by_engagement_and_drop_curiosities(tmp_path):
+    d = _reddit_dir(
+        tmp_path,
+        [("LocalLLaMA", "x" * (50 + i)) for i in range(8)]  # 8 comments, varying length
+        + [("amateurradio", "y" * 40) for _ in range(3)]  # below min_comments -> dropped
+        + [("rust", "z" * 30) for _ in range(5)],
+    )
+    interests = reddit_interests(d, min_comments=5, samples=2)
+    assert [i.subreddit for i in interests] == ["LocalLLaMA", "rust"]  # ranked, curiosity dropped
+    assert interests[0].comment_count == 8
+    assert len(interests[0].samples) == 2  # keeps the longest few
+    assert len(interests[0].samples[0]) >= len(interests[0].samples[1])
+
+
+def test_reddit_interest_seeds_ground_in_his_words_generation_only(tmp_path):
+    vault = Vault.load(build_vault(tmp_path))
+    interests = [
+        RedditInterest("LocalLLaMA", 1236, ("running a 70b at 4-bit on a single 24gb card",)),
+        RedditInterest("amateurradio", 61, ("worked a POTA activation on 20m at dawn",)),
+    ]
+    seeds = companion_seeds(vault, PERSONA, SPEAKER, interests=interests)
+    mix = seed_mix(seeds)
+    assert mix.get("interest") == 2  # the fifth kind, alongside the four vault kinds
+    interest_seeds = [s for s in seeds if s.seed_id.startswith("companion-interest-")]
+    for s in interest_seeds:
+        assert s.render_grounding is False  # his reddit words shape generation, not recited
+        assert s.grounding not in s.card
+        assert "r/" in s.scenario
+    assert any("70b" in s.grounding for s in interest_seeds)  # his actual comment IS the grounding
+
+
+def test_reddit_interest_seeds_are_capped_and_holdout_by_family(tmp_path):
+    interests = [RedditInterest(f"sub{i}", 30 - i, (f"a comment about sub{i}",)) for i in range(10)]
+    seeds = reddit_interest_seeds(interests, PERSONA, SPEAKER, "voice guide", cap=4)
+    assert len(seeds) == 4
+    assert all(s.family.startswith("companion/reddit-") for s in seeds)
+    assert len({s.family for s in seeds}) == 4  # distinct community -> distinct family
