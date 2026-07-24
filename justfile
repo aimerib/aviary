@@ -70,6 +70,13 @@ ship-external name *args:
 fetch-books *args:
     uv run aviary fetch-books {{args}}
 
+# Filter + fandom-diverse sample the AO3 (otwarchive-downloader JSONL) archive into a
+# lane B corpus dir + appendable yaml. Includes everything except AO3-tagged Underage
+# works; --out must be OUTSIDE the repo. Feeds lane C RP seeds via a designated run:
+# `just ingest-ao3 --in DIR --out DIR --limit 3000 --existing datagen/configs/lane_b.yaml`
+ingest-ao3 *args:
+    uv run aviary ingest-ao3 {{args}}
+
 test:
     uv run pytest
 

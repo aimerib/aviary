@@ -69,6 +69,21 @@ def main(argv: list[str] | None = None) -> int:
     fb.add_argument("--existing", type=Path, default=None, help="lane_b.yaml to dedupe against")
     fb.add_argument("--emit-yaml", action="store_true", help="print appendable book entries")
 
+    ao = sub.add_parser(
+        "ingest-ao3", help="filter + fandom-sample AO3 (otwarchive JSONL) into lane B"
+    )
+    ao.add_argument(
+        "--in", dest="ao3_in", type=Path, required=True, help="dir of ao3_works_*.jsonl"
+    )
+    ao.add_argument("--out", type=Path, required=True, help="corpus output dir (OUTSIDE the repo)")
+    ao.add_argument("--limit", type=int, default=3000, help="max works to keep (fandom-diverse)")
+    ao.add_argument("--min-words", type=int, default=300, help="drop works shorter than this")
+    ao.add_argument(
+        "--per-fandom-cap", type=int, default=5, help="max works per fandom, for breadth"
+    )
+    ao.add_argument("--existing", type=Path, default=None, help="lane_b.yaml to dedupe against")
+    ao.add_argument("--emit-yaml", action="store_true", help="print appendable book entries")
+
     args = parser.parse_args(argv)
 
     if args.cmd == "install":
@@ -192,6 +207,22 @@ def main(argv: list[str] | None = None) -> int:
         if args.emit_yaml and not args.score_report:
             fresh = [b for b in books if b.title.lower() not in have]
             print("\n" + dump_book_yaml(fresh))
+        return 0
+    if args.cmd == "ingest-ao3":
+        from aviary.lanes.b_fiction.ao3 import ingest_ao3
+        from aviary.lanes.b_fiction.fetch import dump_book_yaml, existing_keys
+
+        have = existing_keys(args.existing) if args.existing else set()
+        books = ingest_ao3(
+            args.ao3_in,
+            args.out,
+            limit=args.limit,
+            min_words=args.min_words,
+            per_fandom_cap=args.per_fandom_cap,
+            existing=have,
+        )
+        if args.emit_yaml:
+            print("\n" + dump_book_yaml(books))
         return 0
     return 1
 
