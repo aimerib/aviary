@@ -127,16 +127,28 @@ def ingest_ao3(
     log=print,
 ) -> list[BookConfig]:
     """Select a fandom-diverse, underage-excluded sample and write each work as `.txt`
-    to `out` (OUTSIDE the repo). Returns lane B BookConfigs for the kept works."""
+    to `out` (OUTSIDE the repo). Returns lane B BookConfigs for the kept works.
+
+    Idempotent: `limit` is the TARGET TOTAL number of works in `out`, not a per-run
+    add. Works already materialized in `out` (or registered in `existing`, an
+    existing_keys(lane_b.yaml) set) are skipped, and only the shortfall is topped up —
+    so re-running at the SAME limit is a no-op (nothing rewritten, nothing re-emitted),
+    and you GROW the corpus by raising --limit. Deterministic in archive order."""
     out.mkdir(parents=True, exist_ok=True)
+    # Fold the already-written works into the skip set (idempotency by output dir, not
+    # only by the registered yaml, which you may not have appended yet), and top the
+    # corpus UP to `limit` rather than adding `limit` every run.
+    already = {p.stem for p in out.glob("ao3-*.txt")}
+    skip = set(existing or ()) | already
+    remaining = max(0, limit - len(already))
     kept: list[BookConfig] = []
     fandoms: set[str] = set()
     for work, text in select_works(
         iter_works(jsonl_dir),
-        limit=limit,
+        limit=remaining,
         min_words=min_words,
         per_fandom_cap=per_fandom_cap,
-        existing=existing,
+        existing=skip,
     ):
         cfg = ao3_book_config(work, out / f"{work_id_for(work)}.txt")
         cfg.path.write_text(text, encoding="utf-8")

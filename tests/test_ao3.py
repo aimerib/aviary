@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import json
+
 from aviary.lanes.b_fiction.ao3 import (
     ao3_book_config,
+    ingest_ao3,
     is_underage,
     primary_fandom,
     select_works,
@@ -110,3 +113,33 @@ def test_ao3_book_config_stable_id_and_fields(tmp_path):
     assert b.title == "A Study in Fic"
     assert b.author == "someauthor"
     assert b.holdout is False
+
+
+def test_ingest_ao3_is_idempotent_by_output_dir(tmp_path):
+    src = tmp_path / "jsonl"
+    src.mkdir()
+    works = [_work(i, fandom=f"Fandom {i}") for i in range(5)]
+    (src / "ao3_works_1-10000.jsonl").write_text("\n".join(json.dumps(w) for w in works))
+    out = tmp_path / "corpus"
+
+    first = ingest_ao3(src, out, limit=5, log=lambda *a: None)
+    assert len(first) == 5
+    assert len(list(out.glob("ao3-*.txt"))) == 5
+
+    # Re-run over the same out: every work is already materialized -> nothing new,
+    # nothing rewritten, nothing re-emitted. Even a larger limit adds none (source dry).
+    assert ingest_ao3(src, out, limit=5, log=lambda *a: None) == []
+    assert ingest_ao3(src, out, limit=50, log=lambda *a: None) == []
+
+
+def test_ingest_ao3_limit_is_target_total_not_per_run(tmp_path):
+    src = tmp_path / "jsonl"
+    src.mkdir()
+    works = [_work(i, fandom=f"Fandom {i}") for i in range(10)]
+    (src / "ao3_works_1-10000.jsonl").write_text("\n".join(json.dumps(w) for w in works))
+    out = tmp_path / "corpus"
+
+    assert len(ingest_ao3(src, out, limit=4, log=lambda *a: None)) == 4  # fresh: writes 4
+    assert ingest_ao3(src, out, limit=4, log=lambda *a: None) == []  # same limit: no-op
+    assert len(ingest_ao3(src, out, limit=7, log=lambda *a: None)) == 3  # raise: tops up to 7
+    assert len(list(out.glob("ao3-*.txt"))) == 7  # total, not 4+4+7
