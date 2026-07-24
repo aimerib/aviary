@@ -39,12 +39,12 @@ from aviary.schema.records import (
     make_record_id,
 )
 
-# Parsers that identify the owner from the export itself — Teams names them in each
-# file's `me` field, Instagram's owner is the one participant common to every thread.
-# They set message roles directly, so a config anchor would be dead config AND, being
-# owner/friend display names, exactly the real names the radioactive rule keeps out
-# of git. imessage stays anchor-based: its export labels the owner a literal "Me".
-_STRUCTURAL_OWNER = {"instagram", "teams"}
+# Parsers that identify the owner from the export itself — Teams/Reddit name them in
+# each file's `me`/`account` field, Instagram's owner is the one participant common to
+# every thread. They set message roles directly, so a config anchor would be dead
+# config AND, being real display names, exactly what the radioactive rule keeps out of
+# git. imessage stays anchor-based: its export labels the owner a literal "Me".
+_STRUCTURAL_OWNER = {"instagram", "teams", "reddit"}
 
 
 class SourceConfig(BaseModel):
@@ -76,6 +76,11 @@ class SourceConfig(BaseModel):
     # thread collapses several speakers into one "assistant" voice; a companion build
     # usually wants a single relationship per thread.
     max_participants: int = 0
+    # Absolute cap on this source's records, strided evenly across them in the order
+    # the parser yields (0 = uncapped). For a source that can dwarf the others —
+    # reddit's metal account alone is >1600 comments — this takes a representative
+    # slice in time order rather than letting one source become the lane.
+    max_records: int = 0
 
     @model_validator(mode="after")
     def _exactly_one_role_anchor(self) -> SourceConfig:
@@ -556,6 +561,79 @@ class TeamsParser:
                 yield path.stem, rows
 
 
+class RedditParser:
+    """Reddit comment exchanges. Each of the owner's comments pairs with the parent it
+    replied to: [parent author's post/comment] -> [owner's reply]. `source.path` is a
+    directory of per-account export files: {"account", "me", "comments": [...]}.
+
+    Unlike the DM sources, the owner takes the ASSISTANT seat: the record ends on his
+    substantive reply, which is the turn worth modeling (owner-directed 2026-07-24, to
+    absorb topic engagement, not to seat strangers as the assistant). Records are
+    yielded oldest-first across all accounts so `max_records` slices an even sample of
+    the whole span rather than one account's recent tail. A deleted/empty parent or
+    reply is skipped — half an exchange is not a conversation."""
+
+    def parse(
+        self, source: SourceConfig, cfg: LaneDConfig, run_id: str
+    ) -> Iterator[ConversationRecord]:
+        rows = self._exchanges(source)
+        rows.sort(key=lambda r: r["sent"])
+        for r in rows:
+            segment = [
+                {
+                    "ts": r["sent"],
+                    "sender": r["parent_author"],
+                    "text": r["parent_text"],
+                    "role": "user",
+                },
+                {
+                    "ts": r["sent"],
+                    "sender": r["owner"],
+                    "text": r["reply_text"],
+                    "role": "assistant",
+                },
+            ]
+            record = _record_from_segment(source, cfg, run_id, r["permalink"], 0, segment)
+            if record is not None:
+                yield record
+
+    @staticmethod
+    def _exchanges(source: SourceConfig) -> list[dict]:
+        paths = sorted(source.path.glob("*.json")) if source.path.is_dir() else [source.path]
+        deleted = {"", "[deleted]", "[removed]"}
+        out: list[dict] = []
+        for path in paths:
+            raw = json.loads(path.read_text(encoding="utf-8"))
+            owner = (raw.get("me") or {}).get("name") or raw.get("account") or "me"
+            for i, c in enumerate(raw.get("comments", [])):
+                sent = c.get("sent")
+                reply = (c.get("text") or "").strip()
+                if not sent or reply in deleted:
+                    continue
+                parent = c.get("in_reply_to") or {}
+                parent_text = "\n\n".join(
+                    t
+                    for t in (
+                        (parent.get("title") or "").strip(),
+                        (parent.get("text") or "").strip(),
+                    )
+                    if t
+                )
+                if parent_text in deleted:
+                    continue
+                out.append(
+                    {
+                        "sent": sent,
+                        "owner": owner,
+                        "parent_author": (parent.get("author") or "").strip() or "reddit",
+                        "parent_text": parent_text,
+                        "reply_text": reply,
+                        "permalink": c.get("permalink") or f"{path.stem}#{i}",
+                    }
+                )
+        return out
+
+
 class _StubParser:
     """Registration point for a real-format parser that doesn't exist yet.
     Formats are learned from real exports at implementation time, never guessed."""
@@ -577,13 +655,25 @@ PARSERS: dict[str, SourceParser] = {
     "imessage": IMessageParser(),
     "instagram": InstagramParser(),
     "teams": TeamsParser(),
+    "reddit": RedditParser(),
     "discord": _StubParser("discord"),
     "journal": _StubParser("journal"),
 }
+
+
+def _stride_cap(records: list[ConversationRecord], limit: int) -> list[ConversationRecord]:
+    """An even slice of `records` (in yield order) when it exceeds `limit`."""
+    if limit <= 0 or len(records) <= limit:
+        return records
+    step = len(records) / limit
+    return [records[int(i * step)] for i in range(limit)]
 
 
 def parse_all(cfg: LaneDConfig, run_id: str) -> Iterator[ConversationRecord]:
     for source in cfg.sources:
         if source.parser not in PARSERS:
             raise KeyError(f"unknown lane D parser {source.parser!r} for source {source.id!r}")
-        yield from PARSERS[source.parser].parse(source, cfg, run_id)
+        records = PARSERS[source.parser].parse(source, cfg, run_id)
+        if source.max_records:
+            records = _stride_cap(list(records), source.max_records)
+        yield from records

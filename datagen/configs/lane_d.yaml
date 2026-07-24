@@ -44,6 +44,18 @@ sources:
     # is deliberately in scope: a companion that only ever sounds intimate is a
     # narrower voice than the owner actually has. 11 balanced threads, so no cap.
 
+  - id: reddit                                # family prefix: reddit/<YYYY-MM>
+    parser: reddit                            # per-account export: {account, me, comments:[...]}
+    path: /Users/aimeri/output/reddit
+    # Structurally owned (the exported account). Here — and ONLY here — the owner
+    # takes the ASSISTANT seat: [a stranger's post -> his reply], so the record ends
+    # on his substantive turn, the one worth modeling (owner-directed 2026-07-24).
+    # Opposite of the DM sources on purpose. 1663 usable exchanges, 74% LocalLLaMA —
+    # cap to a slice strided across the 2012..2026 span so reddit informs the voice
+    # without becoming the lane. Register is essayistic/technical; the laned rubric
+    # filters poor-fit replies. Its topics also feed lane C grounding (reddit_interests).
+    max_records: 150
+
 # Silence longer than this splits a stream into separate records; the record is
 # the session, and holdout is time-blocked because temporal adjacency is the
 # leakage mode for personal logs.
@@ -79,10 +91,11 @@ holdout_families:
   - im/2024-12
   - im/2025-12
   - im/2026-02
-  # ig/ and teams/ each hold out one populated month; both sources are small, so a
-  # heavier holdout would starve training. Confirmed to contain records; adjust freely.
+  # ig/ teams/ reddit/ each hold out one populated month; these sources are small, so
+  # a heavier holdout would starve training. Confirmed to contain records; adjust freely.
   - ig/2024-05
   - teams/2025-11
+  - reddit/2025-05
 
 # The owner's Obsidian vault: the journals-and-notes half of lane D. Read for
 # GROUNDING, not for records — it supplies lane C's companion seeds (see

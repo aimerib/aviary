@@ -684,3 +684,111 @@ def test_teams_files_are_separate_threads_and_blank_text_is_skipped(tmp_path):
 def test_teams_rejects_a_config_role_anchor():
     with pytest.raises(ValueError, match="resolves the owner"):
         SourceConfig(id="teams", parser="teams", path="/x", owner_sender=OWNER)
+
+
+# --- Reddit comment exchanges ------------------------------------------------
+
+
+def _reddit_file(root, account, owner, comments):
+    """comments: (sent, parent_author, parent_title, parent_text, reply_text)."""
+    root.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "account": account,
+        "me": {"name": owner, "reddit_username": account},
+        "posts": [],
+        "comments": [
+            {
+                "sent": s,
+                "subreddit": "books",
+                "score": 3,
+                "permalink": f"/r/books/{account}/{i}",
+                "in_reply_to": {"author": pa, "title": pt, "text": px},
+                "text": rt,
+            }
+            for i, (s, pa, pt, px, rt) in enumerate(comments)
+        ],
+    }
+    (root / f"{account}.json").write_text(json.dumps(payload))
+    return root
+
+
+def _reddit_cfg(path, **overrides):
+    base = {
+        "sources": [{"id": "reddit", "parser": "reddit", "path": str(path)}],
+        # reddit replies are long-form; keep the synthetic floor from dropping them
+        "min_record_chars": 0,
+        "min_mean_message_chars": 0,
+    }
+    return LaneDConfig.model_validate(base | overrides)
+
+
+def test_reddit_pairs_parent_with_owner_reply_owner_as_assistant(tmp_path):
+    root = _reddit_file(
+        tmp_path / "reddit",
+        "sam_reads",
+        OWNER,
+        [
+            (
+                "2026-03-14T21:00:00Z",
+                "stranger",
+                "What got you into doom metal?",
+                "Genuinely curious what the entry point was for people.",
+                "Funeral doom, weirdly — the slowness forced me to sit still and actually listen.",
+            )
+        ],
+    )
+    recs = list(parse_all(_reddit_cfg(root), "t"))
+    assert len(recs) == 1
+    rec = recs[0]
+    # The owner is the ASSISTANT here — the record ends on his reply, the modeled turn.
+    assert [m.role for m in rec.messages] == ["user", "assistant"]
+    assert rec.messages[0].speaker == "stranger"
+    assert rec.messages[1].speaker == OWNER
+    assert "entry point" in rec.messages[0].content  # parent title + text combined
+    assert rec.provenance.family == "reddit/2026-03"
+
+
+def test_reddit_skips_deleted_or_half_exchanges(tmp_path):
+    root = _reddit_file(
+        tmp_path / "reddit",
+        "sam_reads",
+        OWNER,
+        [
+            ("2026-03-01T10:00:00Z", "x", "gone", "[deleted]", "[removed]"),  # both gone
+            ("2026-03-02T10:00:00Z", "y", "", "", "a reply with no parent to answer"),  # no parent
+            ("2026-03-03T10:00:00Z", "z", "Real question", "with a body", "a real answer"),  # keep
+        ],
+    )
+    recs = list(parse_all(_reddit_cfg(root), "t"))
+    assert len(recs) == 1
+    assert recs[0].messages[1].content == "a real answer"
+
+
+def test_reddit_max_records_strides_across_accounts(tmp_path):
+    root = tmp_path / "reddit"
+    for acct in ("sam_a", "sam_b"):
+        _reddit_file(
+            root,
+            acct,
+            OWNER,
+            [
+                (f"2026-0{m}-01T10:00:00Z", "p", f"Q{m}", f"body {m}", f"reply {acct} {m}")
+                for m in range(1, 6)
+            ],
+        )
+    # 10 exchanges across two accounts -> capped to 4, strided in time order.
+    recs = list(
+        parse_all(
+            _reddit_cfg(
+                root,
+                sources=[{"id": "reddit", "parser": "reddit", "path": str(root), "max_records": 4}],
+            ),
+            "t",
+        )
+    )
+    assert len(recs) == 4
+
+
+def test_reddit_rejects_a_config_role_anchor():
+    with pytest.raises(ValueError, match="resolves the owner"):
+        SourceConfig(id="reddit", parser="reddit", path="/x", assistant_sender=OWNER)
