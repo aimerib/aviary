@@ -1,0 +1,93 @@
+manifest_version: 2
+run_id: 2026-07-23-pilot-sorcha8
+kind: pilot
+status: complete
+lanes:
+- a
+- b
+- c
+- d
+started: '2026-07-23T16:01:07Z'
+finished: '2026-07-23T17:40:50Z'
+provenance:
+  hermes_commit: v2026.7.7.2
+  task_bank_commit: 3b5eb3419604df17aef162009801f1ff131992dd
+  datagen_config_hash: 670ca4693ededc0637f3b58d73561e1339eeb3e5a37dbb3f3b3c94d9bd8b9782
+  gate_inputs_hash: f19816aa5775eb6300253d77e6c60273b6c9e890014f4fc8517b6ce24092179e
+  serializer_contract: v3
+  target: sorcha-v1
+  base_model: Qwen3.5-35B-A3B
+teachers:
+  roster:
+  - id: deepseek-v4-flash-20260717
+    provider: deepseek
+    route: direct
+  - id: deepseek-v4-pro-20260717
+    provider: deepseek
+    route: direct
+  - id: glm-5.2-20260717
+    provider: zhipu
+    route: direct
+  - id: kimi-k3-20260717
+    provider: moonshot
+    route: openrouter
+  assignments:
+    lane_a:
+      easy_mid: deepseek-v4-flash-20260717
+      hard: deepseek-v4-pro-20260717
+    lane_b:
+      profiles: deepseek-v4-flash-20260717
+      scenes: deepseek-v4-flash-20260717
+      dialogue: deepseek-v4-pro-20260717
+    lane_c:
+      user_sim: kimi-k3-20260717
+      character: deepseek-v4-pro-20260717
+      character_alt: glm-5.2-20260717
+    judge:
+      primary: glm-5.2-20260717
+      secondary: kimi-k3-20260717
+      tertiary: deepseek-v4-flash-20260717
+    harmonizer:
+      primary: deepseek-v4-flash-20260717
+counts:
+  instances: 0
+  rollouts: 1383
+  verified: 1265
+  judged: 910
+  rendered_train: 0
+  rendered_eval: 0
+  rendered_dpo_pairs: 0
+  rendered_nsp: 0
+keep_rates:
+  verify: 0.9147
+  judge: 0.7194
+  by_lane:
+    a:
+      verify: 0.8571
+      judge: 0.7928
+    b:
+      verify: 1.0
+      judge: 0.5748
+    c:
+      verify: 0.9776
+      judge: 0.9466
+    d:
+      verify: 1.0
+      judge: 0.4667
+spend_usd:
+  total: 12.1305
+  by_teacher:
+    kimi-k3-20260717: 11.8272
+    glm-5.2-20260717: 0.0
+    deepseek-v4-pro-20260717: 0.2898
+    deepseek-v4-flash-20260717: 0.0135
+  by_lane:
+    c: 7.9119
+prompt_set_hash: 2340a3d748160ba5c3e0c04e114d955ba69dcfe05de9e425b8def49f83b4fea2
+artifacts:
+  hf_dataset: ''
+  ship_exempt_lanes:
+  - d
+  eval_families_held_out: []
+  eval_param_seed: null
+notes: ''
