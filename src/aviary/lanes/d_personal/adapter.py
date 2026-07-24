@@ -20,6 +20,8 @@ in lane_d.yaml and flow through the existing family-level split rule unchanged.
 from __future__ import annotations
 
 import json
+import re
+from collections import Counter
 from collections.abc import Iterator
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -36,6 +38,13 @@ from aviary.schema.records import (
     SourceRef,
     make_record_id,
 )
+
+# Parsers that identify the owner from the export itself — Teams names them in each
+# file's `me` field, Instagram's owner is the one participant common to every thread.
+# They set message roles directly, so a config anchor would be dead config AND, being
+# owner/friend display names, exactly the real names the radioactive rule keeps out
+# of git. imessage stays anchor-based: its export labels the owner a literal "Me".
+_STRUCTURAL_OWNER = {"instagram", "teams"}
 
 
 class SourceConfig(BaseModel):
@@ -56,16 +65,27 @@ class SourceConfig(BaseModel):
     assistant_sender: str = ""
     owner_sender: str = ""
 
-    # imessage only: which threads to read from a directory export.
-    include_threads: list[str] = Field(default_factory=list)  # file stems; empty = all
+    # Directory-export sources (imessage/instagram/teams): which threads to read.
+    include_threads: list[str] = Field(default_factory=list)  # file/dir stems; empty = all
     exclude_threads: list[str] = Field(default_factory=list)
     min_thread_messages: int = 0  # skip threads thinner than this before sessionizing
     # Cap any one thread's share of this source's records (0 = uncapped). A single
     # dominant relationship would otherwise BE the lane's assistant voice.
     max_thread_share: float = 0.0
+    # instagram: skip threads with more than N participants (0 = keep all). A group
+    # thread collapses several speakers into one "assistant" voice; a companion build
+    # usually wants a single relationship per thread.
+    max_participants: int = 0
 
     @model_validator(mode="after")
     def _exactly_one_role_anchor(self) -> SourceConfig:
+        if self.parser in _STRUCTURAL_OWNER:
+            if self.assistant_sender or self.owner_sender:
+                raise ValueError(
+                    f"source {self.id!r}: parser {self.parser!r} resolves the owner from the "
+                    "export itself — leave assistant_sender/owner_sender unset"
+                )
+            return self
         if bool(self.assistant_sender) == bool(self.owner_sender):
             raise ValueError(
                 f"source {self.id!r}: set exactly one of assistant_sender / owner_sender"
@@ -171,7 +191,9 @@ def _record_from_segment(
         return None
     messages = [
         Message(
-            role=source.role_for(m["sender"]),
+            # Structural-owner parsers (instagram/teams) resolve the role from the
+            # export and set it on the row; anchor-based sources map it from config.
+            role=m.get("role") or source.role_for(m["sender"]),
             speaker=m["sender"],
             content=m["text"],
             ts=m["ts"],
@@ -271,17 +293,7 @@ class IMessageParser:
     def parse(
         self, source: SourceConfig, cfg: LaneDConfig, run_id: str
     ) -> Iterator[ConversationRecord]:
-        by_thread: dict[str, list[ConversationRecord]] = {}
-        for thread, msgs in self._threads(source, cfg):
-            kept = [
-                record
-                for seg_idx, segment in enumerate(_sessionize(msgs, cfg))
-                if (record := _record_from_segment(source, cfg, run_id, thread, seg_idx, segment))
-                is not None
-            ]
-            if kept:
-                by_thread[thread] = kept
-        yield from _apply_thread_cap(by_thread, source.max_thread_share)
+        yield from _threaded_records(self._threads(source, cfg), source, cfg, run_id)
 
     def _threads(self, source: SourceConfig, cfg: LaneDConfig) -> Iterator[tuple[str, list[dict]]]:
         paths = sorted(source.path.glob("*.jsonl")) if source.path.is_dir() else [source.path]
@@ -355,6 +367,195 @@ def _apply_thread_cap(
         yield from (records[int(i * step)] for i in range(keep))
 
 
+def _threaded_records(
+    threads: Iterator[tuple[str, list[dict]]],
+    source: SourceConfig,
+    cfg: LaneDConfig,
+    run_id: str,
+) -> Iterator[ConversationRecord]:
+    """Shared driver for directory-of-threads sources (imessage, instagram, teams):
+    sessionize each thread, build records, then apply the thread-dominance cap.
+
+    `threads` yields (thread_name, rows), each row a dict with `ts`/`sender`/`text`
+    and optionally a pre-resolved `role` (structural-owner formats). The cap runs
+    across the whole source, so it must see every thread before yielding — hence the
+    materialized `by_thread` rather than a straight passthrough."""
+    by_thread: dict[str, list[ConversationRecord]] = {}
+    for thread, rows in threads:
+        kept = [
+            record
+            for seg_idx, segment in enumerate(_sessionize(rows, cfg))
+            if (record := _record_from_segment(source, cfg, run_id, thread, seg_idx, segment))
+            is not None
+        ]
+        if kept:
+            by_thread[thread] = kept
+    yield from _apply_thread_cap(by_thread, source.max_thread_share)
+
+
+def _demojibake(s: str) -> str:
+    """Undo Meta's UTF-8-as-latin-1 double-encoding: bytes that are really UTF-8 get
+    stored reinterpreted as latin-1 and JSON-escaped, so 'Ã©' should read 'é' and
+    '\\u00f0\\u009f\\u0098\\u0080' is '😀'. Only round-trip when it round-trips cleanly
+    — text already correct (any codepoint > 255) or byte runs that aren't valid UTF-8
+    are returned untouched. Applied ONCE, and before owner detection, since
+    sender_name is mojibaked too."""
+    try:
+        return s.encode("latin-1").decode("utf-8")
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return s
+
+
+# Meta auto-generated, non-conversational `content`. Measured in the owner's export:
+# "X sent an attachment." (1384), "X liked a message" (101), share stubs (80), and a
+# few group-membership system lines. These are events, not turns — training on them
+# teaches the model to say "sent an attachment".
+_IG_AUTO = re.compile(
+    r"sent an attachment\.?\s*$"
+    r"|\bliked a message\b"
+    r"|\bshared (?:a|an) (?:reel|post|story|link)\b"
+    r"|^Reacted .+ to your message\s*$"
+    r"|\b(?:named the group|changed the (?:theme|group name|nickname)"
+    r"|set (?:the|your) nickname|added|left the group|created the group|removed)\b",
+    re.I,
+)
+
+
+def _detect_owner(thread_participants: list[list[str]]) -> str:
+    """The owner is whoever is in the most threads: they appear in every one, each
+    friend in only their own. Keeps a real display name out of git (unlike a config
+    anchor) and survives a malformed thread.
+
+    Refuses to guess: if the top two participants are tied (e.g. a lone DM, where
+    owner and friend each appear once), role assignment would be a coin flip — and a
+    flipped owner trains the model to produce the owner's own turns. A real DYI export
+    has dozens of threads, so a tie means the path is wrong, not that we should pick."""
+    counts: Counter[str] = Counter()
+    for names in thread_participants:
+        counts.update(set(names))
+    ranked = counts.most_common(2)
+    if not ranked:
+        return ""
+    if len(ranked) > 1 and ranked[0][1] == ranked[1][1]:
+        raise ValueError(
+            "instagram owner is ambiguous: no participant appears in more threads than "
+            "the rest. A real export has many threads sharing one owner — check the path."
+        )
+    return ranked[0][0]
+
+
+class InstagramParser:
+    """Meta 'Download Your Information' message threads (Instagram/Messenger).
+
+    `source.path` is the export directory; each `<thread>/message_*.json` is one
+    conversation (Meta shards long threads across message_1, message_2, …). Three
+    format quirks live here and nowhere else:
+
+      * every text field is UTF-8 double-encoded as latin-1 (`_demojibake`);
+      * messages are listed newest-first (re-sorted ascending);
+      * photo/share/reaction/system rows carry an auto `content` string that is an
+        event, not a turn (`_IG_AUTO`), and are dropped like a bare attachment.
+
+    The owner is detected structurally (in every thread) and takes the USER seat —
+    the companion mapping, matching imessage's `owner_sender`."""
+
+    def parse(
+        self, source: SourceConfig, cfg: LaneDConfig, run_id: str
+    ) -> Iterator[ConversationRecord]:
+        loaded = self._load(source)
+        owner = _detect_owner([participants for _, _, participants in loaded])
+        yield from _threaded_records(self._threads(loaded, owner, source), source, cfg, run_id)
+
+    def _load(self, source: SourceConfig) -> list[tuple[str, list[dict], list[str]]]:
+        """(thread_name, raw messages, participant names) per thread dir, honoring the
+        include/exclude filters and max_participants. Participants are read first so
+        the owner can be detected before any role is assigned."""
+        include, exclude = set(source.include_threads), set(source.exclude_threads)
+        out: list[tuple[str, list[dict], list[str]]] = []
+        for tdir in sorted(p for p in source.path.iterdir() if p.is_dir()):
+            if (include and tdir.name not in include) or tdir.name in exclude:
+                continue
+            files = sorted(tdir.glob("message_*.json"))
+            if not files:
+                continue
+            participants: list[str] = []
+            messages: list[dict] = []
+            for f in files:
+                raw = json.loads(f.read_text(encoding="utf-8"))
+                if raw.get("participants"):
+                    participants = [_demojibake(p.get("name", "")) for p in raw["participants"]]
+                messages.extend(raw.get("messages", []))
+            if source.max_participants and len(participants) > source.max_participants:
+                continue
+            out.append((tdir.name, messages, participants))
+        return out
+
+    def _threads(
+        self, loaded: list[tuple[str, list[dict], list[str]]], owner: str, source: SourceConfig
+    ) -> Iterator[tuple[str, list[dict]]]:
+        for name, messages, _ in loaded:
+            rows = [r for r in (self._row(m, owner) for m in messages) if r]
+            rows.sort(key=lambda r: r["ts"])  # Meta lists newest-first
+            if len(rows) >= source.min_thread_messages:
+                yield name, rows
+
+    @staticmethod
+    def _row(m: dict, owner: str) -> dict | None:
+        content, sender, ts = m.get("content"), m.get("sender_name"), m.get("timestamp_ms")
+        if not content or sender is None or ts is None:
+            return None
+        content = _demojibake(content)
+        if _IG_AUTO.search(content):
+            return None
+        text = content.strip()
+        if not text:
+            return None
+        sender = _demojibake(sender)
+        return {
+            "ts": datetime.fromtimestamp(ts / 1000, UTC).isoformat(),
+            "sender": sender,
+            "text": text,
+            "role": "user" if sender == owner else "assistant",
+        }
+
+
+class TeamsParser:
+    """Pre-normalized Teams 1-on-1 export: one JSON file per chat,
+
+        {"me": {"name": …}, "participant": {"name": …},
+         "messages": [{"from": <name>, "sent": <iso8601 Z>, "text": …}]}
+
+    `me.name` names the owner structurally (no real name in config), and the owner
+    takes the USER seat. Each file is one conversation stream, sessionized like every
+    other lane D source."""
+
+    def parse(
+        self, source: SourceConfig, cfg: LaneDConfig, run_id: str
+    ) -> Iterator[ConversationRecord]:
+        yield from _threaded_records(self._threads(source), source, cfg, run_id)
+
+    def _threads(self, source: SourceConfig) -> Iterator[tuple[str, list[dict]]]:
+        include, exclude = set(source.include_threads), set(source.exclude_threads)
+        paths = sorted(source.path.glob("*.json")) if source.path.is_dir() else [source.path]
+        for path in paths:
+            if (include and path.stem not in include) or path.stem in exclude:
+                continue
+            raw = json.loads(path.read_text(encoding="utf-8"))
+            owner = (raw.get("me") or {}).get("name", "")
+            rows = [
+                {
+                    "ts": m["sent"],
+                    "sender": m["from"],
+                    "text": (m.get("text") or "").strip(),
+                    "role": "user" if m.get("from") == owner else "assistant",
+                }
+                for m in raw.get("messages", [])
+                if m.get("from") and m.get("sent") and (m.get("text") or "").strip()
+            ]
+            if len(rows) >= source.min_thread_messages:
+                yield path.stem, rows
+
+
 class _StubParser:
     """Registration point for a real-format parser that doesn't exist yet.
     Formats are learned from real exports at implementation time, never guessed."""
@@ -374,6 +575,8 @@ class _StubParser:
 PARSERS: dict[str, SourceParser] = {
     "generic_jsonl": GenericJsonlParser(),
     "imessage": IMessageParser(),
+    "instagram": InstagramParser(),
+    "teams": TeamsParser(),
     "discord": _StubParser("discord"),
     "journal": _StubParser("journal"),
 }

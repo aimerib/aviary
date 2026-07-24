@@ -4,6 +4,7 @@ the radioactive-data rule forbids real personal content anywhere in the repo."""
 from __future__ import annotations
 
 import json
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -11,6 +12,7 @@ from aviary.lanes.d_personal.adapter import (
     PARSERS,
     LaneDConfig,
     SourceConfig,
+    _demojibake,
     parse_all,
 )
 
@@ -448,3 +450,237 @@ def test_substance_floor_drops_acknowledgement_tokens(tmp_path):
     kept = list(parse_all(_im_cfg(d, min_record_chars=200, min_mean_message_chars=25), "t"))
     assert len(kept) == 1
     assert "fell apart" in kept[0].messages[0].content
+
+
+# --- Meta "Download Your Information" (Instagram/Messenger) -------------------
+
+MAX = "Max"  # a second synthetic friend, for owner-across-threads detection
+
+
+def _mojibake(s: str) -> str:
+    """Exactly how Meta mangles it: real UTF-8 bytes reinterpreted as latin-1. The
+    parser's _demojibake must invert this on every text field."""
+    return s.encode("utf-8").decode("latin-1")
+
+
+def _ig_ms(offset_min: int) -> int:
+    base = datetime(2026, 3, 14, 21, 0, tzinfo=UTC)
+    return int((base + timedelta(minutes=offset_min)).timestamp() * 1000)
+
+
+def _ig_thread(root, thread, participants, messages, *, files=1):
+    """messages: (sender, offset_min, content). Written mojibaked and NEWEST-FIRST
+    (Meta's order), optionally sharded across message_1..message_N.json."""
+    td = root / thread
+    td.mkdir(parents=True, exist_ok=True)
+    rows = [
+        {"sender_name": _mojibake(s), "timestamp_ms": _ig_ms(off), "content": _mojibake(c)}
+        for s, off, c in messages
+    ]
+    rows.reverse()  # newest-first
+    shards = [rows[i::files] for i in range(files)]  # each shard keeps Meta's ordering
+    for i, shard in enumerate(shards, 1):
+        payload = {
+            "participants": [{"name": _mojibake(p)} for p in participants],
+            "messages": shard,
+            "title": _mojibake(participants[0]),
+            "thread_path": f"inbox/{thread}",
+        }
+        (td / f"message_{i}.json").write_text(json.dumps(payload))
+    return td
+
+
+def _ig_cfg(path, **overrides):
+    base = {"sources": [{"id": "ig", "parser": "instagram", "path": str(path)}]}
+    return LaneDConfig.model_validate(base | overrides)
+
+
+def _ig_export(tmp_path):
+    """Two threads sharing owner Sam — enough for structural owner detection."""
+    root = tmp_path / "instagram"
+    _ig_thread(
+        root,
+        "rio_123",
+        [FRIEND, OWNER],
+        [
+            (FRIEND, 0, "the trail was pure mud"),
+            (OWNER, 2, "and yet you sound delighted"),
+            (FRIEND, 3, "I lost a shoe out there"),
+        ],
+    )
+    _ig_thread(
+        root,
+        "max_456",
+        [MAX, OWNER],
+        [(MAX, 0, "cafe plan still on?"), (OWNER, 1, "always")],
+    )
+    return root
+
+
+def test_demojibake_restores_meta_double_encoding():
+    assert _demojibake(_mojibake("café ☕ résumé — 😀")) == "café ☕ résumé — 😀"
+    # Idempotent-safe on already-correct text (codepoint > 255 can't latin-1 encode).
+    assert _demojibake("plain ascii") == "plain ascii"
+    assert _demojibake("already 😀 unicode") == "already 😀 unicode"
+
+
+def test_instagram_detects_owner_and_seats_them_as_user(tmp_path):
+    recs = list(parse_all(_ig_cfg(_ig_export(tmp_path)), "t"))
+    rio = next(r for r in recs if r.provenance.source.detail["conversation_id"] == "rio_123")
+    # Sam is in both threads -> the owner -> the USER seat (companion mapping).
+    assert [m.role for m in rio.messages] == ["assistant", "user", "assistant"]
+    assert [m.speaker for m in rio.messages] == [FRIEND, OWNER, FRIEND]
+    assert rio.provenance.lane == "d"
+    assert rio.provenance.family == "ig/2026-03"
+
+
+def test_instagram_reverse_order_is_sorted_and_shards_merge(tmp_path):
+    root = tmp_path / "instagram"
+    _ig_thread(root, "other_1", [MAX, OWNER], [(MAX, 9, "z last")])  # keep owner detectable
+    _ig_thread(
+        root,
+        "rio_123",
+        [FRIEND, OWNER],
+        [(FRIEND, 0, "first"), (OWNER, 1, "second"), (FRIEND, 2, "third"), (OWNER, 3, "fourth")],
+        files=2,  # sharded across message_1 + message_2, still newest-first within each
+    )
+    rio = next(
+        r
+        for r in parse_all(_ig_cfg(root), "t")
+        if r.provenance.source.detail["conversation_id"] == "rio_123"
+    )
+    assert [m.content for m in rio.messages] == ["first", "second", "third", "fourth"]
+
+
+def test_instagram_drops_auto_strings_and_fixes_unicode(tmp_path):
+    root = tmp_path / "instagram"
+    _ig_thread(root, "other_1", [MAX, OWNER], [(MAX, 9, "keep owner detectable"), (OWNER, 10, "k")])
+    _ig_thread(
+        root,
+        "rio_123",
+        [FRIEND, OWNER],
+        [
+            (FRIEND, 0, "did you see the café pic ☕"),
+            (FRIEND, 1, f"{FRIEND} sent an attachment."),  # Meta auto-string -> drop
+            (OWNER, 2, "Reacted ❤ to your message"),  # reaction-as-content -> drop
+            (OWNER, 3, "gorgeous"),
+        ],
+    )
+    rio = next(
+        r
+        for r in parse_all(_ig_cfg(root), "t")
+        if r.provenance.source.detail["conversation_id"] == "rio_123"
+    )
+    assert [m.content for m in rio.messages] == ["did you see the café pic ☕", "gorgeous"]
+    assert "sent an attachment" not in rio.model_dump_json()
+    assert "\\u00e2" not in rio.model_dump_json()  # no lingering mojibake bytes
+
+
+def test_instagram_max_participants_skips_group_threads(tmp_path):
+    root = tmp_path / "instagram"
+    _ig_thread(root, "rio_123", [FRIEND, OWNER], [(FRIEND, 0, "one on one"), (OWNER, 1, "yes")])
+    _ig_thread(
+        root, "max_456", [MAX, OWNER], [(MAX, 0, "second DM"), (OWNER, 1, "keeps owner clear")]
+    )
+    _ig_thread(
+        root,
+        "group_789",
+        [FRIEND, MAX, OWNER, "Jo"],
+        [(FRIEND, 0, "group chat noise"), (MAX, 1, "so much noise"), (OWNER, 2, "lol")],
+    )
+    threads = {
+        r.provenance.source.detail["conversation_id"]
+        for r in parse_all(
+            _ig_cfg(
+                root,
+                sources=[
+                    {"id": "ig", "parser": "instagram", "path": str(root), "max_participants": 2}
+                ],
+            ),
+            "t",
+        )
+    }
+    assert threads == {"rio_123", "max_456"}  # the 4-person group is skipped
+
+
+def test_instagram_refuses_to_guess_an_ambiguous_owner(tmp_path):
+    # One lone DM: owner and friend each appear once. Guessing would risk seating the
+    # owner as assistant — training the model to produce his turns. Fail loud instead.
+    root = tmp_path / "instagram"
+    _ig_thread(root, "rio_123", [FRIEND, OWNER], [(FRIEND, 0, "hi"), (OWNER, 1, "hey")])
+    with pytest.raises(ValueError, match="owner is ambiguous"):
+        list(parse_all(_ig_cfg(root), "t"))
+
+
+def test_instagram_rejects_a_config_role_anchor():
+    with pytest.raises(ValueError, match="resolves the owner"):
+        SourceConfig(id="ig", parser="instagram", path="/x", owner_sender=OWNER)
+
+
+# --- Teams 1-on-1 export -----------------------------------------------------
+
+
+def _teams_file(root, name, owner, messages):
+    """messages: (sender, ts_iso, text)."""
+    root.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "me": {"name": owner, "email": "o@x"},
+        "participant": {"name": messages[0][0], "email": "p@x"},
+        "messages": [{"from": s, "sent": ts, "text": t} for s, ts, t in messages],
+    }
+    (root / f"{name}.json").write_text(json.dumps(payload))
+    return root
+
+
+def _teams_cfg(path, **overrides):
+    base = {"sources": [{"id": "teams", "parser": "teams", "path": str(path)}]}
+    return LaneDConfig.model_validate(base | overrides)
+
+
+def test_teams_uses_me_name_as_owner_in_the_user_seat(tmp_path):
+    root = _teams_file(
+        tmp_path / "teams",
+        "casey",
+        OWNER,
+        [
+            ("Casey", "2026-03-14T21:00:00Z", "can you review the deploy runbook?"),
+            (OWNER, "2026-03-14T21:02:00Z", "yep, give me ten minutes and I will read it through"),
+            ("Casey", "2026-03-14T21:05:00Z", "no rush, thank you"),
+        ],
+    )
+    recs = list(parse_all(_teams_cfg(root), "t"))
+    assert len(recs) == 1
+    rec = recs[0]
+    assert [m.role for m in rec.messages] == ["assistant", "user", "assistant"]
+    assert [m.speaker for m in rec.messages] == ["Casey", OWNER, "Casey"]
+    assert rec.provenance.family == "teams/2026-03"
+
+
+def test_teams_files_are_separate_threads_and_blank_text_is_skipped(tmp_path):
+    root = tmp_path / "teams"
+    _teams_file(
+        root,
+        "casey",
+        OWNER,
+        [
+            ("Casey", "2026-04-01T10:00:00Z", "first"),
+            ("Casey", "2026-04-01T10:01:00Z", ""),  # blank (an attachment card) -> skipped
+            (OWNER, "2026-04-01T10:02:00Z", "second"),
+        ],
+    )
+    _teams_file(
+        root,
+        "dana",
+        OWNER,
+        [("Dana", "2026-04-02T10:00:00Z", "hi"), (OWNER, "2026-04-02T10:01:00Z", "hello")],
+    )
+    recs = list(parse_all(_teams_cfg(root), "t"))
+    threads = {r.provenance.source.detail["conversation_id"] for r in recs}
+    assert threads == {"casey", "dana"}
+    casey = next(r for r in recs if r.provenance.source.detail["conversation_id"] == "casey")
+    assert [m.content for m in casey.messages] == ["first", "second"]
+
+
+def test_teams_rejects_a_config_role_anchor():
+    with pytest.raises(ValueError, match="resolves the owner"):
+        SourceConfig(id="teams", parser="teams", path="/x", owner_sender=OWNER)

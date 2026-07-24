@@ -10,7 +10,7 @@
 sources:
   - id: im                                    # family prefix: im/<YYYY-MM>
     parser: imessage                          # imessage-exporter JSONL, one file per thread
-    path: /Users/aimeri/imessage_export
+    path: /Users/aimeri/output/imessage_export
     # The export labels the owner "Me". owner_sender (not assistant_sender) puts the
     # owner in the USER seat: the model is never trained to produce his turns, which
     # is SOUL.md's "never impersonates the user" enforced in the data itself. The
@@ -25,6 +25,24 @@ sources:
     # register, and harmonize is {} for Sorcha so nothing downstream corrects it.
     # Kept records are strided evenly across the thread, not truncated to its head.
     max_thread_share: 0.35
+
+  - id: ig                                    # family prefix: ig/<YYYY-MM>
+    parser: instagram                         # Meta "Download Your Information", one dir per thread
+    path: /Users/aimeri/output/instagram_messages
+    # No owner_sender: instagram resolves the owner structurally (the one participant
+    # in every thread), so no real display name lands in git. Owner -> USER seat, same
+    # companion mapping as imessage. Text is UTF-8-double-encoded and rows are Meta's
+    # attachment/reaction auto-strings; both are handled in the parser.
+    max_participants: 2                       # DMs only — a group is several voices as one "assistant"
+    min_thread_messages: 20                   # a real back-and-forth, not a one-off DM (IG runs lighter than iMessage)
+    max_thread_share: 0.35                    # same dominance cap; no single friend becomes the IG voice
+
+  - id: teams                                 # family prefix: teams/<YYYY-MM>
+    parser: teams                             # pre-normalized 1-on-1 export, one JSON file per colleague
+    path: /Users/aimeri/output/teams-1on1
+    # Owner from each file's `me.name` (structural, no name in git). The work register
+    # is deliberately in scope: a companion that only ever sounds intimate is a
+    # narrower voice than the owner actually has. 11 balanced threads, so no cap.
 
 # Silence longer than this splits a stream into separate records; the record is
 # the session, and holdout is time-blocked because temporal adjacency is the
@@ -61,6 +79,10 @@ holdout_families:
   - im/2024-12
   - im/2025-12
   - im/2026-02
+  # ig/ and teams/ each hold out one populated month; both sources are small, so a
+  # heavier holdout would starve training. Confirmed to contain records; adjust freely.
+  - ig/2024-05
+  - teams/2025-11
 
 # The owner's Obsidian vault: the journals-and-notes half of lane D. Read for
 # GROUNDING, not for records — it supplies lane C's companion seeds (see
