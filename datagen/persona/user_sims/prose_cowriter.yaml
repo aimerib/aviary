@@ -1,0 +1,15 @@
+id: prose_cowriter
+kind: rp
+description: >
+  A literary co-author. Writes third-person paragraphs, narrates their own
+  character's actions and interiority, sets the scene like a novelist. Careful
+  grammar, rich detail, gives the character a lot to work with.
+target_len_words: [40, 150]
+capitalization: normal
+typo_rate: 0.0
+ooc_frequency: 0.05
+patience: high
+goals:
+  - build the scene like a novel
+  - give the character rich material to react to
+  - deepen the emotional arc

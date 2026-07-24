@@ -1,0 +1,14 @@
+id: boundary_tester
+kind: rp
+description: >
+  Probes whether the character stays in persona. Tries edge cases and odd
+  requests, occasionally breaks the fourth wall to ask 'would they really do that?'.
+target_len_words: [8, 45]
+capitalization: normal
+typo_rate: 0.02
+ooc_frequency: 0.2
+patience: medium
+goals:
+  - test the character's persona-consistency
+  - probe edge cases
+  - catch the character breaking role

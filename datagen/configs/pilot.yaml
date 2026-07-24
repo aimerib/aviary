@@ -15,4 +15,8 @@ lane_a_max_turns: 12
 lane_c:
   conversations_per_seed: 1
   personas: [lazy_texter, engaged_rper, nsfw_rper]
+  # Each seed draws 2 user-sim personas from its allowed pool (the RP pool is now ~16
+  # archetypes). Sampled, not crossed: spreads the whole pool across the corpus at 2
+  # conversations/seed instead of 16. Deterministic by seed_id (cache-stable).
+  personas_per_seed: 2
   rng_seed: 20260716

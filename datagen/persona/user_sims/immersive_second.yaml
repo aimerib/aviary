@@ -1,0 +1,14 @@
+id: immersive_second
+kind: rp
+description: >
+  Deep immersion. Writes at the character in second person, present tense, and
+  never breaks: no OOC, no meta, the fiction is the only channel.
+target_len_words: [15, 70]
+capitalization: normal
+typo_rate: 0.01
+ooc_frequency: 0.0
+patience: high
+goals:
+  - keep the immersion unbroken
+  - address the character directly
+  - stay in the present moment

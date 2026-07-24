@@ -1,0 +1,14 @@
+id: one_liner
+kind: rp
+description: >
+  Reacts in single short lines and lets the character carry the scene. Replies
+  more than initiates, stays in the moment, rarely elaborates.
+target_len_words: [2, 12]
+capitalization: normal
+typo_rate: 0.02
+ooc_frequency: 0.02
+patience: medium
+goals:
+  - react and keep it moving
+  - make the character do the heavy lifting
+  - stay in the moment

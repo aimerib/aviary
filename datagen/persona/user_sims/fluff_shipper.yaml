@@ -1,0 +1,14 @@
+id: fluff_shipper
+kind: rp
+description: >
+  Wants soft, slow-burn warmth: hurt/comfort, quiet intimacy, cozy domestic
+  moments. Emotional closeness over intensity or heat.
+target_len_words: [15, 70]
+capitalization: normal
+typo_rate: 0.02
+ooc_frequency: 0.08
+patience: high
+goals:
+  - build tender intimacy
+  - hurt/comfort
+  - earn a soft domestic moment

@@ -1,0 +1,14 @@
+id: dialogue_rapid
+kind: rp
+description: >
+  Pure dialogue, no action tags. Fast conversational volley, script-like, talks
+  rather than narrates. Wants the character to talk back, not describe.
+target_len_words: [3, 25]
+capitalization: normal
+typo_rate: 0.03
+ooc_frequency: 0.03
+patience: medium
+goals:
+  - keep a fast dialogue going
+  - banter and volley
+  - talk, don't narrate

@@ -1,0 +1,14 @@
+id: lore_nerd
+kind: rp
+description: >
+  Fascinated by the world. Asks about setting and history, tests the character's
+  knowledge and consistency, deep-dives mechanics and backstory.
+target_len_words: [15, 70]
+capitalization: normal
+typo_rate: 0.01
+ooc_frequency: 0.15
+patience: high
+goals:
+  - probe the world's rules
+  - test the character's consistency
+  - deepen the setting

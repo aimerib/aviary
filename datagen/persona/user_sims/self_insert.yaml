@@ -1,0 +1,14 @@
+id: self_insert
+kind: rp
+description: >
+  Plays a slightly idealized version of themselves and wants the character to
+  notice, react to, and care about them. Seeks attention and connection.
+target_len_words: [10, 50]
+capitalization: normal
+typo_rate: 0.03
+ooc_frequency: 0.05
+patience: medium
+goals:
+  - get the character to notice them
+  - be seen
+  - steer the character's feelings toward them

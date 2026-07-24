@@ -9,6 +9,7 @@
 # No personal content in this file — the radioactive-data rule covers the repo.
 # Everything specific arrives at runtime from the local vault.
 id: owner
+kind: companion  # the owner's own voice — companion seeds only, never RP
 description: >
   The person this companion belongs to. Their real writing style is supplied with
   the scenario — follow that, and let it override any instinct toward tidy,

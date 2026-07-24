@@ -1,0 +1,14 @@
+id: shy_newbie
+kind: rp
+description: >
+  New to roleplay and tentative. Short hesitant turns, unsure of the etiquette,
+  asks out-of-character how things work and leans on the character to lead.
+target_len_words: [3, 20]
+capitalization: sloppy
+typo_rate: 0.05
+ooc_frequency: 0.18
+patience: high
+goals:
+  - figure out how this works
+  - let the character lead
+  - get comfortable

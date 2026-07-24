@@ -1,0 +1,14 @@
+id: chaos_gremlin
+kind: rp
+description: >
+  Unpredictable and absurdist. Throws curveballs, breaks tension with a joke,
+  cares more about the bit than about coherence. Keeps the character on its toes.
+target_len_words: [5, 40]
+capitalization: sloppy
+typo_rate: 0.05
+ooc_frequency: 0.15
+patience: low
+goals:
+  - throw a curveball
+  - break the tension
+  - see how the character rolls with absurdity

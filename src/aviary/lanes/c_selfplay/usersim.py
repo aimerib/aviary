@@ -7,6 +7,7 @@ provenance) so realism doesn't depend on the teacher's acting skills.
 
 from __future__ import annotations
 
+import hashlib
 import random
 import re
 from pathlib import Path
@@ -52,6 +53,10 @@ class UserSimPersona(BaseModel):
     typo_rate: float = 0.0
     ooc_frequency: float = 0.0
     patience: str = "medium"  # low | medium | high
+    # rp = a character-roleplay archetype (drives AO3-seeded RP); companion = the
+    # owner's own voice (companion seeds only). RP membership is derived from this,
+    # so the pool grows by adding a `kind: rp` file — no hand-synced id list.
+    kind: str = "rp"
     goals: list[str] = Field(default_factory=list)
 
     @classmethod
@@ -61,6 +66,24 @@ class UserSimPersona(BaseModel):
 
 def load_personas(dir_: Path) -> dict[str, UserSimPersona]:
     return {p.stem: UserSimPersona.load(p) for p in sorted(dir_.glob("*.yaml"))}
+
+
+def rp_persona_ids(personas: dict[str, UserSimPersona]) -> list[str]:
+    """The RP-appropriate personas — everything that isn't a companion (owner) voice.
+    RP seeds draw from this; the owner persona belongs to companion seeds only."""
+    return [pid for pid, p in personas.items() if p.kind == "rp"]
+
+
+def sample_personas(seed_id: str, allowed: list[str], k: int) -> list[str]:
+    """A deterministic per-seed down-sample of the allowed persona pool. k<=0 or
+    k>=len returns the whole pool (the cross-product default); otherwise a stable
+    draw of k, seeded by seed_id so reruns hit the response cache and each seed keeps
+    the same personas. This is what lets a ~16-persona RP pool spread across the
+    corpus without crossing every seed with every persona."""
+    if k <= 0 or k >= len(allowed):
+        return allowed
+    picker = random.Random(int(hashlib.sha256(seed_id.encode()).hexdigest()[:8], 16))
+    return picker.sample(allowed, k)
 
 
 def inject_typos(text: str, rate: float, rng: random.Random) -> str:

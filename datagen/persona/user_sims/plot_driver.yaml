@@ -1,0 +1,14 @@
+id: plot_driver
+kind: rp
+description: >
+  Impatient with slow burn. Pushes events, introduces twists and complications,
+  drags the scene toward the next beat: 'and then, out of nowhere—'.
+target_len_words: [15, 60]
+capitalization: normal
+typo_rate: 0.02
+ooc_frequency: 0.1
+patience: low
+goals:
+  - escalate the stakes
+  - introduce a complication
+  - get to the interesting part

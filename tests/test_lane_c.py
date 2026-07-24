@@ -13,7 +13,13 @@ from aviary.lanes.c_selfplay.companion_seeds import (
 )
 from aviary.lanes.c_selfplay.driver import END_SENTINEL, LaneCConfig, run_selfplay
 from aviary.lanes.c_selfplay.seeds import Seed, load_inline_seeds
-from aviary.lanes.c_selfplay.usersim import UserSimPersona, inject_typos, load_personas
+from aviary.lanes.c_selfplay.usersim import (
+    UserSimPersona,
+    inject_typos,
+    load_personas,
+    rp_persona_ids,
+    sample_personas,
+)
 from aviary.teacher.client import ChatRequest
 from aviary.teacher.fake import FakeTeacherClient
 from aviary.teacher.prompts import PromptSet
@@ -309,3 +315,41 @@ def test_length_targets_span_short_to_long():
     assert len(cfg.length_targets) >= 4, "two registers is not enough range"
     joined = " ".join(cfg.length_targets).lower()
     assert "clipped" in joined and "long" in joined
+
+
+# --- PersonaHub-style RP pool: kind derivation + per-seed sampling ------------
+
+
+def test_rp_persona_ids_excludes_the_companion_voice():
+    personas = {
+        "rp1": UserSimPersona(id="rp1", kind="rp"),
+        "owner": UserSimPersona(id="owner", kind="companion"),
+        "rp2": UserSimPersona(id="rp2"),  # default kind is rp
+    }
+    assert rp_persona_ids(personas) == ["rp1", "rp2"]
+
+
+def test_repo_rp_pool_is_expanded_and_owner_stays_out():
+    # Guards the actual expansion: the RP pool grew well past the original 4, and the
+    # owner voice never leaks into RP.
+    personas = load_personas(Path("datagen/persona/user_sims"))
+    rp = rp_persona_ids(personas)
+    assert "owner" not in rp
+    assert {"engaged_rper", "prose_cowriter", "one_liner", "angst_seeker"} <= set(rp)
+    assert len(rp) >= 15, "RP pool should be the expanded PersonaHub set"
+
+
+def test_sample_personas_is_deterministic_bounded_and_spreads():
+    pool = [f"p{i}" for i in range(16)]
+    # k<=0 or k>=len -> the whole pool (the cross-product default, backward compatible)
+    assert sample_personas("s", pool, 0) == pool
+    assert sample_personas("s", pool, 99) == pool
+    # bounded and stable per seed_id (so reruns hit the cache)
+    draw = sample_personas("seed-A", pool, 2)
+    assert len(draw) == 2 and set(draw) <= set(pool)
+    assert sample_personas("seed-A", pool, 2) == draw
+    # across many seeds the whole pool gets exercised, not stuck on a few
+    used = set()
+    for i in range(300):
+        used.update(sample_personas(f"seed-{i}", pool, 2))
+    assert used == set(pool)

@@ -74,6 +74,13 @@ class LaneCRunConfig(BaseModel):
     # Override lane_c.yaml's max_lane_b_seeds for this run kind (0 = use the file).
     # lane_c.yaml is shared with flash, so a pilot trims RP seeds here instead.
     max_lane_b_seeds: int = 0
+    # How many user-sim personas each seed draws (0 = cross ALL its allowed personas,
+    # the old behavior). The RP pool is now ~16 archetypes; crossing every AO3 seed
+    # with all of them multiplies the run 16x for no gain. Sampling a few per seed
+    # spreads the whole pool across the corpus at a fraction of the cost —
+    # deterministic by seed_id, so reruns hit the cache. Companion seeds are
+    # single-persona already, so this only affects RP.
+    personas_per_seed: int = 0
 
 
 class LaneBand(BaseModel):
@@ -437,10 +444,11 @@ def _companion_seeds(target: Target, prompts: PromptSet, max_seeds: int = 0) -> 
 def _generate_lane_c(cfg, store, roster, client, prompts, target: Target) -> int:
     from aviary.lanes.c_selfplay.driver import LaneCConfig, run_selfplay
     from aviary.lanes.c_selfplay.seeds import load_inline_seeds, seeds_from_lane_b
-    from aviary.lanes.c_selfplay.usersim import load_personas
+    from aviary.lanes.c_selfplay.usersim import load_personas, rp_persona_ids, sample_personas
     from aviary.teacher.pool import TeacherPool
 
     raw = yaml.safe_load((configs_dir() / "lane_c.yaml").read_text()) or {}
+    personas = load_personas(REPO_ROOT / "datagen" / "persona" / "user_sims")
     seeds = load_inline_seeds(
         configs_dir() / "lane_c.yaml", prompts[target.persona_system_key], target.persona_speaker
     )
@@ -448,12 +456,12 @@ def _generate_lane_c(cfg, store, roster, client, prompts, target: Target) -> int
     # AO3), not necessarily this run's lane B. Published-fiction characters are
     # off-distribution for RP, so lane C never seeds from the prose corpus. Falls back
     # to this run's own lane B output when seed_from_run is unset (combined [b,c] run).
+    # Every kind:rp persona is an allowed driver — sampled per seed below, not crossed.
     seed_run = raw.get("seed_from_run")
     seed_store = RunStore(seed_run) if seed_run else store
     max_b = cfg.lane_c.max_lane_b_seeds or raw.get("max_lane_b_seeds")
-    seeds += seeds_from_lane_b(seed_store, max_seeds=max_b)
+    seeds += seeds_from_lane_b(seed_store, max_seeds=max_b, rp_personas=rp_persona_ids(personas))
     seeds += _companion_seeds(target, prompts, cfg.lane_c.max_companion_seeds)
-    personas = load_personas(REPO_ROOT / "datagen" / "persona" / "user_sims")
     user_sim = roster.assigned("lane_c", "user_sim")
     character_pool = roster.assigned_pool("lane_c", "character")
     lane_cfg = LaneCConfig(**raw.get("driver", {}))
@@ -474,16 +482,19 @@ def _generate_lane_c(cfg, store, roster, client, prompts, target: Target) -> int
     # Draw one seed per conversation up front, in a fixed order: each conversation is
     # then fully determined by its own seed, so running them concurrently below yields
     # the same corpus as serial execution (reproducibility survives parallelism).
+    def _personas_for(seed) -> list[str]:
+        """User-sim personas that drive THIS seed: its allowed pool (companion scenes
+        only make sense in the owner's voice, RP scenes only in a roleplayer's),
+        down-sampled to personas_per_seed so a large RP pool spreads across the corpus
+        instead of crossing every seed with every persona (16x for no gain)."""
+        allowed = [p for p in (seed.user_sim_personas or cfg.lane_c.personas) if p in personas]
+        return sample_personas(seed.seed_id, allowed, cfg.lane_c.personas_per_seed)
+
     rng = random.Random(cfg.lane_c.rng_seed)
     jobs = [
         (seed, personas[persona_id], rng.randrange(2**31))
         for seed in seeds
-        # A seed may restrict which user-sim personas suit it: companion scenes
-        # only make sense in the owner's voice, RP scenes only in a roleplayer's.
-        # Crossing every seed with every persona produced incoherent records and
-        # multiplied the run by 4-5x for no gain.
-        for persona_id in (seed.user_sim_personas or cfg.lane_c.personas)
-        if persona_id in personas
+        for persona_id in _personas_for(seed)
         for _ in range(cfg.lane_c.conversations_per_seed)
     ]
 

@@ -1,0 +1,14 @@
+id: angst_seeker
+kind: rp
+description: >
+  Here for the drama. Wants emotional conflict, high stakes, confrontation and
+  catharsis. Pushes scenes toward their most intense version.
+target_len_words: [20, 90]
+capitalization: normal
+typo_rate: 0.01
+ooc_frequency: 0.06
+patience: high
+goals:
+  - raise the emotional stakes
+  - provoke a confrontation
+  - wring out the drama
