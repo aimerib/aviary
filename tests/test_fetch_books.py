@@ -10,6 +10,7 @@ from aviary.lanes.b_fiction.fetch import (
     interiority_score,
     is_epub,
     percentiles,
+    score_local,
     slugify,
 )
 
@@ -94,6 +95,24 @@ def test_dump_book_yaml_round_trips_through_lane_b_loader(tmp_path):
     assert parsed["books"][0]["author"] == "Jane Austen"
 
 
+def test_dump_book_yaml_escapes_embedded_quotes(tmp_path):
+    import yaml
+
+    # The bug that broke lane_b.yaml's parse: a title with embedded double-quotes.
+    entries = [
+        book_config(
+            source="gutenberg",
+            ident="2943",
+            path=tmp_path / "flip.txt",
+            author="Anon",
+            title='Flip\'s "Islands of Providence"',
+        )
+    ]
+    block = "books:\n" + "\n".join(dump_book_yaml(entries).splitlines()[1:])
+    parsed = yaml.safe_load(block)  # must not raise
+    assert parsed["books"][0]["title"] == 'Flip\'s "Islands of Providence"'
+
+
 def test_existing_keys_reads_titles_and_ids_for_dedupe(tmp_path):
     y = tmp_path / "lane_b.yaml"
     y.write_text(
@@ -106,3 +125,31 @@ def test_existing_keys_reads_titles_and_ids_for_dedupe(tmp_path):
 
 def test_existing_keys_empty_when_no_file(tmp_path):
     assert existing_keys(tmp_path / "nope.yaml") == set()
+
+
+def _pd_dir(tmp_path):
+    """A synthetic _public_domain drop: fetch-books-named Gutenberg .txt."""
+    d = tmp_path / "pd"
+    d.mkdir()
+    (d / "gutenberg--105--austen-jane--persuasion.txt").write_text(
+        "Title: Persuasion\nAuthor: Jane Austen\n\n" + INTERIOR
+    )
+    (d / "gutenberg--999--anon--a-cart-manual.txt").write_text(
+        "Title: A Cart Manual\nAuthor: Anon\n\n" + EXTERNAL
+    )
+    return d
+
+
+def test_score_local_keeps_interior_reads_header_drops_external(tmp_path):
+    kept = score_local(_pd_dir(tmp_path), min_interiority=7.0, log=lambda *_: None)
+    assert [b.work_id for b in kept] == ["gutenberg-105"]  # the external one falls below threshold
+    b = kept[0]
+    assert b.title == "Persuasion"  # from the Gutenberg header, not the slugged filename
+    assert b.author == "Jane Austen"
+
+
+def test_score_local_dedupes_against_existing(tmp_path):
+    kept = score_local(
+        _pd_dir(tmp_path), min_interiority=0.0, existing={"gutenberg-105"}, log=lambda *_: None
+    )
+    assert "gutenberg-105" not in {b.work_id for b in kept}  # already registered -> skipped

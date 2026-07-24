@@ -57,11 +57,14 @@ def main(argv: list[str] | None = None) -> int:
     cr.add_argument("--strict-minor", action="store_true", help="also drop school-age settings")
     cr.add_argument("--drop-claude", action="store_true", help="drop rows naming Claude/Anthropic")
 
-    fb = sub.add_parser("fetch-books", help="download public-domain fiction for lane B")
-    fb.add_argument("source", choices=["gutenberg", "standardebooks"])
-    fb.add_argument("--out", type=Path, required=True, help="download dir (OUTSIDE the repo)")
+    fb = sub.add_parser("fetch-books", help="download or score public-domain fiction for lane B")
+    fb.add_argument("source", choices=["gutenberg", "standardebooks", "local"])
+    fb.add_argument(
+        "--out", type=Path, help="download dir for gutenberg/standardebooks (OUTSIDE the repo)"
+    )
+    fb.add_argument("--dir", type=Path, dest="local_dir", help="existing book dir to score (local)")
     fb.add_argument("--limit", type=int, default=100)
-    fb.add_argument("--min-interiority", type=float, default=7.0, help="gutenberg keep threshold")
+    fb.add_argument("--min-interiority", type=float, default=7.0, help="interiority keep threshold")
     fb.add_argument("--score-report", action="store_true", help="score only, download nothing")
     fb.add_argument("--existing", type=Path, default=None, help="lane_b.yaml to dedupe against")
     fb.add_argument("--emit-yaml", action="store_true", help="print appendable book entries")
@@ -164,10 +167,17 @@ def main(argv: list[str] | None = None) -> int:
             existing_keys,
             fetch_gutenberg,
             fetch_standardebooks,
+            score_local,
         )
 
         have = existing_keys(args.existing) if args.existing else set()
-        if args.source == "gutenberg":
+        if args.source == "local":
+            if not args.local_dir:
+                parser.error("fetch-books local requires --dir")
+            books = score_local(args.local_dir, min_interiority=args.min_interiority, existing=have)
+        elif args.source == "gutenberg":
+            if not args.out:
+                parser.error("fetch-books gutenberg requires --out")
             books = fetch_gutenberg(
                 args.out,
                 limit=args.limit,
@@ -176,6 +186,8 @@ def main(argv: list[str] | None = None) -> int:
                 dry_run=args.score_report,
             )
         else:
+            if not args.out:
+                parser.error("fetch-books standardebooks requires --out")
             books = fetch_standardebooks(args.out, limit=args.limit)
         if args.emit_yaml and not args.score_report:
             fresh = [b for b in books if b.title.lower() not in have]

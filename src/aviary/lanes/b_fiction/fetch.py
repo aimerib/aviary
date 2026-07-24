@@ -21,7 +21,7 @@ from pathlib import Path
 
 import httpx
 
-from aviary.lanes.b_fiction.books import BookConfig, strip_gutenberg
+from aviary.lanes.b_fiction.books import BookConfig, load_book_text, strip_gutenberg
 
 GUTENDEX = "https://gutendex.com/books/"
 SE_INDEX = "https://standardebooks.org/ebooks/"
@@ -42,6 +42,12 @@ _MENTAL = re.compile(
     re.I,
 )
 _WORD = re.compile(r"[A-Za-z']+")
+
+# Project Gutenberg .txt keeps accurate Title:/Author: in its header; a fetch-books
+# filename is `<source>--<id>--<author>--<title>` (slugged) as the fallback.
+_GUT_TITLE = re.compile(r"^Title:\s*(.+)$", re.M)
+_GUT_AUTHOR = re.compile(r"^Author:\s*(.+)$", re.M)
+_BOOK_SUFFIXES = (".txt", ".epub", ".kepub", ".html", ".htm")
 
 
 def interiority_score(text: str, sample_chars: int = 60_000) -> float:
@@ -92,16 +98,24 @@ def percentiles(scores: list[float]) -> dict[str, float]:
     return {f"p{p}": s[min(len(s) - 1, p * len(s) // 100)] for p in (10, 25, 50, 75, 90)}
 
 
+def _yaml_str(s: str) -> str:
+    """A safe double-quoted YAML scalar. Titles carry embedded quotes — Flip's
+    "Islands of Providence", "Hashknife"—philanthropist — and an unescaped one breaks
+    the whole file's parse (it did: 5 entries had to be repaired by hand). Escape
+    backslashes first, then quotes."""
+    return '"' + str(s).replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
 def dump_book_yaml(entries: list[BookConfig]) -> str:
     """Render entries as a `books:`-appendable YAML block. Hand-formatted (not
     yaml.dump) to match lane_b.yaml's quoted-path house style and stay reviewable."""
     lines = ["# append under `books:` in datagen/configs/lane_b.yaml — set holdout by hand"]
     for b in entries:
         lines.append(f"  - work_id: {b.work_id}")
-        lines.append(f'    path: "{b.path}"')
+        lines.append(f"    path: {_yaml_str(b.path)}")
         if b.author:
-            lines.append(f'    author: "{b.author}"')
-        lines.append(f'    title: "{b.title}"')
+            lines.append(f"    author: {_yaml_str(b.author)}")
+        lines.append(f"    title: {_yaml_str(b.title)}")
     return "\n".join(lines)
 
 
@@ -118,6 +132,69 @@ def existing_keys(lane_b_yaml: Path) -> set[str]:
         keys.add(str(b.get("title", "")).strip().lower())
     keys.discard("")
     return keys
+
+
+def _local_meta(path: Path, raw_head: str) -> tuple[str, str, str, str]:
+    """(source, ident, author, title) for a local book. Prefer the Gutenberg header
+    (accurate); fall back to the fetch-books filename `<source>--<id>--<author>--<title>`.
+    Un-slugging a filename is lossy, so the header wins whenever it is present."""
+    parts = path.stem.split("--")
+    source = parts[0] if len(parts) > 1 else "local"
+    ident = parts[1] if len(parts) > 2 else path.stem
+    t = _GUT_TITLE.search(raw_head)
+    a = _GUT_AUTHOR.search(raw_head)
+    title = t.group(1).strip() if t else ""
+    author = a.group(1).strip() if a else ""
+    if not title:
+        title = parts[3].replace("-", " ").title() if len(parts) > 3 else path.stem
+    if not author and len(parts) > 2:
+        author = parts[2].replace("-", " ").title()
+    return source, ident, author, title
+
+
+def score_local(
+    directory: Path,
+    *,
+    min_interiority: float,
+    existing: set[str] | None = None,
+    log=print,
+) -> list[BookConfig]:
+    """Score an already-downloaded directory of books by interiority and return the
+    keepers as BookConfigs — the no-network sibling of fetch_gutenberg, for a local
+    drop (e.g. a _public_domain dir of Gutenberg .txt). Reads local files only, so the
+    suite exercises it offline; dedupes against `existing` (existing_keys output)."""
+    existing = existing or set()
+    kept: list[BookConfig] = []
+    scores: list[float] = []
+    for path in sorted(directory.iterdir()):
+        if path.suffix.lower() not in _BOOK_SUFFIXES:
+            continue
+        try:
+            text = load_book_text(path)
+        except Exception as e:  # noqa: BLE001 — one bad file must not abort a 1000-book scan
+            log(f"  skip {path.name}: {e}")
+            continue
+        score = interiority_score(text)
+        scores.append(score)
+        raw_head = (
+            path.read_text(encoding="utf-8", errors="replace")[:3000]
+            if path.suffix.lower() == ".txt"
+            else ""
+        )
+        source, ident, author, title = _local_meta(path, raw_head)
+        work_id = slugify(f"{source}-{ident}", 80)
+        if work_id in existing or title.lower() in existing:
+            continue
+        if score < min_interiority:
+            continue
+        kept.append(book_config(source=source, ident=ident, path=path, author=author, title=title))
+        log(f"  [{len(kept)}] interiority={score:4.1f}  {title} — {author or '?'}")
+    if scores:
+        log(
+            f"\nscored {len(scores)} | kept {len(kept)} | interiority percentiles: "
+            + "  ".join(f"{k}={v:.1f}" for k, v in percentiles(scores).items())
+        )
+    return kept
 
 
 # --- network I/O (not unit-tested: the suite bans sockets) -----------------------
